@@ -34,12 +34,13 @@ rebuilder/
 │       │   └── <related-repo>/
 │       ├── scope.md                      # Filled-out scope
 │       ├── input.md                      # Filled-out input
-│       ├── output/                       # Steps 1-6: analysis artifacts and PRD
+│       ├── output/                       # Steps 1-6, 17: analysis artifacts, PRD, and summary
 │       │   ├── legacy_assessment.md
 │       │   ├── modernization_opportunities.md
 │       │   ├── feasibility.md
 │       │   ├── candidate_N.md
-│       │   └── prd.md
+│       │   ├── prd.md
+│       │   └── summary-of-work.md
 │       ├── developer-agent/              # Step 8: populated dev agent config
 │       │   ├── WINDSURF_DEV.md
 │       │   └── config.md
@@ -47,6 +48,7 @@ rebuilder/
 │       │   ├── WINDSURF_SRE.md
 │       │   └── config.md
 │       └── docs/
+│           ├── component-overview.md      # Step 2: plain-language component overview
 │           ├── adr/                      # Step 9: architecture decision records
 │           │   └── *.md
 │           ├── feature-parity.md         # Step 10: feature parity matrix
@@ -212,6 +214,8 @@ All outputs are written into the project directory under `rebuild-inputs/<projec
 | Feasibility analysis | `output/feasibility.md` | Effort, risk, dependencies, rollback per opportunity |
 | Rebuild candidates | `output/candidate_N.md` | Concrete proposals with stack choices, phased scope, infrastructure migration plan, and DAPR integration notes |
 | PRD | `output/prd.md` | Product requirements including infrastructure migration plan and DAPR integration if changing providers |
+| Component overview | `docs/component-overview.md` | Plain-language overview of the current application for non-developer audiences |
+| Summary of work | `output/summary-of-work.md` | Executive summary with codebase metrics, health scorecard, compliance results, and file inventory |
 | ADRs | `docs/adr/*.md` | Architecture decision records |
 | Feature parity matrix | `docs/feature-parity.md` | Every feature cataloged with rebuild status |
 | Data migration mapping | `docs/data-migration-mapping.md` | Schema mapping between legacy and target |
