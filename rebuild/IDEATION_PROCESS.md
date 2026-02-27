@@ -934,6 +934,25 @@ into implementation. Cite industry estimation frameworks (e.g., McConnell's
 Code Complete, Capers Jones's Applied Software Measurement) if applicable.
 State the acceleration factor achieved by the automated process.]
 
+### Key Numbers
+
+[Summary table of headline metrics — placed here so executives see the numbers
+without scrolling past the detailed estimate table. Include: source lines
+eliminated, code reduction %, dependencies removed, compliance checks passed,
+quality gates passed, test coverage, CVEs, new endpoints, ADRs, total files.
+Measure programmatically — do not estimate.]
+
+| Metric | Value |
+|--------|-------|
+| Source lines eliminated | [n] |
+| Source code reduction | [n%] |
+| ... | ... |
+| Total files delivered | [n] |
+
+### Estimated Human Time Equivalent
+
+[Estimate table goes here — see paragraph guidance above.]
+
 ## Spec-Driven Approach
 
 [Table showing each step in the IDEATION_PROCESS.md that was executed and what
@@ -945,17 +964,6 @@ and compliance standards were defined before code was written.]
 | 1 | Legacy Assessment | output/legacy_assessment.md |
 | 2 | Component Overview | docs/component-overview.md |
 | ... | ... | ... |
-
-## Speed Metrics
-
-| Metric | Value |
-|---|---|
-| Total files delivered | [count] |
-| Source files | [count] |
-| Test files | [count] |
-| Infrastructure files | [count] |
-| Documentation files | [count] |
-| Pipeline run | Single session |
 
 ## Source Code Metrics
 
