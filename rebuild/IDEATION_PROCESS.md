@@ -1030,6 +1030,36 @@ and compliance standards were defined before code was written.]
 | ... | ... | ... | ... |
 | **Total** | **[n]** | **[n]** | **[n]** |
 
+## Extended Quality Gate Results
+
+[Summary from the Quality Gate Verification and Test Results Report (`tests/TEST_RESULTS.md`) produced in Step 12. Include both core and extended gates.]
+
+**Core Gates (all must pass):**
+
+| Gate | Tool | Threshold | Result | Status |
+|---|---|---|---|---|
+| Unit Tests | pytest | 0 failures | [n passed, n failed] | [PASS/FAIL] |
+| Lint | ruff check | 0 errors | [n errors] | [PASS/FAIL] |
+| Format | ruff format | 0 unformatted | [n/n formatted] | [PASS/FAIL] |
+| Type Check | mypy (strict) | 0 errors | [n errors in n files] | [PASS/FAIL] |
+
+**Extended Gates (measured baselines):**
+
+| Gate | Tool | Threshold | Result | Status |
+|---|---|---|---|---|
+| Test Coverage | pytest-cov | measured | [n% overall] | [MEASURED] |
+| Cyclomatic Complexity | radon cc | avg ≤ B | [avg rating (n)] | [PASS/FAIL] |
+| Maintainability Index | radon mi | all ≥ B | [all n files rated X] | [PASS/FAIL] |
+| Dead Code | vulture | 0 findings | [n findings] | [PASS/FAIL] |
+| Dependency Vulnerabilities | pip-audit | 0 critical/high | [n CVEs] | [PASS/FLAGGED] |
+| Docstring Coverage | interrogate | measured | [n%] | [MEASURED] |
+| Duplicate Code (DRY) | pylint + jscpd | < 3% duplication | [n% duplication] | [PASS/FAIL] |
+| Cognitive Complexity | ruff C901 | 0 issues | [n issues] | [PASS/FAIL] |
+
+[Include brief notes on coverage gaps (e.g., "services require running infrastructure"), any flagged vulnerabilities with remediation plan, and any justified exceptions (e.g., intentional structural similarity in clone detection).]
+
+**Full machine-verified output:** [`tests/TEST_RESULTS.md`](../[built-repo]/tests/TEST_RESULTS.md)
+
 ## Architecture Decisions
 
 [Summary table of all ADRs produced.]
