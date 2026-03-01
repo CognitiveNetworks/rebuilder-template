@@ -63,8 +63,36 @@
 
 - Branch naming: `feature/<short-description>` or `fix/<short-description>`
 - Never commit directly to `main`.
-- Commit messages explain why, not what. Squash into logical commits before PR.
 - Rebase on `main` before opening a PR.
+
+### Commit Messages
+
+- Every commit gets a **detailed message**: one-line summary + structured body.
+- The summary line is a short imperative sentence (e.g., `fix: resolve Redis connection leak on shutdown`).
+- The body groups changes by category with bullet points explaining _what changed and why_.
+- Use categories like `Documentation:`, `Production readiness:`, `Bug fixes:`, `Features:`, `Refactoring:`, `Tests:` — whatever fits the work.
+- Squash into logical commits before PR. Each commit should be a coherent unit of work.
+
+**Shell-safe commit workflow:** Multi-line commit messages with special characters (arrows, parentheses, backticks, unicode) break shell quoting in zsh/bash. Always write the message to a temp file and use `git commit -F`:
+
+```bash
+# Write message to temp file (avoids all quoting issues)
+cat > /tmp/commit-msg.txt << 'COMMIT_MSG'
+fix: resolve Redis connection leak on shutdown
+
+Bug fixes:
+- Close Redis pool explicitly in lifespan shutdown handler
+- Add timeout to DAPR client close to prevent hanging
+
+Tests:
+- Add test for graceful shutdown sequence
+- Verify Redis connections are released
+COMMIT_MSG
+
+git commit -F /tmp/commit-msg.txt
+```
+
+Never use `git commit -m "..."` for multi-line messages — it silently truncates or breaks on special characters.
 
 ## PR Expectations
 
