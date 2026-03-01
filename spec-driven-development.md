@@ -622,35 +622,24 @@ the gap.
 - **Re-replication gets better each cycle.** The first generation has no human
   input. The second generation incorporates every correction from the first
   deployment. By the third cycle, most edge cases are in the spec.
-
-## For a Director of Engineering
-
-### What you can rely on
-
-1. **Structural consistency.** Every rebuild produces the same set of
-   artifacts in the same locations with the same internal structure. You can
-   compare two rebuild outputs side-by-side because they use the same
-   templates.
-
-2. **Quality guarantees.** 14 automated quality gates must pass before the
-   build is considered complete. These are not aspirational — they are
-   enforced by the process and verified by `tests/TEST_RESULTS.md`. The
-   quality receipt is a machine-verified proof, not an engineer's assertion.
-
-3. **Compliance auditability.** The compliance audit (Step 12) checks 30+
-   specific items — Dockerfile pinning, non-root user, health endpoint
-   behavior, Pydantic response models, OTEL instrumentation, IDE instruction
-   files. Each item is a binary pass/fail.
-
-4. **Process improvement is systematic.** Every manual correction from an
-   operator becomes a process change (Step 17). The process gets tighter with
-   each run. Gaps don't persist — they get codified into the standards.
-
-5. **Agent behavior is document-driven.** Both agents (developer and SRE)
-   load their instructions from markdown files at the start of every session.
-   Changing the document changes the behavior. No retraining, no
-   redeployment, no model fine-tuning. You control the agent by editing a
-   text file.
+- **Structural consistency.** Every rebuild produces the same set of artifacts
+  in the same locations with the same internal structure. You can compare two
+  rebuild outputs side-by-side because they use the same templates.
+- **Quality guarantees.** 14 automated quality gates must pass before the
+  build is considered complete. These are not aspirational — they are enforced
+  by the process and verified by `tests/TEST_RESULTS.md`. The quality receipt
+  is a machine-verified proof, not an engineer's assertion.
+- **Compliance auditability.** The compliance audit (Step 12) checks 30+
+  specific items — Dockerfile pinning, non-root user, health endpoint
+  behavior, Pydantic response models, OTEL instrumentation, IDE instruction
+  files. Each item is a binary pass/fail.
+- **Process improvement is systematic.** Every manual correction from an
+  operator becomes a process change (Step 17). The process gets tighter with
+  each run. Gaps don't persist — they get codified into the standards.
+- **Agent behavior is document-driven.** Both agents (developer and SRE) load
+  their instructions from markdown files at the start of every session.
+  Changing the document changes the behavior. No retraining, no redeployment,
+  no model fine-tuning. You control the agent by editing a text file.
 
 ### What varies and why it's acceptable
 
