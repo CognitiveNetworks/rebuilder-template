@@ -57,7 +57,34 @@
 - Tests are not optional. Every bug fix gets a regression test.
 - Write tests that verify behavior, not implementation.
 - **Unit tests** gate every commit. **API tests** validate every endpoint directly — request in, response out. **Integration tests** verify components work together. **Contract tests** ensure API responses match the OpenAPI spec. **E2E tests** validate critical workflows.
+- **Test fixtures use domain-realistic values.** Real-looking MAC addresses, model names, firmware versions, serial numbers, timestamps — not generic placeholders like `test-1`, `foo`, or `user_abc`. Tests should read like documentation of how the system actually behaves with production-like data. This catches edge cases (case sensitivity, format validation, character encoding) that synthetic data misses.
 - Run the full test suite locally before pushing. Do not merge with failing tests.
+
+## Code Audit Checklist
+
+Before considering a service implementation complete, verify every item below. These are the issues that pass quality gates but cause production incidents.
+
+### Security & Auth
+- [ ] Auth token comparisons use `hmac.compare_digest()` or equivalent constant-time comparison — never `==`.
+- [ ] Input identifiers (MAC addresses, API keys, device IDs) are normalized to a consistent case (`.upper()` or `.lower()`) before storage and comparison.
+- [ ] Error responses to external callers suppress internal details (stack traces, database names, file paths, internal IPs). Log the detail server-side; return a generic message to the caller.
+- [ ] Secrets loaded from environment variables or secrets manager — no hardcoded fallbacks, no default values that work in production.
+
+### Connection & Resource Lifecycle
+- [ ] Every connection pool (database, Redis, HTTP client) is explicitly closed in the application shutdown handler — not left to garbage collection.
+- [ ] Background tasks and async workers are cancelled and awaited during shutdown to prevent orphaned coroutines.
+- [ ] Connection retry logic uses exponential backoff with jitter — not fixed-interval retry loops.
+
+### Correctness
+- [ ] Latency and elapsed time measurements use monotonic clocks (`time.monotonic()`, not `time.time()`) — immune to wall-clock drift and NTP adjustments.
+- [ ] Health endpoints return appropriate failure codes (503) when critical dependencies are unreachable — not 200 with a JSON body that says "unhealthy".
+- [ ] Graceful shutdown sets a drain flag that causes health checks to return 503, giving load balancers time to stop sending traffic before the process exits.
+- [ ] Numeric IDs, counters, and sizes use appropriate integer types — no silent float conversion or string concatenation of numbers.
+
+### Dependencies & Configuration
+- [ ] Every external call (HTTP, database, cache, message queue) has an explicit timeout — no unbounded waits.
+- [ ] Dependency versions are pinned to exact versions in lock files. `>=` or `~=` constraints are in the project file; exact pins are in the lock file.
+- [ ] `pip-audit` (or equivalent) reports zero critical/high CVEs.
 
 ## Git Workflow
 
