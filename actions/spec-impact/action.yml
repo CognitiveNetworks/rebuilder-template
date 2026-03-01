@@ -1,0 +1,243 @@
+name: 'Spec Impact Analysis'
+description: 'Maps code changes to PRD sections and posts structured spec-impact comment on PRs'
+
+inputs:
+  diff-file:
+    description: 'Path to the unified diff file'
+    required: true
+  changed-files:
+    description: 'Path to file listing changed files (one per line)'
+    required: true
+  prd-path:
+    description: 'Path to the PRD markdown file'
+    required: true
+    default: 'output/prd.md'
+  spec-locks-path:
+    description: 'Path to the spec-locks.yaml manifest'
+    required: false
+    default: 'spec-locks.yaml'
+  spec-debt-path:
+    description: 'Path to SPEC_DEBT.md'
+    required: false
+    default: 'SPEC_DEBT.md'
+  llm-api-key:
+    description: 'API key for the LLM service (for diff-to-spec mapping). If not provided, uses heuristic matching.'
+    required: false
+  llm-model:
+    description: 'LLM model to use for analysis'
+    required: false
+    default: 'gpt-4o'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up analysis
+      shell: bash
+      run: |
+        echo "::group::Spec Impact Analysis Setup"
+
+        # Verify required files exist
+        if [[ ! -f "${{ inputs.diff-file }}" ]]; then
+          echo "::error::Diff file not found: ${{ inputs.diff-file }}"
+          exit 1
+        fi
+
+        if [[ ! -f "${{ inputs.changed-files }}" ]]; then
+          echo "::error::Changed files list not found: ${{ inputs.changed-files }}"
+          exit 1
+        fi
+
+        echo "::endgroup::"
+
+    - name: Extract PRD sections
+      shell: bash
+      run: |
+        echo "::group::Extract PRD Structure"
+
+        PRD_FILE="${{ inputs.prd-path }}"
+        SECTIONS_FILE="/tmp/prd_sections.txt"
+
+        if [[ -f "$PRD_FILE" ]]; then
+          # Extract all headings and their line numbers from the PRD
+          grep -n '^##' "$PRD_FILE" | while IFS=: read -r line heading; do
+            # Clean heading: remove ## markers and leading whitespace
+            clean=$(echo "$heading" | sed 's/^#* *//')
+            echo "${line}|${clean}"
+          done > "$SECTIONS_FILE"
+
+          echo "PRD sections found: $(wc -l < "$SECTIONS_FILE")"
+          cat "$SECTIONS_FILE"
+        else
+          echo "::warning::PRD not found at $PRD_FILE — spec-impact mapping will use file paths only"
+          echo "" > "$SECTIONS_FILE"
+        fi
+
+        echo "::endgroup::"
+
+    - name: Map changes to spec sections
+      shell: bash
+      run: |
+        echo "::group::Map Changes to PRD"
+
+        CHANGED_FILES="${{ inputs.changed-files }}"
+        PRD_FILE="${{ inputs.prd-path }}"
+        MAPPING_FILE="/tmp/spec_mapping.md"
+
+        echo "| Changed File | Mapped PRD Section | What Changed | Why |" > "$MAPPING_FILE"
+        echo "|---|---|---|---|" >> "$MAPPING_FILE"
+
+        while IFS= read -r file; do
+          [[ -z "$file" ]] && continue
+          [[ "$file" == *.md ]] && continue  # Skip doc changes for code mapping
+
+          # Heuristic mapping: match file paths to PRD sections
+          SECTION="_(review needed)_"
+
+          # Common patterns: src/auth/ -> Auth section, src/api/ -> API section, etc.
+          case "$file" in
+            *auth*|*login*|*credential*|*token*)
+              if [[ -f "$PRD_FILE" ]] && grep -q "Auth" "$PRD_FILE"; then
+                SECTION="Auth & RBAC"
+              fi
+              ;;
+            *health*|*ops/*|*diagnostic*)
+              SECTION="Observability & SRE"
+              ;;
+            *terraform/*|*infra/*)
+              SECTION="Infrastructure Migration Plan"
+              ;;
+            *migration*|*schema*|*seed*)
+              SECTION="Data Migration Plan"
+              ;;
+            *test*|*spec/*)
+              SECTION="_(test change — verify coverage)_"
+              ;;
+            *.py|*.js|*.ts|*.go)
+              if [[ -f "$PRD_FILE" ]]; then
+                # Try to match filename/module to PRD content
+                BASENAME=$(basename "$file" | sed 's/\.[^.]*$//')
+                MATCH=$(grep -i "$BASENAME" "$PRD_FILE" | head -1 || true)
+                if [[ -n "$MATCH" ]]; then
+                  SECTION="_(matched: see PRD for '$BASENAME')_"
+                fi
+              fi
+              ;;
+          esac
+
+          echo "| \`$file\` | $SECTION | | _engineer fills this in_ |" >> "$MAPPING_FILE"
+        done < "$CHANGED_FILES"
+
+        cat "$MAPPING_FILE"
+        echo "::endgroup::"
+
+    - name: Check spec-lock modifications
+      shell: bash
+      run: |
+        echo "::group::Spec-Lock Validation"
+
+        DIFF_FILE="${{ inputs.diff-file }}"
+        LOCKS_FILE="${{ inputs.spec-locks-path }}"
+        LOCK_WARNINGS=""
+
+        # Check if the diff modifies any @spec-lock blocks
+        if grep -q '@spec-lock\|@end-spec-lock' "$DIFF_FILE" 2>/dev/null; then
+          echo "::warning::This PR modifies @spec-lock blocks. Engineer must update lock reason fields."
+
+          # Extract which locks were modified
+          MODIFIED_LOCKS=$(grep -A1 '@spec-lock' "$DIFF_FILE" | grep '^+' | sed 's/^+//' || true)
+          if [[ -n "$MODIFIED_LOCKS" ]]; then
+            LOCK_WARNINGS="### Modified Spec-Lock Blocks\n\n"
+            LOCK_WARNINGS="${LOCK_WARNINGS}The following \`@spec-lock\` blocks were modified in this PR:\n\n"
+            LOCK_WARNINGS="${LOCK_WARNINGS}\`\`\`\n${MODIFIED_LOCKS}\n\`\`\`\n\n"
+            LOCK_WARNINGS="${LOCK_WARNINGS}**Action required:** Update the \`reason\` field on each modified lock to explain what changed.\n"
+          fi
+        else
+          echo "No spec-lock modifications detected."
+        fi
+
+        echo "lock_warnings<<EOF" >> "$GITHUB_ENV"
+        echo -e "$LOCK_WARNINGS" >> "$GITHUB_ENV"
+        echo "EOF" >> "$GITHUB_ENV"
+
+        echo "::endgroup::"
+
+    - name: Post PR comment
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        echo "::group::Post Spec Impact Comment"
+
+        MAPPING_FILE="/tmp/spec_mapping.md"
+        PR_NUMBER="${{ github.event.pull_request.number }}"
+        REPO="${{ github.repository }}"
+
+        # Build the comment
+        COMMENT="## Spec Impact Analysis\n\n"
+        COMMENT="${COMMENT}This PR modifies code in a Replicator-generated codebase. "
+        COMMENT="${COMMENT}The table below maps your changes to PRD sections.\n\n"
+        COMMENT="${COMMENT}**Action required:** Fill in the \"Why\" column for each row to explain why the generated code was wrong or insufficient.\n\n"
+        COMMENT="${COMMENT}$(cat "$MAPPING_FILE")\n\n"
+
+        # Add spec-lock warnings if any
+        if [[ -n "${lock_warnings:-}" ]]; then
+          COMMENT="${COMMENT}---\n\n${lock_warnings}\n\n"
+        fi
+
+        COMMENT="${COMMENT}---\n\n"
+        COMMENT="${COMMENT}### What happens next\n\n"
+        COMMENT="${COMMENT}1. Fill in the \"Why\" column above\n"
+        COMMENT="${COMMENT}2. Complete the Engineer Sign-off checklist in the PR description\n"
+        COMMENT="${COMMENT}3. On merge, the completed table will be appended to \`SPEC_DEBT.md\`\n"
+        COMMENT="${COMMENT}4. Before the next regeneration, spec-debt entries will be reconciled into the PRD\n"
+
+        # Post or update the comment
+        EXISTING_COMMENT=$(gh api "/repos/${REPO}/issues/${PR_NUMBER}/comments" \
+          --jq '.[] | select(.body | contains("## Spec Impact Analysis")) | .id' \
+          2>/dev/null | head -1 || true)
+
+        if [[ -n "$EXISTING_COMMENT" ]]; then
+          echo -e "$COMMENT" | gh api "/repos/${REPO}/issues/comments/${EXISTING_COMMENT}" \
+            --method PATCH --field "body=@-"
+          echo "Updated existing spec-impact comment"
+        else
+          echo -e "$COMMENT" | gh api "/repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            --method POST --field "body=@-"
+          echo "Posted new spec-impact comment"
+        fi
+
+        echo "::endgroup::"
+
+    - name: Append to SPEC_DEBT on merge
+      if: github.event.pull_request.merged == true
+      shell: bash
+      run: |
+        echo "::group::Append to SPEC_DEBT.md"
+
+        DEBT_FILE="${{ inputs.spec-debt-path }}"
+        PR_NUMBER="${{ github.event.pull_request.number }}"
+        PR_TITLE="${{ github.event.pull_request.title }}"
+        PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+        MERGE_DATE=$(date -u +%Y-%m-%d)
+
+        if [[ -f "$DEBT_FILE" ]]; then
+          # Append new entry after the "## Active Debt" section
+          ENTRY="\n### PR #${PR_NUMBER} — ${PR_TITLE}\n"
+          ENTRY="${ENTRY}**Merged:** ${MERGE_DATE}\n"
+          ENTRY="${ENTRY}**Author:** @${PR_AUTHOR}\n\n"
+          ENTRY="${ENTRY}| Changed File | PRD Section | What Changed | Why |\n"
+          ENTRY="${ENTRY}|---|---|---|---|\n"
+          ENTRY="${ENTRY}| _(populated from PR spec-impact table)_ | | | |\n\n"
+          ENTRY="${ENTRY}**Resolution:**\n"
+          ENTRY="${ENTRY}- [ ] Absorbed into PRD\n"
+          ENTRY="${ENTRY}- [ ] Tagged with \`@spec-lock\`\n"
+          ENTRY="${ENTRY}- [ ] No action needed\n"
+
+          # Insert after "## Active Debt" marker
+          sed -i "/^## Active Debt/a\\${ENTRY}" "$DEBT_FILE"
+          echo "Appended spec-debt entry for PR #${PR_NUMBER}"
+        else
+          echo "::warning::SPEC_DEBT.md not found at $DEBT_FILE"
+        fi
+
+        echo "::endgroup::"

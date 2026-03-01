@@ -501,6 +501,118 @@ improvements addressed specific gap categories:
 Each fix converted a human correction into a document rule, eliminating that
 class of variance from future runs.
 
+## After Day 1: The Lifecycle of Generated Code
+
+Everything above describes **Day 1** — the initial generation. But generated
+code doesn't stay generated. Engineers ship it, debug it, extend it, and
+inevitably change parts that the spec got wrong. Without a feedback mechanism,
+those changes are invisible to the spec, and the next regeneration overwrites
+them with the same wrong code.
+
+This section describes how the system handles the gap between what the spec
+says and what the running code actually does.
+
+### The immutable codebase mental model
+
+The ideal is simple: **the PRD is the single source of truth, and the code is
+a derived artifact.** If you want to change the code, change the spec first,
+then regenerate. This is "immutable infrastructure" applied to application code.
+
+In practice, this ideal breaks on Day 2. An engineer discovers a race
+condition the spec didn't anticipate. A customer reports an edge case that
+requires a fix before anyone can update the PRD. A performance optimization
+needs domain knowledge that doesn't reduce to a spec bullet point.
+
+These changes are legitimate. The question is: **how do you keep the spec and
+the code convergent when humans inevitably edit the generated output?**
+
+### Two mechanisms
+
+**1. Spec-Impact PR Gate** — Every human PR to a replicated codebase triggers
+a GitHub Action that maps the changed files to PRD sections, identifies which
+spec requirements are affected, and posts a structured comment on the PR. The
+engineer must acknowledge which PRD sections their change diverges from and
+explain why. The PR template enforces this with mandatory sign-off checkboxes.
+
+The gate doesn't block merging — it captures **why** the divergence exists.
+Each merged PR appends an entry to `SPEC_DEBT.md`: the date, the PR, the
+affected PRD sections, and the engineer's explanation of what the spec got
+wrong.
+
+**2. Spec-Lock Annotations** — For code blocks where the generated
+implementation was fundamentally wrong (not just a bug fix but a conceptual
+gap), engineers wrap the replacement in `@spec-lock` / `@end-spec-lock`
+annotations. These annotations include:
+
+- The PRD section the code implements
+- A unique lock ID
+- The behavioral contract the code guarantees
+- The reason the generated version was replaced
+
+Locked blocks are **human-authoritative** — the regeneration process must port
+them faithfully rather than regenerating from prose. A language-agnostic
+scanner (`scripts/scan-spec-locks.sh`) extracts all locks into
+`spec-locks.yaml` for automated processing.
+
+### The convergence lifecycle
+
+```
+Generate → Deploy → Human edits → Spec debt accumulates
+    ↑                                        |
+    |          Reconcile: merge debt          |
+    |          entries into PRD               |
+    +←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←←+
+                Regenerate with
+                improved spec
+```
+
+On **re-replication** (rebuilding a previously generated codebase), the process
+runs a reconciliation step before assessment:
+
+1. Read `SPEC_DEBT.md` — every entry where a human explained why the generated
+   code was wrong.
+2. Read `spec-locks.yaml` — every block where a human replaced the generated
+   implementation entirely.
+3. **Update the PRD** to incorporate what the humans taught it. Missing
+   requirements get added. Wrong requirements get corrected. Inexpressible
+   constraints get documented as notes.
+4. Re-generate from the improved spec.
+
+After reconciliation, some locks can be removed — the PRD now captures what
+they protected. The remaining locks represent requirements that truly cannot be
+expressed in spec prose (performance tuning, hardware quirks, vendor SDK
+workarounds). Those are carried forward.
+
+### Spec-lock count as a health metric
+
+The number of `@spec-lock` annotations in a codebase is a leading indicator
+of spec quality:
+
+| Lock count | Interpretation |
+|---|---|
+| 0 | Either the spec is perfect, or nobody is editing the generated code (both worth investigating) |
+| 1–5 | Healthy — a few edge cases the spec couldn't anticipate |
+| 6–15 | The spec has gaps — reconciliation before next rebuild is recommended |
+| 15+ | The spec is significantly incomplete — consider a spec rewrite before regenerating |
+
+Over successive rebuilds, the lock count should **decrease**. Each
+reconciliation cycle converts locks into spec improvements. A rising lock count
+means the spec is diverging from reality faster than reconciliation is closing
+the gap.
+
+### What this means for engineering leaders
+
+- **Human edits are expected, not failures.** The system captures them rather
+  than ignoring them.
+- **Every spec-debt entry is a spec improvement waiting to happen.** The debt
+  ledger is a prioritized backlog of PRD corrections.
+- **Spec-lock count is auditable.** You can track it per-repo, per-sprint,
+  per-team. A team with a falling lock count is converging their specs toward
+  completeness.
+- **Re-replication gets better each cycle.** The first generation has no human
+  input. The second generation incorporates every correction from the first
+  deployment. By the third cycle, most edge cases are in the spec.
+
 ## For a Director of Engineering
 
 ### What you can rely on

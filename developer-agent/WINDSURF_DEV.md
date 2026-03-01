@@ -61,6 +61,51 @@
 - You will not include SRE Agent for library repos
 - DAPR integrations will be a sidecar, ensure that we aren't overcomplicating integration with components like libaries and articulate how DAPR is being used.
 
+### Spec-Lock Convention
+
+This codebase is generated from a spec (the PRD). When you edit generated code and the behavior **cannot be expressed precisely enough in the spec**, you **must** tag the block with `@spec-lock` so it survives future regeneration.
+
+**When to use `@spec-lock`:**
+- The code contains empirically tuned values (backoff curves, timeouts, buffer sizes) that were determined through production observation, not derived from requirements prose.
+- The code handles undocumented behavior in an external dependency (rate limits, cold-start windows, error codes not in the vendor's docs).
+- The algorithm's correctness depends on specific implementation details (ordering, timing, race condition guards) that no amount of prose can reproduce exactly.
+
+**When NOT to use `@spec-lock`:**
+- The code is a straightforward implementation of a spec requirement — even if you wrote it by hand, the spec could regenerate it.
+- You're locking code because you prefer your style over what the generator produces. Style is not a reason to lock.
+- The change can be captured by updating the PRD with a more specific requirement.
+
+**Annotation format:**
+
+```python
+# @spec-lock §[PRD-section] [lock-id]
+# contract: [function signature and return type]
+# raises: [exception types, if any]
+# reason: [Why this block cannot be generated from the spec.
+#          Be specific — "empirically tuned" is not enough.
+#          State what was tuned, against what conditions, and why the specific values matter.]
+def my_function(...):
+    ...
+# @end-spec-lock
+```
+
+**Required fields:**
+- **Spec section** — which PRD requirement this implements (e.g., `§4.2`)
+- **Lock ID** — unique identifier for this block (e.g., `auth-retry-logic`)
+- **Contract** — function signature and error types. This is the interface that regenerated calling code must respect.
+- **Reason** — why this block cannot be generated from the spec. Enforced by CI — empty reasons fail the spec-impact check.
+
+**Language-agnostic:** The `@spec-lock` / `@end-spec-lock` pattern works in any language via comments (`//`, `#`, `/* */`). The scanner matches the tags, not the comment syntax.
+
+**Granularity:** Function + class level, identified by qualified name (not line numbers — those shift on edit).
+
+**Your obligations:**
+- When you encounter a `@spec-lock` block during development, **do not modify it** without updating the `reason` field and confirming with the human.
+- When you create a new `@spec-lock` block, ensure all four required fields are present.
+- When the human asks you to edit a spec-locked block, flag it: _"This block is spec-locked (§4.2 auth-retry-logic). Changes here must update the lock's reason. Should I proceed?"_
+
+**Spec debt tracking:** Every code edit to a Replicator-generated codebase that diverges from the PRD should be documented in `SPEC_DEBT.md`. The spec-impact CI check enforces this on human PRs. See `SPEC_DEBT.md` in the repo root for the tracking format.
+
 ## Testing
 
 - Tests are not optional. Every bug fix gets a regression test.

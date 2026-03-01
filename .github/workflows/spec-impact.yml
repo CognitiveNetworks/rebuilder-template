@@ -1,0 +1,112 @@
+name: Spec Impact Check
+# Runs on human PRs (not replicator-generated) to detect divergence from the PRD.
+# Maps code changes to PRD sections, validates spec-lock modifications, and
+# requires engineers to document why the generated code was wrong.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  spec-impact:
+    # Skip PRs labeled as replicator-generated (automated regeneration)
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'replicator-generated') }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for accurate diff
+
+      - name: Get PR diff
+        id: diff
+        run: |
+          # Get the diff between PR branch and base
+          git diff origin/${{ github.event.pull_request.base.ref }}...HEAD \
+            --name-only > /tmp/changed_files.txt
+
+          git diff origin/${{ github.event.pull_request.base.ref }}...HEAD \
+            --unified=3 > /tmp/full_diff.txt
+
+          echo "changed_files<<EOF" >> "$GITHUB_OUTPUT"
+          cat /tmp/changed_files.txt >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Scan for spec-lock changes
+        id: locks
+        run: |
+          # Check if any spec-locked blocks were modified
+          LOCK_CHANGES=""
+
+          while IFS= read -r file; do
+            [[ -f "$file" ]] || continue
+
+            # Check if the file contains @spec-lock and was modified
+            if grep -q '@spec-lock' "$file" 2>/dev/null; then
+              # Extract which locks are in this file
+              LOCKS_IN_FILE=$(grep -n '@spec-lock' "$file" | sed 's/.*@spec-lock //' || true)
+              if [[ -n "$LOCKS_IN_FILE" ]]; then
+                LOCK_CHANGES="${LOCK_CHANGES}\n- **${file}**: ${LOCKS_IN_FILE}"
+              fi
+            fi
+          done < /tmp/changed_files.txt
+
+          if [[ -n "$LOCK_CHANGES" ]]; then
+            echo "has_lock_changes=true" >> "$GITHUB_OUTPUT"
+            echo "lock_details<<EOF" >> "$GITHUB_OUTPUT"
+            echo -e "$LOCK_CHANGES" >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_lock_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run spec-lock scanner
+        run: |
+          # Generate current spec-locks manifest
+          if [[ -f scripts/scan-spec-locks.sh ]]; then
+            chmod +x scripts/scan-spec-locks.sh
+            ./scripts/scan-spec-locks.sh .
+          fi
+
+      - name: Run spec-impact analysis
+        uses: ./actions/spec-impact
+        with:
+          diff-file: /tmp/full_diff.txt
+          changed-files: /tmp/changed_files.txt
+          prd-path: output/prd.md
+          spec-locks-path: spec-locks.yaml
+          spec-debt-path: SPEC_DEBT.md
+
+      - name: Validate spec-lock modifications
+        if: steps.locks.outputs.has_lock_changes == 'true'
+        run: |
+          echo "## ⚠️ Spec-Lock Blocks Modified" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "This PR modifies code inside \`@spec-lock\` blocks." >> "$GITHUB_STEP_SUMMARY"
+          echo "You **must** update the lock's \`reason\` field to explain what changed and why." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Modified locks:" >> "$GITHUB_STEP_SUMMARY"
+          echo "${{ steps.locks.outputs.lock_details }}" >> "$GITHUB_STEP_SUMMARY"
+
+          # Verify that modified locks have updated reason fields
+          # (The custom action handles the detailed validation)
+
+      - name: Check sign-off
+        run: |
+          # Verify the PR body contains the required spec-impact sign-off
+          PR_BODY="${{ github.event.pull_request.body }}"
+
+          if [[ -z "$PR_BODY" ]]; then
+            echo "::error::PR description is empty. Please use the PR template and fill in the Spec Impact section."
+            exit 1
+          fi
+
+          # Check for required sections (the PR template enforces structure)
+          if ! echo "$PR_BODY" | grep -q "## Functional requirement"; then
+            echo "::warning::PR description is missing the 'Functional requirement' section. Please use the PR template."
+          fi
