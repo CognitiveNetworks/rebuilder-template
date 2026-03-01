@@ -211,31 +211,50 @@ runs:
     - name: Append to SPEC_DEBT on merge
       if: github.event.pull_request.merged == true
       shell: bash
+      env:
+        PR_TITLE: ${{ github.event.pull_request.title }}
+        PR_AUTHOR: ${{ github.event.pull_request.user.login }}
       run: |
         echo "::group::Append to SPEC_DEBT.md"
 
         DEBT_FILE="${{ inputs.spec-debt-path }}"
         PR_NUMBER="${{ github.event.pull_request.number }}"
-        PR_TITLE="${{ github.event.pull_request.title }}"
-        PR_AUTHOR="${{ github.event.pull_request.user.login }}"
         MERGE_DATE=$(date -u +%Y-%m-%d)
 
         if [[ -f "$DEBT_FILE" ]]; then
-          # Append new entry after the "## Active Debt" section
-          ENTRY="\n### PR #${PR_NUMBER} — ${PR_TITLE}\n"
-          ENTRY="${ENTRY}**Merged:** ${MERGE_DATE}\n"
-          ENTRY="${ENTRY}**Author:** @${PR_AUTHOR}\n\n"
-          ENTRY="${ENTRY}| Changed File | PRD Section | What Changed | Why |\n"
-          ENTRY="${ENTRY}|---|---|---|---|\n"
-          ENTRY="${ENTRY}| _(populated from PR spec-impact table)_ | | | |\n\n"
-          ENTRY="${ENTRY}**Resolution:**\n"
-          ENTRY="${ENTRY}- [ ] Absorbed into PRD\n"
-          ENTRY="${ENTRY}- [ ] Tagged with \`@spec-lock\`\n"
-          ENTRY="${ENTRY}- [ ] No action needed\n"
+          # Build the entry in a temp file to avoid sed escaping issues
+          ENTRY_FILE=$(mktemp)
+          cat > "$ENTRY_FILE" << ENTRY_EOF
+
+### PR #${PR_NUMBER} — ${PR_TITLE}
+**Merged:** ${MERGE_DATE}
+**Author:** @${PR_AUTHOR}
+
+| Changed File | PRD Section | What Changed | Why |
+|---|---|---|---|
+| _(populated from PR spec-impact table)_ | | | |
+
+**Resolution:**
+- [ ] Absorbed into PRD
+- [ ] Tagged with \`@spec-lock\`
+- [ ] No action needed
+ENTRY_EOF
 
           # Insert after "## Active Debt" marker
-          sed -i "/^## Active Debt/a\\${ENTRY}" "$DEBT_FILE"
-          echo "Appended spec-debt entry for PR #${PR_NUMBER}"
+          sed -i.bak '/^## Active Debt/r '"$ENTRY_FILE" "$DEBT_FILE"
+          rm -f "${DEBT_FILE}.bak" "$ENTRY_FILE"
+
+          # Commit and push the spec-debt update
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$DEBT_FILE"
+          if git diff --cached --quiet; then
+            echo "No changes to SPEC_DEBT.md"
+          else
+            git commit -m "chore: append spec-debt entry for PR #${PR_NUMBER}"
+            git push
+            echo "Committed spec-debt entry for PR #${PR_NUMBER}"
+          fi
         else
           echo "::warning::SPEC_DEBT.md not found at $DEBT_FILE"
         fi

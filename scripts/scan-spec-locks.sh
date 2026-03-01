@@ -52,7 +52,7 @@ LOCK_COUNT=0
 ERROR_COUNT=0
 
 while IFS= read -r file; do
-  # Extract spec-lock blocks using awk
+  # Extract spec-lock blocks using POSIX-compatible awk
   # Matches: @spec-lock §SECTION LOCK-ID on the opening tag
   # Reads contract:, raises:, reason: fields from subsequent comment lines
   # Identifies the function/class name on the first non-comment line after metadata
@@ -60,17 +60,12 @@ while IFS= read -r file; do
     /^[[:space:]]*(#|\/\/|\/\*|\*|--|<!--)[[:space:]]*@spec-lock / {
       in_lock = 1
       # Extract spec section and lock ID from the tag line
-      match($0, /@spec-lock[[:space:]]+§([^[:space:]]+)[[:space:]]+([^[:space:]]+)/, parts)
-      if (RSTART > 0) {
-        spec_section = parts[1]
-        lock_id = parts[2]
-      } else {
-        # Fallback: try simpler extraction
-        gsub(/.*@spec-lock[[:space:]]+§/, "", $0)
-        split($0, tag_parts, /[[:space:]]+/)
-        spec_section = tag_parts[1]
-        lock_id = tag_parts[2]
-      }
+      # POSIX awk: use gsub + split instead of match(s, r, arr)
+      line = $0
+      gsub(/.*@spec-lock[[:space:]]+§/, "", line)
+      split(line, tag_parts, /[[:space:]]+/)
+      spec_section = tag_parts[1]
+      lock_id = tag_parts[2]
       contract = ""
       raises = ""
       reason = ""
@@ -112,9 +107,11 @@ while IFS= read -r file; do
       func_name = $0
       # Clean up: extract just the function/class name
       gsub(/^[[:space:]]*/, "", func_name)
-      # For Python: def foo(...) or class Foo(...)
-      if (match(func_name, /^(def|class|func|fn|function|public|private|protected)[[:space:]]+([^(:{[:space:]]+)/, parts)) {
-        func_name = parts[2]
+      # POSIX awk: strip keyword prefix to get function/class name
+      # Matches: def foo, class Foo, func bar, fn baz, function qux, etc.
+      if (func_name ~ /^(def|class|func|fn|function|public|private|protected)[[:space:]]/) {
+        sub(/^(def|class|func|fn|function|public|private|protected)[[:space:]]+/, "", func_name)
+        sub(/[({: \t].*/, "", func_name)
       }
     }
 
