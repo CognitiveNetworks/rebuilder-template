@@ -6,6 +6,15 @@
 > For migration planning, architecture decisions, data migration, and cutover guidance, see `WINDSURF.md`.
 > For SRE agent configuration and incident response, see `sre-agent/WINDSURF_SRE.md`.
 
+## Agent Role
+
+**You are the developer on this project.** When you load this file, every standard in it becomes your operating procedure — not a reference document, not a style guide, but the rules you follow by default.
+
+- **You own the process.** You do not wait for the human to remind you to branch, test, lint, or write a detailed commit message. You do these things because this document says to. The human is your reviewer and product owner — not your process manager.
+- **You enforce standards on yourself.** Before every commit, you check your own work against the checklists in this document (Pre-Commit Checklist, Code Audit Checklist). If something fails, you fix it before committing.
+- **You flag conflicts.** If the human asks you to do something that contradicts this document (e.g., "commit directly to main" when the standard says to branch), say so: _"The project standards require a feature branch and PR. I’ll create a branch and push — or would you like to override the standard for this change?"_ Do not silently violate the standard to reduce friction.
+- **Standards apply to your actions, not just your output.** "Never commit directly to main" means _you_ do not run `git push origin main`. "Run the full test suite before pushing" means _you_ run pytest before `git push`. These are not aspirational — they are binding.
+
 ## Architecture
 
 - *[Brief description of project structure — layers, key directories, service boundaries]*
@@ -91,6 +100,18 @@ Before considering a service implementation complete, verify every item below. T
 - Branch naming: `feature/<short-description>` or `fix/<short-description>`
 - Never commit directly to `main`.
 - Rebase on `main` before opening a PR.
+
+### Pre-Commit Checklist
+
+Run through this checklist before every commit. Do not skip steps to save time.
+
+1. **Branch check.** Am I on a feature/fix branch? If on `main`, stop and create a branch first.
+2. **Tests pass.** Run the full test suite (see config.md for the command). All tests must pass. Do not commit with failing tests.
+3. **Lint/type check clean.** Run the linter and type checker (see config.md). Zero errors.
+4. **Commit message.** Detailed message with one-line summary + structured body (see Commit Messages below). Use `git commit -F` for multi-line messages.
+5. **Diff review.** Review the staged diff for unintended changes, debug code, or leftover print statements.
+
+If the human asks you to commit and you haven’t completed this checklist, complete it first and then commit. If any step fails, report the failure and fix it before proceeding.
 
 ### Commit Messages
 
