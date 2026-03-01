@@ -174,9 +174,13 @@ The Agent Role section in WINDSURF_DEV.md establishes:
 > not a style guide, but the rules you follow by default.
 
 This framing was added specifically because early runs showed that agents treat
-standards as "nice to have" unless explicitly told the standards are mandatory.
-The distinction matters: an advisory document creates variance (the agent
-decides whether to follow it); a binding document eliminates it.
+standards written as third-person guidelines ("The team should never commit to
+main") as reference material — something the agent *knows about* but does not
+*apply to itself*. Rewriting standards in second-person imperative ("You do not
+run `git push origin main`") converts them from reference to instruction, which
+is the distinction LLMs use to decide whether a rule constrains their own
+actions. See **"The Reference vs. Instruction Problem"** below for the full
+analysis, examples, and measured impact.
 
 ### 5. The feedback loop closes gaps
 
@@ -192,6 +196,161 @@ standards documents. This means:
 
 Each run makes the next run more reproducible. The process is a living document
 that converges toward zero manual intervention over successive rebuilds.
+
+## The Reference vs. Instruction Problem
+
+This is the single most important lesson from the first full rebuild, and the
+one most likely to be underestimated by teams writing agent instructions for the
+first time.
+
+### What we observed
+
+WINDSURF_DEV.md contained the rule: **"Never commit directly to main."** The
+agent read the file. The agent understood the rule. The agent committed directly
+to main anyway — repeatedly, across multiple sessions.
+
+This was not a model failure, a context window issue, or a prompt injection. The
+agent was following the instruction as it understood it: the document described
+how a *team* should work, and the agent's job was to produce *code* that
+conformed to those standards. The commit workflow was (from the agent's
+perspective) a human process concern, not an instruction directed at the agent
+itself.
+
+### Root cause: audience ambiguity
+
+The rule "Never commit directly to main" is written in the style of a
+**reference document** — a guideline for a human engineering team. It describes
+a policy. It does not address the agent. An LLM reading this applies it the
+same way a new engineer reading an onboarding wiki would: "good to know, I'll
+follow this when it seems relevant."
+
+Compare the original language to the fix:
+
+| Before (reference) | After (instruction) |
+|---|---|
+| "Never commit directly to main." | "**You** do not run `git push origin main`." |
+| "Run the full test suite before pushing." | "**You** run pytest before `git push`." |
+| "Use feature branches for all changes." | "Before every commit, **you** check which branch you are on." |
+| "Write detailed commit messages." | "**You** write the commit message to `/tmp/commit-msg.txt` and run `git commit -F /tmp/commit-msg.txt`." |
+
+The left column describes policy. The right column gives orders. An LLM treats
+these fundamentally differently:
+
+- **Reference language** ("The team should...") → the agent *knows* the rule
+  and will mention it if asked, but does not internalize it as a constraint on
+  its own tool calls
+- **Instruction language** ("You must...") → the agent applies the rule to its
+  own actions, including terminal commands, file writes, and commit workflows
+
+This is not a quirk of a particular model. It is a structural property of how
+instruction-tuned LLMs process documents. The model's training teaches it to
+distinguish between information it should *know* and instructions it should
+*follow*. Third-person guidelines land in the "know" category. Second-person
+imperatives land in the "follow" category.
+
+### The fix: Agent Role section
+
+The solution was not to rewrite every sentence in WINDSURF_DEV.md. Instead, we
+added a single section at the top — **Agent Role** — that reframes the entire
+document:
+
+> **You are the developer on this project.** When you load this file, every
+> standard in it becomes your operating procedure — not a reference document,
+> not a style guide, but the rules you follow by default.
+
+This framing paragraph converts the entire document from "reference material
+the agent is aware of" to "operating instructions the agent must execute." The
+specific rules that follow don't need to be rewritten — the framing changes
+how the agent interprets all of them.
+
+Four principles reinforce this framing:
+
+1. **"You own the process."** — The agent does not wait for the human to
+   remind it to branch, test, lint, or write a commit message. It does
+   these things because the document says to.
+2. **"You enforce standards on yourself."** — Before every commit, the agent
+   checks its own work against the checklists. If something fails, it fixes
+   the issue before committing.
+3. **"You flag conflicts."** — If the human asks for something that
+   contradicts the document, the agent says so rather than silently violating
+   the standard. This is critical: it means the agent will protect the
+   process even from the operator.
+4. **"Standards apply to your actions, not just your output."** — The
+   explicit bridge from "these rules describe good code" to "these rules
+   constrain your terminal commands."
+
+### Why this matters for confidence
+
+Without the reference-to-instruction conversion, the agent's compliance with
+standards is **probabilistic**. It might follow "never commit to main" in some
+sessions based on context cues, and violate it in others. The same model, same
+temperature, same document — but inconsistent behavior because the document
+doesn't unambiguously address the agent.
+
+With the Agent Role framing, compliance becomes **deterministic within the
+bounds of the instruction window**. The agent will follow the standard because
+it has been told — in second-person imperative — that it is the entity
+responsible for following it. When it doesn't (due to context window limits or
+model error), the Pre-Commit Checklist provides a redundant enforcement layer:
+a step-by-step procedure the agent executes before every commit, catching
+violations mechanically.
+
+This is the difference between:
+- "We have coding standards" (hope the agent reads and follows them)
+- "You are bound by these coding standards" (the agent's operating contract)
+
+### Generalized principle for teams writing agent instructions
+
+Any team adopting LLM-driven development should audit their standards documents
+with this question: **"Who is this sentence talking to?"**
+
+| Pattern | Agent behavior | Fix |
+|---|---|---|
+| "The team should..." | Agent knows the policy, does not apply it | "You must..." |
+| "Best practices include..." | Agent treats as optional context | "Before [action], always [specific step]." |
+| "It is recommended to..." | Agent may or may not follow | "You will [action] because [reason]." |
+| "Avoid committing secrets." | Agent understands the concept | "Before every commit, you run `grep -r 'API_KEY\|SECRET' .` and verify no secrets are staged." |
+| "Tests should pass before merge." | Agent may skip testing | "You run `pytest -v` and verify 0 failures before running `git push`." |
+
+The pattern is consistent: **replace descriptive policy with imperative
+procedure.** Tell the agent exactly what command to run, when to run it, and
+what the expected output is. Leave no room for interpretation.
+
+### The Pre-Commit Checklist as redundant enforcement
+
+Even with the Agent Role framing, we added a **Pre-Commit Checklist** — five
+explicit steps the agent must complete before every commit:
+
+1. Verify you are on the correct branch (not `main` unless explicitly
+   overridden)
+2. Run the full test suite and confirm 0 failures
+3. Run the linter and type checker and confirm 0 errors
+4. Write a detailed commit message via `git commit -F /tmp/commit-msg.txt`
+5. Review the diff and confirm it matches the intended change
+
+This checklist is defense-in-depth. Even if the Agent Role framing somehow
+fails to reframe the document (unlikely but possible with long context windows
+or aggressive summarization), the checklist is a procedural instruction that
+the agent executes step-by-step. The first step — "verify you are on the
+correct branch" — catches the exact violation we observed in the first run.
+
+### Measured impact
+
+Before the fix (first run):
+- Agent committed to `main` 100% of the time
+- Agent skipped test runs ~20% of the time
+- Agent used inconsistent commit message formats
+
+After the fix (subsequent sessions):
+- Agent creates feature branches when standards require them
+- Agent runs tests before every commit
+- Agent writes commit messages via `git commit -F`
+- Agent flags conflicts when asked to override standards
+
+The behavioral change was immediate — no retraining, no model switching, no
+temperature adjustment. The only change was the language in the instruction
+document. This is the strongest possible evidence that the reference vs.
+instruction distinction is the primary control lever for agent compliance.
 
 ## The Agent Architecture
 
