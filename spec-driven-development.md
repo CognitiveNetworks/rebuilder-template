@@ -28,6 +28,21 @@ that captures every human divergence and a **spec-lock annotation system** that
 preserves code the spec can't yet express. Accumulated fixes feed back into the
 PRD before the next rebuild, so each generation is better than the last.
 
+---
+
+**Contents**
+
+- [The Contract](#the-contract) — inputs, process, outputs
+- [What Is Fixed vs. What Varies](#what-is-fixed-vs-what-varies) — where determinism ends and acceptable variance begins
+- [How Reproducibility Is Achieved](#how-reproducibility-is-achieved) — the five mechanisms that constrain LLM output
+- [The Reference vs. Instruction Problem](#the-reference-vs-instruction-problem) — why third-person guidelines fail and how we fixed it
+- [The Agent Architecture](#the-agent-architecture) — developer agent, SRE agent, and how they relate
+- [Reproducibility Evidence](#reproducibility-evidence) — measured results from tv-collection-services
+- [After Day 1: The Lifecycle of Generated Code](#after-day-1-the-lifecycle-of-generated-code) — spec-impact, spec-lock, and the convergence loop
+- [What this means for engineering leaders](#what-this-means-for-engineering-leaders) — guarantees, acceptable variance, and what to verify
+
+---
+
 ## The Contract
 
 ```
