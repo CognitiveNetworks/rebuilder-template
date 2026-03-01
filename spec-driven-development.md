@@ -18,6 +18,16 @@ the agent executes), and **outputs** (what gets delivered). The LLM is
 constrained to operate within this contract — it fills in the blanks, it
 doesn't decide what the blanks are.
 
+That contract solves Day 1. But generated code doesn't stay generated. Engineers
+ship it, debug it, and inevitably fix things the spec got wrong — a race
+condition it didn't anticipate, an edge case a customer reported, a performance
+path that doesn't reduce to a bullet point. Without a feedback mechanism, those
+fixes are invisible to the spec, and the next regeneration overwrites them with
+the same wrong code. Replicator closes this loop with a **spec-impact PR gate**
+that captures every human divergence and a **spec-lock annotation system** that
+preserves code the spec can't yet express. Accumulated fixes feed back into the
+PRD before the next rebuild, so each generation is better than the last.
+
 ## The Contract
 
 ```
