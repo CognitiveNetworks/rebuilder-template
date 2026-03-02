@@ -380,7 +380,26 @@ instruction distinction is the primary control lever for agent compliance.
 ## The Agent Architecture
 
 Two agents operate during the lifecycle of a rebuilt service, each with a
-distinct role, instruction set, and activation mechanism.
+distinct role, skill, and activation mechanism.
+
+### Why `skill.md`
+
+Each agent's instruction file is called `skill.md` — adopting the
+industry-standard term for a modular, self-contained instruction set that
+defines how an agent handles a specific class of work. A skill is not
+configuration (that's `config.md`) and not code (that's the runtime). It is
+the knowledge and decision-making framework the agent loads before acting.
+
+The developer agent's skill covers coding standards, testing, and CI/CD. The
+SRE agent's skill covers diagnostics, remediation, and escalation. Same
+pattern, different domains. This naming aligns with Claude's agent skills
+concept, OpenAI's function/tool framing, and LangChain's skill abstraction —
+the industry is converging on "skill" as the unit of agent instruction.
+
+The two-file pattern — `skill.md` + `config.md` — separates *what the agent
+knows how to do* from *what it operates on*. A skill is portable across
+projects; config is project-specific. When you onboard a new service, you
+copy the skill unchanged and populate a fresh config.
 
 ### Developer Agent
 
@@ -454,6 +473,49 @@ behavior is defined entirely by `skill.md`. Changing the instruction
 file changes the agent's behavior on the next alert. Playbooks in `playbooks/`
 extend its remediation capabilities without code changes.
 
+### How the Skills Load
+
+The two agents use different loading mechanisms but the same two-file pattern:
+
+```
+  DEVELOPER AGENT                          SRE AGENT
+  ─────────────────────────────            ─────────────────────────────
+
+  Developer opens repo in IDE              Monitoring alert fires
+          │                                        │
+          ▼                                        ▼
+  IDE reads shim file:                     agent.py reads from disk:
+  .windsurfrules (Windsurf)                SRE_PROMPT_PATH env var
+  .github/copilot-instructions.md          (default: /app/skill.md)
+  (VS Code + Copilot)                              │
+          │                                        ▼
+          ▼                                agent.py sends skill.md
+  Shim says: "read these                   as the LLM system prompt
+  two files before any work"               Alert becomes first user msg
+          │                                        │
+          ▼                                        ▼
+  ┌─────────────────────┐                  ┌─────────────────────┐
+  │ developer-agent/    │                  │ sre-agent/          │
+  │   skill.md          │ ◄── HOW to act   │   skill.md          │
+  │   config.md         │ ◄── WHAT to act  │   config.md         │
+  │                     │     on           │                     │
+  └─────────────────────┘                  └─────────────────────┘
+          │                                        │
+          ▼                                        ▼
+  Agent writes code per                    Agent diagnoses, remediates,
+  skill standards                          or escalates per skill rules
+```
+
+**Both agents are stateless.** Neither retains memory between sessions. Every
+session starts by loading the skill from disk. This means:
+
+- Updating the skill changes behavior on the *next* session — no
+  redeployment, no retraining
+- The skill file *is* the agent's identity — everything it knows, every rule
+  it follows, every constraint it respects comes from this file
+- Config changes (new service URL, new SLO threshold) take effect on the next
+  session without touching the skill
+
 ### How the Agents Relate
 
 ```
@@ -476,9 +538,9 @@ extend its remediation capabilities without code changes.
 ```
 
 The developer agent creates the service. The SRE agent operates it. Both are
-configured by the same rebuild process. The developer agent's standards ensure
-the service exposes the `/ops/*` endpoints that the SRE agent requires. This is
-not accidental — it is a designed contract.
+configured by the same rebuild process. The developer agent's skill ensures
+the service exposes the `/ops/*` endpoints that the SRE agent's skill requires.
+This is not accidental — it is a designed contract between the two skills.
 
 ## Reproducibility Evidence
 
