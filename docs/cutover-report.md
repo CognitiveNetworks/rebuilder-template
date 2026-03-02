@@ -2,7 +2,7 @@
 
 > Post-cutover documentation. Fill this out after executing the cutover plan.
 >
-> See `WINDSURF.md` > Cutover Strategy for requirements.
+> See `STANDARDS.md` > Cutover Strategy for requirements.
 
 ## Summary
 

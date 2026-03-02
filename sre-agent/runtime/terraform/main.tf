@@ -103,7 +103,7 @@ resource "google_cloud_run_v2_service" "sre_agent" {
 
       env {
         name  = "SRE_PROMPT_PATH"
-        value = "/app/WINDSURF_SRE.md"
+        value = "/app/skill.md"
       }
 
       env {

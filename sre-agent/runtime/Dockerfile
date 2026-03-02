@@ -9,8 +9,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY runtime/*.py .
 
-# Copy WINDSURF_SRE.md into the container
-COPY WINDSURF_SRE.md /app/WINDSURF_SRE.md
+# Copy skill.md into the container
+COPY skill.md /app/skill.md
 
 # Run as non-root
 RUN useradd --create-home appuser

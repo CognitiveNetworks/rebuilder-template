@@ -309,19 +309,19 @@ build_and_push_image() {
 
     IMAGE="${REGION}-docker.pkg.dev/${GCP_PROJECT}/sre-agent/sre-agent:latest"
 
-    # Copy project-specific WINDSURF_SRE.md into the build context if it exists.
-    # The Dockerfile COPYs sre-agent/WINDSURF_SRE.md into the container.
+    # Copy project-specific skill.md into the build context if it exists.
+    # The Dockerfile COPYs sre-agent/skill.md into the container.
     # The template version has placeholders — we need the populated version.
-    local sre_prompt_src="$PROJECT_DIR/sre-agent/WINDSURF_SRE.md"
-    local sre_prompt_dest="$SCRIPT_DIR/../WINDSURF_SRE.md"
+    local sre_prompt_src="$PROJECT_DIR/sre-agent/skill.md"
+    local sre_prompt_dest="$SCRIPT_DIR/../skill.md"
     local prompt_swapped=false
     if [[ -f "$sre_prompt_src" ]]; then
-        log "Copying project-specific WINDSURF_SRE.md into build context"
+        log "Copying project-specific skill.md into build context"
         cp "$sre_prompt_dest" "$sre_prompt_dest.template.bak"
         cp "$sre_prompt_src" "$sre_prompt_dest"
         prompt_swapped=true
     else
-        warn "No project-specific WINDSURF_SRE.md found at $sre_prompt_src"
+        warn "No project-specific skill.md found at $sre_prompt_src"
         warn "The container will use the generic template — populate it before deploying"
     fi
 
@@ -331,7 +331,7 @@ build_and_push_image() {
     # Restore the template after building
     if [[ "$prompt_swapped" == "true" ]]; then
         mv "$sre_prompt_dest.template.bak" "$sre_prompt_dest"
-        log "Restored generic WINDSURF_SRE.md template"
+        log "Restored generic skill.md template"
     fi
 
     log "Pushing image..."

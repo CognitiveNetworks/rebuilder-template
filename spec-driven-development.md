@@ -58,8 +58,8 @@ PRD before the next rebuild, so each generation is better than the last.
 │                       PROCESS                            │
 │                                                          │
 │  IDEATION_PROCESS.md   18 prescribed steps               │
-│  WINDSURF_DEV.md       Coding standards + checklists     │
-│  WINDSURF.md           Architecture standards            │
+│  skill.md              Coding standards + checklists     │
+│  STANDARDS.md          Architecture standards            │
 │                                                          │
 ├──────────────────────────────────────────────────────────┤
 │                       OUTPUTS                            │
@@ -88,15 +88,15 @@ agent starting from the same inputs will produce structurally identical results:
 |---|---|---|
 | Output file names and locations | IDEATION_PROCESS.md | `output/prd.md`, `docs/adr/001-*.md` |
 | Document structures | IDEATION_PROCESS.md step templates | PRD has Background, Goals, Non-Goals, etc. |
-| API contract (`/ops/*` endpoints) | WINDSURF.md + WINDSURF_DEV.md Step 12 | 11 diagnostic/remediation endpoints per service |
-| Quality gates (14 gates) | WINDSURF_DEV.md Step 12 | pytest, ruff, mypy, radon, vulture, pip-audit, etc. |
-| Service bootstrap checklist | WINDSURF_DEV.md | Dockerfile, CI/CD, Terraform, health endpoint, OTEL |
-| Code audit checklist (14 items) | WINDSURF_DEV.md | Timing-safe comparisons, pool close, backoff, etc. |
-| Pre-commit checklist (5 steps) | WINDSURF_DEV.md | Branch check, tests, lint, message, diff review |
-| Test data requirements | WINDSURF_DEV.md + Step 13a | Domain-realistic identifiers, no `abc123` |
-| Commit message format | WINDSURF_DEV.md | Summary + structured body via `git commit -F` |
+| API contract (`/ops/*` endpoints) | STANDARDS.md + skill.md Step 12 | 11 diagnostic/remediation endpoints per service |
+| Quality gates (14 gates) | skill.md Step 12 | pytest, ruff, mypy, radon, vulture, pip-audit, etc. |
+| Service bootstrap checklist | skill.md | Dockerfile, CI/CD, Terraform, health endpoint, OTEL |
+| Code audit checklist (14 items) | skill.md | Timing-safe comparisons, pool close, backoff, etc. |
+| Pre-commit checklist (5 steps) | skill.md | Branch check, tests, lint, message, diff review |
+| Test data requirements | skill.md + Step 13a | Domain-realistic identifiers, no `abc123` |
+| Commit message format | skill.md | Summary + structured body via `git commit -F` |
 | IDE instruction files | Step 8 (7c) | `.windsurfrules`, `.github/copilot-instructions.md` |
-| Agent role framing | WINDSURF_DEV.md Agent Role section | Agent is the developer, standards are binding |
+| Agent role framing | skill.md Agent Role section | Agent is the developer, standards are binding |
 
 ### Determined by inputs (predictable given the same scope.md)
 
@@ -192,7 +192,7 @@ the convergence mechanism: **different paths, same destination.**
 
 ### 4. Standards documents are binding, not advisory
 
-The Agent Role section in WINDSURF_DEV.md establishes:
+The Agent Role section in skill.md establishes:
 
 > **You are the developer on this project.** When you load this file, every
 > standard in it becomes your operating procedure — not a reference document,
@@ -216,7 +216,7 @@ standards documents. This means:
 - Run 1: Operator says "use realistic test data, not `abc123`"
 - Gap identified: no standard for test data realism
 - Fix applied: Step 13a added to IDEATION_PROCESS.md, realistic test data
-  bullet added to WINDSURF_DEV.md Testing section
+  bullet added to skill.md Testing section
 - Run 2: Agent produces realistic test data without being told
 
 Each run makes the next run more reproducible. The process is a living document
@@ -230,7 +230,7 @@ first time.
 
 ### What we observed
 
-WINDSURF_DEV.md contained the rule: **"Never commit directly to main."** The
+skill.md contained the rule: **"Never commit directly to main."** The
 agent read the file. The agent understood the rule. The agent committed directly
 to main anyway — repeatedly, across multiple sessions.
 
@@ -275,7 +275,7 @@ imperatives land in the "follow" category.
 
 ### The fix: Agent Role section
 
-The solution was not to rewrite every sentence in WINDSURF_DEV.md. Instead, we
+The solution was not to rewrite every sentence in skill.md. Instead, we
 added a single section at the top — **Agent Role** — that reframes the entire
 document:
 
@@ -388,11 +388,11 @@ distinct role, instruction set, and activation mechanism.
 
 **How it loads:** The IDE reads an instruction file at repo root
 (`.windsurfrules` for Windsurf, `.github/copilot-instructions.md` for VS Code
-+ Copilot) which tells the agent to read `developer-agent/WINDSURF_DEV.md` and
++ Copilot) which tells the agent to read `developer-agent/skill.md` and
 `developer-agent/config.md` before any work.
 
 **What it knows:**
-- `WINDSURF_DEV.md` — coding practices, testing standards, CI/CD pipeline,
+- `skill.md` — coding practices, testing standards, CI/CD pipeline,
   environment strategy, service bootstrap checklist, code audit checklist,
   pre-commit checklist, observability requirements, and the Agent Role section
   that makes all of this binding
@@ -415,7 +415,7 @@ distinct role, instruction set, and activation mechanism.
 - Quality gates (14 automated checks) must all pass
 
 **Key property:** The developer agent is stateless between sessions. It reloads
-WINDSURF_DEV.md at the start of every session. This means improvements to the
+skill.md at the start of every session. This means improvements to the
 standards document immediately affect the next session — no retraining, no
 redeployment. The document *is* the agent's behavior.
 
@@ -423,12 +423,12 @@ redeployment. The document *is* the agent's behavior.
 
 **When it runs:** After deployment (Phase 3), triggered by monitoring alerts.
 
-**How it loads:** `agent.py` reads `WINDSURF_SRE.md` from disk and sends it as
+**How it loads:** `agent.py` reads `skill.md` from disk and sends it as
 the system prompt to the LLM on every alert. The file is the agent's entire
 operating procedure.
 
 **What it knows:**
-- `WINDSURF_SRE.md` — diagnostic workflow, escalation rules, safety
+- `skill.md` — diagnostic workflow, escalation rules, safety
   constraints, playbook references, tool definitions
 - `config.md` — service registry (URLs), SLO thresholds, PagerDuty
   configuration, escalation contacts, cloud platform access
@@ -450,7 +450,7 @@ operating procedure.
 - Every alert produces a written incident report
 
 **Key property:** Like the developer agent, the SRE agent is prompt-driven. Its
-behavior is defined entirely by `WINDSURF_SRE.md`. Changing the instruction
+behavior is defined entirely by `skill.md`. Changing the instruction
 file changes the agent's behavior on the next alert. Playbooks in `playbooks/`
 extend its remediation capabilities without code changes.
 
@@ -463,8 +463,8 @@ extend its remediation capabilities without code changes.
               ┌───────────┴───────────┐
               ▼                       ▼
      developer-agent/            sre-agent/
-     WINDSURF_DEV.md            WINDSURF_SRE.md
-     config.md                  config.md
+     skill.md                     skill.md
+     config.md                    config.md
               │                       │
               ▼                       ▼
      Phase 2: Build              Phase 3: Operate
@@ -496,10 +496,10 @@ it arrive at the same place?"
 | Service architecture (8 services, names, responsibilities) | Identical | Explicitly specified in scope.md |
 | Tech stack (FastAPI, DAPR, Terraform, Python 3.12) | Identical | Explicitly specified in scope.md |
 | Backward-compatible endpoints | Identical | "Firmware cannot be updated" constraint |
-| `/ops/*` diagnostic + remediation endpoints | Identical | Mandated by WINDSURF_DEV.md Step 12 |
+| `/ops/*` diagnostic + remediation endpoints | Identical | Mandated by skill.md Step 12 |
 | Quality gates (14 automated checks, all passing) | Identical | Prescribed with exact tool commands |
 | Document structure (PRD, ADRs, feature parity) | Identical | Templates define every section |
-| Domain-realistic test data | Identical | Mandated by WINDSURF_DEV.md + Step 13a |
+| Domain-realistic test data | Identical | Mandated by skill.md + Step 13a |
 | Code audit findings (31 issues) | Identical | 14-item checklist catches them proactively |
 | Docker runtime (21 containers healthy) | Equivalent | Same compose structure, different debug path |
 | Narrative prose in documentation | Varies | Word choice is non-deterministic |
@@ -518,10 +518,10 @@ improvements addressed specific gap categories:
 
 | Gap observed | Root cause | Fix applied | Location |
 |---|---|---|---|
-| Generic test data (`abc123`, `test-token`) | No standard for test realism | Realistic test data mandate | WINDSURF_DEV.md + Step 13a |
-| 31 code quality issues found during review | No proactive checklist | 14-item Code Audit Checklist | WINDSURF_DEV.md |
-| Inconsistent commit messages | No message format standard | Commit Messages subsection, `git commit -F` | WINDSURF_DEV.md |
-| Agent committed to main despite "never commit to main" | Standards treated as advisory | Agent Role section + Pre-Commit Checklist | WINDSURF_DEV.md |
+| Generic test data (`abc123`, `test-token`) | No standard for test realism | Realistic test data mandate | skill.md + Step 13a |
+| 31 code quality issues found during review | No proactive checklist | 14-item Code Audit Checklist | skill.md |
+| Inconsistent commit messages | No message format standard | Commit Messages subsection, `git commit -F` | skill.md |
+| Agent committed to main despite "never commit to main" | Standards treated as advisory | Agent Role section + Pre-Commit Checklist | skill.md |
 
 Each fix converted a human correction into a document rule, eliminating that
 class of variance from future runs.

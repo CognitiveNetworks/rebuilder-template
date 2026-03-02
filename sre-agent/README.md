@@ -8,7 +8,7 @@ The agent uses any **OpenAI-compatible LLM API** (GitHub Models, OpenAI, Azure O
 
 1. **Receives alerts** — accepts webhooks from monitoring platforms (GCP Cloud Monitoring, New Relic, Datadog, etc.) via `POST /webhook/gcp`.
 2. **Deduplicates and prioritizes** — rejects duplicate alerts for the same incident, serializes alerts per service, and queues by priority (P1 first). Stale queued alerts expire automatically.
-3. **Runs the agentic loop** — on every alert, `agent.py` reads the full text of `WINDSURF_SRE.md` from disk and sends it to the LLM as the **system prompt** — the first message in the conversation. The alert payload is then sent as the first **user message**. This means `WINDSURF_SRE.md` is the single document that defines everything the agent knows, believes, and is allowed to do. The diagnostic workflow, escalation rules, remediation actions, hard safety constraints, and tech-stack context are all encoded in this one file. If it's not in the system prompt, the agent doesn't know about it. The LLM responds with function calls (`tool_use`), the agent executes them via `tools.py`, feeds the results back, and the loop continues — up to 20 turns or 5 minutes — until the issue is resolved or escalated.
+3. **Runs the agentic loop** — on every alert, `agent.py` reads the full text of `skill.md` from disk and sends it to the LLM as the **system prompt** — the first message in the conversation. The alert payload is then sent as the first **user message**. This means `skill.md` is the single document that defines everything the agent knows, believes, and is allowed to do. The diagnostic workflow, escalation rules, remediation actions, hard safety constraints, and tech-stack context are all encoded in this one file. If it's not in the system prompt, the agent doesn't know about it. The LLM responds with function calls (`tool_use`), the agent executes them via `tools.py`, feeds the results back, and the loop continues — up to 20 turns or 5 minutes — until the issue is resolved or escalated.
 4. **Diagnoses the issue** — checks `/ops/status` for a composite health verdict, then drills into `/ops/health`, `/ops/metrics`, `/ops/errors`, and `/ops/dependencies`. Follows the dependency chain to find the root cause.
 5. **Classifies the problem** — infrastructure, application, dependency, data, or configuration.
 6. **Matches a playbook** — checks if the classification matches a remediation playbook (high error rate, high latency, dependency failure, saturation, certificate expiry).
@@ -31,7 +31,7 @@ The agent uses any **OpenAI-compatible LLM API** (GitHub Models, OpenAI, Azure O
 ```
 sre-agent/
 ├── README.md              # This file
-├── WINDSURF_SRE.md        # Agent instructions — loaded as system prompt
+├── skill.md               # Agent instructions — loaded as system prompt
 ├── config.md              # Per-project config — service registry, SLOs, PagerDuty, escalation
 ├── playbooks/             # Remediation playbooks by incident type
 │   ├── high-error-rate.md
@@ -66,13 +66,13 @@ sre-agent/
 
 ## Key Files
 
-### `WINDSURF_SRE.md`
+### `skill.md`
 
 The agent's operating instructions — and the **single most important file** in the SRE agent. On every alert, `agent.py` reads this file from disk and sends it to the LLM as the `system` message (the first message in the conversation). The alert becomes the first `user` message. Everything the agent knows, every decision it makes, and every constraint it follows comes from this file. If a behavior isn't defined here, the agent won't exhibit it.
 
 This is a **template** with placeholder sections — it is populated with the project's tech stack during the rebuild process (Step 7) and baked into the container image at build time. The condensed prompt fits within GitHub Models' 8k token limit.
 
-**Why this matters:** The system prompt is not a configuration file or a set of rules the agent "checks" — it is the agent's entire identity and knowledge base for each incident. Changing this file changes the agent's diagnostic approach, escalation thresholds, remediation behavior, and safety constraints. The runtime code (`agent.py`, `tools.py`) is generic infrastructure — `WINDSURF_SRE.md` is what makes it an SRE agent.
+**Why this matters:** The system prompt is not a configuration file or a set of rules the agent "checks" — it is the agent's entire identity and knowledge base for each incident. Changing this file changes the agent's diagnostic approach, escalation thresholds, remediation behavior, and safety constraints. The runtime code (`agent.py`, `tools.py`) is generic infrastructure — `skill.md` is what makes it an SRE agent.
 
 It defines:
 
@@ -85,7 +85,7 @@ It defines:
 - **Incident report requirement** — must call `write_incident_report` and `email_incident_report` for every alert
 
 > [!NOTE]
-> **Loading path:** `SRE_PROMPT_PATH` env var → defaults to `/app/WINDSURF_SRE.md` in the container. `config.load_system_prompt()` reads the file on every agent run. The `/ops/health` endpoint verifies the file exists and is readable.
+> **Loading path:** `SRE_PROMPT_PATH` env var → defaults to `/app/skill.md` in the container. `config.load_system_prompt()` reads the file on every agent run. The `/ops/health` endpoint verifies the file exists and is readable.
 
 ### `config.md`
 
@@ -140,8 +140,8 @@ See `runtime/README.md` for setup, testing, deployment, and customization instru
 ## How It Connects to the Rebuild Process
 
 1. **`rebuild/run.sh`** generates a PRD from the legacy assessment.
-2. **Step 7** of the rebuild process auto-populates `WINDSURF_SRE.md` and `config.md` with the tech stack from the chosen rebuild candidate.
-3. Your rebuilt services expose `/ops/*` endpoints as defined in `WINDSURF.md`.
+2. **Step 7** of the rebuild process auto-populates `skill.md` and `config.md` with the tech stack from the chosen rebuild candidate.
+3. Your rebuilt services expose `/ops/*` endpoints as defined in `STANDARDS.md`.
 4. You fill in the remaining fields in `config.md` — service URLs, PagerDuty escalation config, escalation contacts.
 5. You deploy the runtime from `runtime/`.
 6. You configure your monitoring platform to send webhooks to `/webhook/gcp` on the agent.
@@ -172,13 +172,13 @@ Every interaction goes through one of three API surfaces:
 | **Cloud provider APIs** | Infrastructure diagnostics + bounded scaling | Cloud Monitoring metrics, Cloud Logging queries, managed service status, replica count adjustments (within configured limits) |
 | **PagerDuty API** | Escalation to humans | Create incidents (Events API v2), add notes, manage incident lifecycle |
 
-This means the agent can only act on services that expose `/ops/*` endpoints. If a service doesn't implement the `/ops/*` contract defined in `WINDSURF.md`, the agent cannot diagnose or remediate it — it can only escalate based on the alert context alone.
+This means the agent can only act on services that expose `/ops/*` endpoints. If a service doesn't implement the `/ops/*` contract defined in `STANDARDS.md`, the agent cannot diagnose or remediate it — it can only escalate based on the alert context alone.
 
 ## Observability Model
 
 The SRE agent **diagnoses** services through their `/ops/*` endpoints — pull-based, on-demand queries that return structured health snapshots. This is the agent's primary interface for understanding service state. OTEL does not change this.
 
-The SRE agent runtime **also instruments itself** with OpenTelemetry because it is a service, and all services in the platform follow the same observability standard defined in `WINDSURF.md`. The agent's own OTEL telemetry (metrics, traces, logs) flows to your APM platform for dashboards and alerting on the agent itself — webhook throughput, agent run duration, error rates, intake queue depth.
+The SRE agent runtime **also instruments itself** with OpenTelemetry because it is a service, and all services in the platform follow the same observability standard defined in `STANDARDS.md`. The agent's own OTEL telemetry (metrics, traces, logs) flows to your APM platform for dashboards and alerting on the agent itself — webhook throughput, agent run duration, error rates, intake queue depth.
 
 These are separate concerns:
 

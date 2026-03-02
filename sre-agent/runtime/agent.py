@@ -2,7 +2,7 @@
 
 Uses the OpenAI-compatible chat completions API (works with GitHub Models,
 OpenAI, Azure OpenAI, Vertex AI, or any compatible provider). The agent
-loads WINDSURF_SRE.md as the system prompt, sends the alert as the first
+loads skill.md as the system prompt, sends the alert as the first
 user message, and loops: the LLM responds with function calls (tool_use),
 the service executes them via ToolExecutor, and feeds the results back
 until the LLM produces a final text response (resolved or escalated).

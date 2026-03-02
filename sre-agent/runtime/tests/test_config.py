@@ -108,7 +108,7 @@ class TestConfig:
     def test_uses_default_prompt_path(self):
         with patch.dict(os.environ, self.REQUIRED_ENV, clear=True):
             cfg = Config()
-            assert cfg.sre_prompt_path == "/app/WINDSURF_SRE.md"
+            assert cfg.sre_prompt_path == "/app/skill.md"
 
     def test_overrides_prompt_path(self):
         env = {**self.REQUIRED_ENV, "SRE_PROMPT_PATH": "/custom/path.md"}

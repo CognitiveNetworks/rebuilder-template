@@ -146,7 +146,7 @@
 | `LLM_MODEL_ESCALATION` | (empty) | Stronger model for complex incidents. If set, the agent starts with `LLM_MODEL` and switches to this after `LLM_ESCALATION_TURN` turns without resolution. |
 | `LLM_ESCALATION_TURN` | `5` | Turn number at which to switch to the escalation model. Only applies when `LLM_MODEL_ESCALATION` is set. |
 | `LLM_API_BASE_URL` | `https://models.inference.ai.azure.com` | LLM API base URL. For Vertex AI: `https://REGION-aiplatform.googleapis.com/v1beta1/projects/PROJECT/locations/REGION/endpoints/openapi` |
-| `SRE_PROMPT_PATH` | `/app/WINDSURF_SRE.md` | Path to WINDSURF_SRE.md inside the container |
+| `SRE_PROMPT_PATH` | `/app/skill.md` | Path to skill.md inside the container |
 | `INCIDENTS_DIR` | `/app/incidents` | Directory where incident reports are written |
 | `PAGERDUTY_ROUTING_KEY` | (empty) | PagerDuty Events API v2 integration key (from Secret Manager). Required — agent creates incidents on escalation. |
 | `PAGERDUTY_ESCALATION_POLICY_ID` | (empty) | PagerDuty escalation policy ID for human handoff |

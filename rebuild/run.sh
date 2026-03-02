@@ -54,12 +54,12 @@ mkdir -p "$INPUT_DIR/docs/adr"
 mkdir -p "$INPUT_DIR/docs/postmortems"
 
 # Copy template agent configs into the project directory (skip if already present)
-for file in WINDSURF_SRE.md config.md; do
+for file in skill.md config.md; do
     if [ ! -f "$INPUT_DIR/sre-agent/$file" ]; then
         cp "$REPO_DIR/sre-agent/$file" "$INPUT_DIR/sre-agent/$file"
     fi
 done
-for file in WINDSURF_DEV.md config.md; do
+for file in skill.md config.md; do
     if [ ! -f "$INPUT_DIR/developer-agent/$file" ]; then
         cp "$REPO_DIR/developer-agent/$file" "$INPUT_DIR/developer-agent/$file"
     fi
@@ -121,5 +121,5 @@ echo ""
   cd "$REPO_DIR" || exit 1
   unset WINDSURF_SESSION
   windsurf -p --dangerously-skip-permissions \
-    "Read $SCRIPT_DIR/IDEATION_PROCESS.md, $INPUT_FILE, and $SCOPE_FILE. Execute the process.$ADJACENT_PROMPT Write Steps 1-5 outputs to $INPUT_DIR/output/. After generating the PRD: update the SRE agent config at $INPUT_DIR/sre-agent/WINDSURF_SRE.md and $INPUT_DIR/sre-agent/config.md as described in Step 6, populate the developer agent config at $INPUT_DIR/developer-agent/WINDSURF_DEV.md and $INPUT_DIR/developer-agent/config.md as described in Step 7 (Steps 7a and 7b), then per Step 7c place the IDE instruction files (.windsurfrules and .github/copilot-instructions.md) AND the populated developer-agent/WINDSURF_DEV.md and developer-agent/config.md inside the built repository directory so developers get auto-loaded configs when they clone and open the repo in any IDE. Generate ADRs in $INPUT_DIR/docs/adr/ as described in Step 8, generate the feature parity matrix at $INPUT_DIR/docs/feature-parity.md as described in Step 9, and generate the data migration mapping at $INPUT_DIR/docs/data-migration-mapping.md as described in Step 10."
+    "Read $SCRIPT_DIR/IDEATION_PROCESS.md, $INPUT_FILE, and $SCOPE_FILE. Execute the process.$ADJACENT_PROMPT Write Steps 1-5 outputs to $INPUT_DIR/output/. After generating the PRD: update the SRE agent config at $INPUT_DIR/sre-agent/skill.md and $INPUT_DIR/sre-agent/config.md as described in Step 6, populate the developer agent config at $INPUT_DIR/developer-agent/skill.md and $INPUT_DIR/developer-agent/config.md as described in Step 7 (Steps 7a and 7b), then per Step 7c place the IDE instruction files (.windsurfrules and .github/copilot-instructions.md) AND the populated developer-agent/skill.md and developer-agent/config.md inside the built repository directory so developers get auto-loaded configs when they clone and open the repo in any IDE. Generate ADRs in $INPUT_DIR/docs/adr/ as described in Step 8, generate the feature parity matrix at $INPUT_DIR/docs/feature-parity.md as described in Step 9, and generate the data migration mapping at $INPUT_DIR/docs/data-migration-mapping.md as described in Step 10."
 )

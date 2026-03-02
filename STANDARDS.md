@@ -178,7 +178,7 @@
   - Every action taken through an ops endpoint is logged to the audit trail with the agent identity, timestamp, and action taken.
   - Agents make decisions based on the aggregate health across services — not a single metric in isolation. A spike in latency on one service may be caused by saturation on a dependency. The diagnostic endpoints give agents the full picture to make that determination.
   - If an agent cannot confidently diagnose or remediate an issue, it escalates to a human. Guessing in production is not permitted.
-  - The SRE agent's full operating instructions, diagnostic workflow, playbooks, and incident documentation format are defined in `sre-agent/WINDSURF_SRE.md`. The agent is configured per-project via `sre-agent/config.md` and trained on the tech stack chosen from the rebuild candidate.
+  - The SRE agent's full operating instructions, diagnostic workflow, playbooks, and incident documentation format are defined in `sre-agent/skill.md`. The agent is configured per-project via `sre-agent/config.md` and trained on the tech stack chosen from the rebuild candidate.
 
 ## CI/CD
 

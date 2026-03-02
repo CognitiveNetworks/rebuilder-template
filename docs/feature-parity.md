@@ -3,7 +3,7 @@
 > Complete list of every user-facing feature, integration, and workflow in the legacy application.
 > Each feature gets a status. The rebuild is not complete until every **Must Rebuild** and **Rebuild Improved** feature passes acceptance testing.
 >
-> See `WINDSURF.md` > Feature Parity Tracking for requirements.
+> See `STANDARDS.md` > Feature Parity Tracking for requirements.
 >
 > **Organization:** Group features by phase. Phase 1 = core/must-have for launch.
 > Phase 2 = important but not blocking launch. Phase 3 = deferred, evaluated later.

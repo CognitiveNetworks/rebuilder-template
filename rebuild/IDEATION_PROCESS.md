@@ -384,7 +384,7 @@ Each candidate file uses this structure:
 - Interface: [REST, gRPC, SDK, direct DB, message queue, etc.]
 - Contract: [documented / undocumented — if undocumented, must be documented as part of rebuild]
 - Fallback: [behavior if this dependency is unavailable]
-- Tightly Coupled: [Yes/No — if Yes, scope escalation required per WINDSURF.md Dependency Boundaries]
+- Tightly Coupled: [Yes/No — if Yes, scope escalation required per STANDARDS.md Dependency Boundaries]
 - Integration Tests: [what contract tests are needed at this boundary]
 
 [If the application has no external dependencies, state "None — application is self-contained."]
@@ -543,7 +543,7 @@ For each dependency:
 
 After the PRD is generated, update the SRE agent's tech stack to match the chosen rebuild candidate.
 
-**⚠️ STRICT TEMPLATE POPULATION RULES — apply to both WINDSURF_SRE.md and config.md:**
+**⚠️ STRICT TEMPLATE POPULATION RULES — apply to both skill.md and config.md:**
 
 1. **PRESERVE EVERY SECTION.** Do not delete, merge, skip, or summarize any section from the template. Every heading, table, list, and block must appear in the output.
 2. **ONLY REPLACE PLACEHOLDERS.** Find text wrapped in `*[brackets]*` or `[brackets]` and replace it with the real value. Do not rewrite surrounding prose.
@@ -553,7 +553,7 @@ After the PRD is generated, update the SRE agent's tech stack to match the chose
 6. **IF A VALUE IS UNKNOWN**, leave the placeholder as-is and add a TODO comment: `<!-- TODO: fill after infra provisioning -->`.
 7. **DIFF CHECK.** After generating the output, mentally diff it against the template. The only differences should be placeholder values replaced with real values. If any structural difference exists, fix it before writing the file.
 
-Read the Tech Stack section from the PRD generated in Step 6. Write the matching values into the Tech Stack section of the SRE agent's `WINDSURF_SRE.md` (path provided by the runner), replacing the placeholder values:
+Read the Tech Stack section from the PRD generated in Step 6. Write the matching values into the Tech Stack section of the SRE agent's `skill.md` (path provided by the runner), replacing the placeholder values:
 
 - **Cloud Provider** — from the PRD's Technical Approach
 - **Orchestration** — from the PRD's Technical Approach
@@ -576,9 +576,9 @@ This ensures the SRE agent is configured for the exact stack being built from da
 
 After the PRD is generated, populate the developer agent's per-project configuration so teams start with accurate, project-specific settings from day one.
 
-#### 7a: Populate WINDSURF_DEV.md
+#### 7a: Populate skill.md
 
-Read the PRD generated in Step 6 and update the developer agent's `WINDSURF_DEV.md` (path provided by the runner):
+Read the PRD generated in Step 6 and update the developer agent's `skill.md` (path provided by the runner):
 
 - **Project name** — replace `[project-name]` in the header with the project name from the PRD
 - **Architecture section** — replace the placeholder lines with a brief description of the project structure, key directories, and service boundaries based on the PRD's Technical Approach. Keep it to 3-5 bullet points.
@@ -641,25 +641,25 @@ The developer agent only works if the IDE can find the instruction files **at th
 | **Windsurf** | `.windsurfrules` | repo root | Read on every Cascade session start |
 | **VS Code + GitHub Copilot** | `.github/copilot-instructions.md` | `.github/` at repo root | Included in every Copilot Chat interaction |
 
-Both files contain the same instruction: read `developer-agent/WINDSURF_DEV.md` and `developer-agent/config.md` before doing any work. Copy the content from the templates in the project's `developer-agent/` directory.
+Both files contain the same instruction: read `developer-agent/skill.md` and `developer-agent/config.md` before doing any work. Copy the content from the templates in the project's `developer-agent/` directory.
 
 **You must also copy the populated `developer-agent/` configs into the built repo:**
 
 | File | Source (project working dir) | Destination (built repo) |
 |---|---|---|
-| `WINDSURF_DEV.md` | `developer-agent/WINDSURF_DEV.md` | `<repo>/developer-agent/WINDSURF_DEV.md` |
+| `skill.md` | `developer-agent/skill.md` | `<repo>/developer-agent/skill.md` |
 | `config.md` | `developer-agent/config.md` | `<repo>/developer-agent/config.md` |
 
 **Checklist — all four files must exist in the built repo root:**
 
-- [ ] `<repo>/.windsurfrules` — points to `developer-agent/WINDSURF_DEV.md` and `developer-agent/config.md`
+- [ ] `<repo>/.windsurfrules` — points to `developer-agent/skill.md` and `developer-agent/config.md`
 - [ ] `<repo>/.github/copilot-instructions.md` — same content as `.windsurfrules`
-- [ ] `<repo>/developer-agent/WINDSURF_DEV.md` — populated with project-specific values (from Step 8a)
+- [ ] `<repo>/developer-agent/skill.md` — populated with project-specific values (from Step 8a)
 - [ ] `<repo>/developer-agent/config.md` — populated with project-specific values (from Step 8b)
 
 Without these files in the built repo, the developer agent prompt is not loaded — developers would have to manually paste it into every session. **This is the most common gap in previous rebuilds.** The configs get written to the project working directory but never placed inside the repo that developers actually clone.
 
-**This is the mechanism that makes auto-loading work.** Each IDE has its own convention for project-level instructions. The SRE agent has an equivalent mechanism (`agent.py` reads `WINDSURF_SRE.md` from disk and sends it as the system prompt). The developer agent relies on IDE instruction files to achieve the same guarantee for human development sessions.
+**This is the mechanism that makes auto-loading work.** Each IDE has its own convention for project-level instructions. The SRE agent has an equivalent mechanism (`agent.py` reads `skill.md` from disk and sends it as the system prompt). The developer agent relies on IDE instruction files to achieve the same guarantee for human development sessions.
 
 > **Note:** If your team uses Cursor, the equivalent file is `.cursorrules` at the repo root. The content is identical to `.windsurfrules`.
 
@@ -838,7 +838,7 @@ Rules:
 
 ### Step 12: Developer Agent Standards Compliance Audit
 
-After the code is written, perform a line-by-line compliance check against every requirement in `WINDSURF_DEV.md`. Do not rely on memory — open the file and check each item.
+After the code is written, perform a line-by-line compliance check against every requirement in `skill.md`. Do not rely on memory — open the file and check each item.
 
 **Spec-Lock Preservation (re-replication only):**
 
@@ -867,9 +867,9 @@ Do not silently drop locked implementations. If a locked block cannot be ported 
 - [ ] `.env.example` — all environment variables documented
 - [ ] OTEL instrumentation — tracing, metrics (`MeterProvider` configured), and structured logging
 - [ ] `README.md` — how to run locally, how to test, how to deploy
-- [ ] `.windsurfrules` — exists at **built repo root** (not just the project working directory), instructs Windsurf to read `developer-agent/WINDSURF_DEV.md` and `developer-agent/config.md` before any work
-- [ ] `.github/copilot-instructions.md` — exists at `.github/` in **built repo root** (not just the project working directory), instructs VS Code + GitHub Copilot to read `developer-agent/WINDSURF_DEV.md` and `developer-agent/config.md` before any work
-- [ ] `developer-agent/WINDSURF_DEV.md` — exists inside the **built repo** with all placeholders populated
+- [ ] `.windsurfrules` — exists at **built repo root** (not just the project working directory), instructs Windsurf to read `developer-agent/skill.md` and `developer-agent/config.md` before any work
+- [ ] `.github/copilot-instructions.md` — exists at `.github/` in **built repo root** (not just the project working directory), instructs VS Code + GitHub Copilot to read `developer-agent/skill.md` and `developer-agent/config.md` before any work
+- [ ] `developer-agent/skill.md` — exists inside the **built repo** with all placeholders populated
 - [ ] `developer-agent/config.md` — exists inside the **built repo** with project-specific values filled in
 
 **CI/CD pipeline rules:**
@@ -880,7 +880,7 @@ Do not silently drop locked implementations. If a locked block cannot be ported 
 - [ ] Terraform plan runs on PR and output is posted as a PR comment
 - [ ] Sensitive values (credentials, connection strings) are **never** in `.tfvars` files — they come from secrets manager or CI environment variables
 
-**WINDSURF_DEV.md project-specific sections:**
+**skill.md project-specific sections:**
 
 - [ ] All placeholder lines (marked with `*[...]*`) are filled in with project-specific values
 - [ ] Logging and metrics/tracing descriptions are populated (not template text)
@@ -1093,7 +1093,7 @@ At the end of every rebuild session where the operator provided manual correctio
 
 1. List every manual instruction the operator gave
 2. For each, identify why the process didn't handle it
-3. Propose specific additions to this process document (IDEATION_PROCESS.md) or to the developer agent standards (WINDSURF_DEV.md) that would prevent the same gap
+3. Propose specific additions to this process document (IDEATION_PROCESS.md) or to the developer agent standards (skill.md) that would prevent the same gap
 4. Apply the changes to the process documents after operator approval
 
 **The rebuild process is a living document.** Every manual correction is evidence of a process gap. If an operator has to tell you something that should have been in the process, the process is incomplete.

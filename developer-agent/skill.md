@@ -3,8 +3,8 @@
 > Daily development instructions. Loaded via IDE instruction files at the project root.
 > `.windsurfrules` (Windsurf), `.github/copilot-instructions.md` (VS Code + Copilot), or `.cursorrules` (Cursor)
 > instruct the AI assistant to read this file and `config.md` before any work.
-> For migration planning, architecture decisions, data migration, and cutover guidance, see `WINDSURF.md`.
-> For SRE agent configuration and incident response, see `sre-agent/WINDSURF_SRE.md`.
+> For migration planning, architecture decisions, data migration, and cutover guidance, see `STANDARDS.md`.
+> For SRE agent configuration and incident response, see `sre-agent/skill.md`.
 
 ## Agent Role
 
@@ -336,7 +336,7 @@ When creating a new service or component, it ships with these from day one — n
 - SRE agent `/ops/*` endpoints are part of the definition of done for every service. A service without them is not shippable. Build them alongside your feature endpoints, not after.
   - **Diagnostics** (build with every service): `/ops/status`, `/ops/health`, `/ops/metrics`, `/ops/config`, `/ops/dependencies`, `/ops/errors`
   - **Remediation** (build with every service): `/ops/drain`, `/ops/cache/flush`, `/ops/circuits`, `/ops/loglevel`, `/ops/scale` (for services with application-managed scaling)
-  - All remediation endpoints must be idempotent and non-destructive. See `WINDSURF.md` for full spec.
+  - All remediation endpoints must be idempotent and non-destructive. See `STANDARDS.md` for full spec.
   - **These endpoints are the contract with the SRE agent.** The SRE agent calls them to diagnose and remediate incidents. If `/ops/*` endpoints are down, the agent cannot operate. Treat `/ops/*` availability with the same priority as the main API — they should not be behind feature flags, separate deployments, or optional middleware that could fail independently.
 - **Logging:** *[Logging framework and format — e.g., "Structured JSON to stdout via Python `logging`"]*
 - **Metrics and tracing:** *[Metrics and tracing setup — e.g., "OpenTelemetry SDK with OTLP exporter to Cloud Trace"]*

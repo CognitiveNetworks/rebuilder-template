@@ -79,7 +79,7 @@ class TestHealthEndpoint:
     """Tests for GET /health."""
 
     def test_returns_healthy(self, client, tmp_path):
-        prompt_file = tmp_path / "WINDSURF_SRE.md"
+        prompt_file = tmp_path / "skill.md"
         prompt_file.write_text("system prompt content")
         with patch.dict(os.environ, {"SRE_PROMPT_PATH": str(prompt_file)}):
             main_module = _reload_main()

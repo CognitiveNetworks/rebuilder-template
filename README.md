@@ -22,14 +22,14 @@ All rebuilt services follow an **API-first** design — every feature is exposed
 
 ```
 replicator/
-├── WINDSURF.md                # Migration reference — architecture, data migration, cutover, DR, ADRs
+├── STANDARDS.md                # Migration reference — architecture, data migration, cutover, DR, ADRs
 ├── README.md                  # This file
 ├── scope.md                   # Scope template — copy to a working directory before filling out
 ├── prompting.md               # Audit trail of prompting commands and outcomes
 ├── .gitignore                 # Python, Terraform, IDE, OS ignores + rebuild-inputs/
-├── .windsurfrules             # Windsurf IDE — loads developer-agent/WINDSURF_DEV.md + config.md
+├── .windsurfrules             # Windsurf IDE — loads developer-agent/skill.md + config.md
 ├── .github/
-│   └── copilot-instructions.md  # VS Code Copilot — loads developer-agent/WINDSURF_DEV.md + config.md
+│   └── copilot-instructions.md  # VS Code Copilot — loads developer-agent/skill.md + config.md
 ├── rebuild/
 │   ├── IDEATION_PROCESS.md    # The rebuild analysis process definition (18 steps)
 │   ├── input.md               # Input template — copy to a working directory before filling out
@@ -51,10 +51,10 @@ replicator/
 │       │   ├── compliance-audit.md        # Compliance audit results
 │       │   └── process-feedback.md        # Process improvement notes
 │       ├── developer-agent/              # Step 7: populated dev agent config
-│       │   ├── WINDSURF_DEV.md
+│       │   ├── skill.md
 │       │   └── config.md
 │       ├── sre-agent/                    # Step 6: populated SRE agent config
-│       │   ├── WINDSURF_SRE.md
+│       │   ├── skill.md
 │       │   └── config.md
 │       └── docs/
 │           ├── adr/                      # Step 8: architecture decision records
@@ -74,14 +74,14 @@ replicator/
 │       └── .gitkeep
 ├── developer-agent/
 │   ├── README.md              # Developer agent overview
-│   ├── WINDSURF_DEV.md        # Daily dev instructions template — coding, testing, CI/CD, environments, bootstrap
+│   ├── skill.md               # Daily dev instructions template — coding, testing, CI/CD, environments, bootstrap
 │   ├── config.md              # Per-project config template — commands, environments, services, CI/CD
-│   ├── .windsurfrules         # Windsurf IDE hook — reads WINDSURF_DEV.md + config.md on session start
+│   ├── .windsurfrules         # Windsurf IDE hook — reads skill.md + config.md on session start
 │   └── .github/
 │       └── copilot-instructions.md  # VS Code Copilot hook
 ├── sre-agent/
 │   ├── README.md              # SRE agent overview
-│   ├── WINDSURF_SRE.md        # SRE agent instructions template — diagnostic workflow and response framework
+│   ├── skill.md               # SRE agent instructions template — diagnostic workflow and response framework
 │   ├── config.md              # Per-project config template — service registry, SLOs, PagerDuty, escalation
 │   ├── playbooks/             # Remediation playbooks by incident type
 │   │   ├── high-error-rate.md
@@ -203,20 +203,20 @@ cd your-new-service/
 
 # Copy the populated configs from the project directory into the target repo
 REBUILD=../replicator/rebuild-inputs/my-project
-cp ../replicator/WINDSURF.md .
+cp ../replicator/STANDARDS.md .
 cp -r "$REBUILD/developer-agent/" .
 cp -r "$REBUILD/sre-agent/" .
 cp -r "$REBUILD/docs/" .
 cp ../replicator/prompting.md .
 
 # Build the service using the developer agent
-# Open this directory in Windsurf. WINDSURF_DEV.md will be loaded as project rules.
+# Open this directory in Windsurf. skill.md will be loaded as project rules.
 # Ask Cascade:
 # "Read the PRD at $REBUILD/output/prd.md and the ADRs in docs/adr/.
 #  Build the service as specified."
 ```
 
-The developer agent builds the service from scratch using the PRD as the spec and `WINDSURF_DEV.md` as the coding standards.
+The developer agent builds the service from scratch using the PRD as the spec and `skill.md` as the coding standards.
 
 ### Phase 3: Operate with the SRE agent
 
@@ -239,8 +239,8 @@ All outputs are written into the project directory under `rebuild-inputs/<projec
 | ADRs | `docs/adr/*.md` | Architecture decision records |
 | Feature parity matrix | `docs/feature-parity.md` | Every feature cataloged with rebuild status |
 | Data migration mapping | `docs/data-migration-mapping.md` | Schema mapping between legacy and target |
-| Developer agent config | `developer-agent/WINDSURF_DEV.md` + `config.md` | Project name, architecture, commands, CI/CD, environments |
-| SRE agent config | `sre-agent/WINDSURF_SRE.md` + `config.md` | Tech stack, service registry, SLO thresholds |
+| Developer agent config | `developer-agent/skill.md` + `config.md` | Project name, architecture, commands, CI/CD, environments |
+| SRE agent config | `sre-agent/skill.md` + `config.md` | Tech stack, service registry, SLO thresholds |
 
 ## Developer Agent
 
@@ -256,11 +256,11 @@ The `developer-agent/` directory contains the daily development instructions for
 - **Observability** — Golden Signals, RED method, SLOs, `/ops/*` endpoints as definition of done
 
 **Components:**
-- **`WINDSURF_DEV.md`** — the development instructions. Loaded automatically in every Windsurf session.
+- **`skill.md`** — the development instructions. Loaded automatically in every Windsurf session.
 - **`config.md`** — per-project configuration: dev commands, CI/CD pipeline, environments, services, secrets references, monitoring links.
 
 > [!TIP]
-> **How it connects to the rebuild:** The rebuild process (`run.sh`) auto-populates `WINDSURF_DEV.md` and `config.md` from the PRD and chosen rebuild candidate (Step 7). Project name, architecture, development commands, CI/CD pipeline, Terraform settings, and observability config are filled in before the first line of code is written. Copy both files into the target repo, and Cascade will follow the standards defined by the rebuild process.
+> **How it connects to the rebuild:** The rebuild process (`run.sh`) auto-populates `skill.md` and `config.md` from the PRD and chosen rebuild candidate (Step 7). Project name, architecture, development commands, CI/CD pipeline, Terraform settings, and observability config are filled in before the first line of code is written. Copy both files into the target repo, and Cascade will follow the standards defined by the rebuild process.
 
 ## SRE Agent
 
@@ -276,12 +276,12 @@ The `sre-agent/` directory contains a complete, deployable SRE agent that provid
 7. **Documents everything** — writes an incident report for every alert it responds to, including token usage.
 
 **Components:**
-- **`WINDSURF_SRE.md`** — the agent's instructions, diagnostic workflow, escalation rules, and hard safety constraints. **This file is the agent's brain.** On every alert, `agent.py` reads it from disk and sends the full text to the LLM as the `system` message — the first message in the conversation. The alert becomes the first `user` message. Everything the agent knows, every decision it makes, and every constraint it follows comes from this file. The runtime code is generic infrastructure; `WINDSURF_SRE.md` is what makes it an SRE agent.
+- **`skill.md`** — the agent's instructions, diagnostic workflow, escalation rules, and hard safety constraints. **This file is the agent's brain.** On every alert, `agent.py` reads it from disk and sends the full text to the LLM as the `system` message — the first message in the conversation. The alert becomes the first `user` message. Everything the agent knows, every decision it makes, and every constraint it follows comes from this file. The runtime code is generic infrastructure; `skill.md` is what makes it an SRE agent.
 - **`config.md`** — per-project configuration: service registry, SLO thresholds, PagerDuty escalation config, escalation contacts, cloud platform IAM roles, and runtime environment variables.
 - **`playbooks/`** — remediation playbooks for common incident types (high error rate, high latency, dependency failure, saturation, certificate expiry).
 - **`incidents/`** — agent-written incident reports with diagnosis, actions taken, and resolution status.
 - **`runtime/`** — the deployable Python/FastAPI service. Receives monitoring platform webhooks, runs the agentic loop, executes tool calls, and escalates to PagerDuty when needed. Includes alert intake pipeline, token budget controls, OpenTelemetry instrumentation, Dockerfile, and Terraform templates for Cloud Run. See `sre-agent/runtime/README.md` for setup and deployment.
 
 > [!TIP]
-> **How it connects to the rebuild:** The rebuild process (`run.sh`) auto-configures the agent's tech stack from the chosen rebuild candidate (Step 6). Your rebuilt services expose `/ops/*` endpoints as defined in `WINDSURF.md`. The agent uses those endpoints to monitor and respond to incidents. Fill in `config.md` with your service URLs, PagerDuty escalation config, and escalation contacts, deploy the runtime, and the agent is operational.
+> **How it connects to the rebuild:** The rebuild process (`run.sh`) auto-configures the agent's tech stack from the chosen rebuild candidate (Step 6). Your rebuilt services expose `/ops/*` endpoints as defined in `STANDARDS.md`. The agent uses those endpoints to monitor and respond to incidents. Fill in `config.md` with your service URLs, PagerDuty escalation config, and escalation contacts, deploy the runtime, and the agent is operational.
 

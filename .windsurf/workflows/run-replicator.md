@@ -29,9 +29,9 @@ The project directory must exist under `rebuild-inputs/` with:
    ```
 
 3. **Copy template files** into the project directory (skip if already present):
-   - `sre-agent/WINDSURF_SRE.md` → `<project-dir>/sre-agent/WINDSURF_SRE.md`
+   - `sre-agent/skill.md` → `<project-dir>/sre-agent/skill.md`
    - `sre-agent/config.md` → `<project-dir>/sre-agent/config.md`
-   - `developer-agent/WINDSURF_DEV.md` → `<project-dir>/developer-agent/WINDSURF_DEV.md`
+   - `developer-agent/skill.md` → `<project-dir>/developer-agent/skill.md`
    - `developer-agent/config.md` → `<project-dir>/developer-agent/config.md`
    - `developer-agent/.windsurfrules` → `<project-dir>/developer-agent/.windsurfrules`
    - `developer-agent/.github/copilot-instructions.md` → `<project-dir>/developer-agent/.github/copilot-instructions.md`

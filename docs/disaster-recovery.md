@@ -2,7 +2,7 @@
 
 > Documented recovery procedures for each production service. An on-call engineer who did not build the system should be able to follow this at 3 AM.
 >
-> See `WINDSURF.md` > Disaster Recovery & Business Continuity for requirements.
+> See `STANDARDS.md` > Disaster Recovery & Business Continuity for requirements.
 
 ## Recovery Objectives
 

@@ -3,7 +3,7 @@
 > Schema and key-pattern mapping between the legacy application and the target system.
 > Every table, column, key pattern, and transformation is documented here.
 >
-> Fill this out during migration planning. See `WINDSURF.md` > Data Migration & Validation for requirements.
+> Fill this out during migration planning. See `STANDARDS.md` > Data Migration & Validation for requirements.
 
 ## Migration Strategy
 

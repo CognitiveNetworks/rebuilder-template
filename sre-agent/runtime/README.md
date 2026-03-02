@@ -28,7 +28,7 @@ Monitoring Platform Alert (webhook)
             │ dispatched
             ▼
 ┌──────────────────────────┐
-│  Agent Loop              │  Reads WINDSURF_SRE.md from disk (SRE_PROMPT_PATH)
+│  Agent Loop              │  Reads skill.md from disk (SRE_PROMPT_PATH)
 │  (agent.py)              │  Sends it as the LLM "system" message
 │                          │  Sends alert as first "user" message
 │                          │  LLM responds with function calls
@@ -36,7 +36,7 @@ Monitoring Platform Alert (webhook)
 │                          │  Loop until resolved or escalated
 │                          │  Max 20 turns / 5 min (safety limits)
 │                          │
-│                          │  ⚠ WINDSURF_SRE.md IS the agent's brain.
+│                          │  ⚠ skill.md IS the agent's brain.
 │                          │  Everything it knows comes from this file.
 └───────────┴──────────────┘
             │ function calls
@@ -97,7 +97,7 @@ cp .env.example .env
 export LLM_API_KEY="ghp_your-github-pat"  # or OpenAI key
 export PAGERDUTY_API_TOKEN="your-pd-token"
 export OPS_AUTH_TOKEN="your-ops-token"
-export SRE_PROMPT_PATH="../WINDSURF_SRE.md"
+export SRE_PROMPT_PATH="../skill.md"
 export INCIDENTS_DIR="./incidents"
 export SERVICE_REGISTRY="api|http://localhost:8000|true,worker|http://localhost:8001|false"
 
@@ -141,7 +141,7 @@ The spec is generated from Pydantic models and endpoint type annotations — it 
 | `PAGERDUTY_API_TOKEN` | Yes | PagerDuty API token (from secrets manager) |
 | `OPS_AUTH_TOKEN` | Yes | Bearer token for `/ops/*` endpoint auth (from secrets manager) |
 | `SERVICE_REGISTRY` | Yes | Comma-separated: `name\|url\|critical` |
-| `SRE_PROMPT_PATH` | No | Path to WINDSURF_SRE.md (default: `/app/WINDSURF_SRE.md`) |
+| `SRE_PROMPT_PATH` | No | Path to skill.md (default: `/app/skill.md`) |
 | `INCIDENTS_DIR` | No | Incident report output dir (default: `/app/incidents`) |
 | `PAGERDUTY_ROUTING_KEY` | Yes | PagerDuty Events API v2 integration key — the agent uses this to create PagerDuty incidents on escalation. |
 | `PAGERDUTY_ESCALATION_POLICY_ID` | No | PagerDuty escalation policy for human handoff |

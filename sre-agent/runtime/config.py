@@ -68,7 +68,7 @@ class Config:
 
         # SRE agent instructions
         self.sre_prompt_path: str = os.environ.get(
-            "SRE_PROMPT_PATH", "/app/WINDSURF_SRE.md"
+            "SRE_PROMPT_PATH", "/app/skill.md"
         )
 
         # Incident reports
@@ -238,7 +238,7 @@ class Config:
         return self.llm_api_key
 
     def load_system_prompt(self) -> str:
-        """Load the WINDSURF_SRE.md system prompt from disk."""
+        """Load the skill.md system prompt from disk."""
         with open(self.sre_prompt_path) as f:
             return f.read()
 
