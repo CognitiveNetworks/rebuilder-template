@@ -2,7 +2,7 @@
 
 ## Trigger Condition
 
-- PagerDuty alert indicating a downstream service or external dependency is unreachable
+- Monitoring alert indicating a downstream service or external dependency is unreachable
 - `/ops/status` shows **degraded** or **unhealthy** with dependency health as the contributing signal
 - `/ops/dependencies` shows one or more dependencies as impaired or unreachable
 

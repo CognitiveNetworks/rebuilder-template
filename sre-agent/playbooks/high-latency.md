@@ -2,7 +2,7 @@
 
 ## Trigger Condition
 
-- PagerDuty alert indicating elevated response times
+- Monitoring alert indicating elevated response times
 - `/ops/status` shows **degraded** or **unhealthy** with latency as the contributing signal
 - `/ops/metrics` shows p95 or p99 latency above SLO threshold
 

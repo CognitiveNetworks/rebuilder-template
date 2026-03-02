@@ -2,7 +2,7 @@
 
 ## Trigger Condition
 
-- PagerDuty alert indicating TLS certificate is expiring or has expired
+- Monitoring alert indicating TLS certificate is expiring or has expired
 - `/ops/errors` shows TLS handshake failures, certificate validation errors, or connection refused errors with TLS context
 - `/ops/dependencies` shows a dependency as unreachable with TLS-related error messages
 

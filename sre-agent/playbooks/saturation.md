@@ -2,7 +2,7 @@
 
 ## Trigger Condition
 
-- PagerDuty alert indicating resource exhaustion (CPU, memory, disk, connections)
+- Monitoring alert indicating resource exhaustion (CPU, memory, disk, connections)
 - `/ops/status` shows **degraded** or **unhealthy** with saturation as the contributing signal
 - `/ops/metrics` shows saturation above warning threshold (typically >80%)
 

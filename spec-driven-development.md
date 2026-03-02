@@ -95,7 +95,7 @@ agent starting from the same inputs will produce structurally identical results:
 | Pre-commit checklist (5 steps) | skill.md | Branch check, tests, lint, message, diff review |
 | Test data requirements | skill.md + Step 13a | Domain-realistic identifiers, no `abc123` |
 | Commit message format | skill.md | Summary + structured body via `git commit -F` |
-| IDE instruction files | Step 8 (7c) | `.windsurfrules`, `.github/copilot-instructions.md` |
+| IDE instruction files | Step 8c | `.windsurfrules`, `.github/copilot-instructions.md` |
 | Agent role framing | skill.md Agent Role section | Agent is the developer, standards are binding |
 
 ### Determined by inputs (predictable given the same scope.md)

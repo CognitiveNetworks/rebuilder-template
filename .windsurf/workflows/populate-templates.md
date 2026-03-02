@@ -1,5 +1,5 @@
 ---
-description: Populate SRE agent templates with project-specific values during rebuild Step 6
+description: Populate SRE agent templates with project-specific values during rebuild Step 7
 ---
 
 # Populate SRE Agent Templates

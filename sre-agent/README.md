@@ -211,6 +211,7 @@ Swap providers by changing two environment variables:
 | GitHub Models (default) | GitHub PAT | `https://models.inference.ai.azure.com` |
 | OpenAI | OpenAI API key | `https://api.openai.com/v1` |
 | Azure OpenAI | Azure key | `https://your-resource.openai.azure.com/openai/deployments/your-deployment` |
+| Vertex AI (GCP) | Not required (uses ADC) | Set via `deploy.sh --vertex-ai`. Set `LLM_MODEL=google/gemini-2.0-flash` |
 | Any OpenAI-compatible | Provider key | Provider's base URL |
 
 See `runtime/README.md` for the full environment variable reference.

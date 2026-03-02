@@ -2,7 +2,7 @@
 
 ## Trigger Condition
 
-- PagerDuty alert indicating elevated error rate (5xx responses, unhandled exceptions, application errors)
+- Monitoring alert indicating elevated error rate (5xx responses, unhandled exceptions, application errors)
 - `/ops/status` shows **degraded** or **unhealthy** with errors as the contributing signal
 - `/ops/metrics` shows error rate above SLO threshold
 

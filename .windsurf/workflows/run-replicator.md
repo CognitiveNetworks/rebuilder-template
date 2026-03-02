@@ -38,8 +38,8 @@ The project directory must exist under `rebuild-inputs/` with:
    - `docs/cutover-report.md` → `<project-dir>/docs/cutover-report.md`
    - `docs/disaster-recovery.md` → `<project-dir>/docs/disaster-recovery.md`
 
-4. **Read and execute `rebuild/IDEATION_PROCESS.md`** — this is the main process. Read `IDEATION_PROCESS.md`, `<project-dir>/input.md`, and `<project-dir>/scope.md`. Execute Steps 1-10 sequentially, writing outputs to `<project-dir>/output/`.
+4. **Read and execute `rebuild/IDEATION_PROCESS.md`** — this is the main process. Read `IDEATION_PROCESS.md`, `<project-dir>/input.md`, and `<project-dir>/scope.md`. Execute Steps 1-11 sequentially, writing outputs to `<project-dir>/output/`.
 
-5. **For Steps 6 and 7 (template population)**, you MUST follow the `/populate-templates` workflow rules. Read `.windsurf/workflows/populate-templates.md` before populating any template file. The strict rules in that workflow override any inclination to condense, rephrase, or restructure template content.
+5. **For Steps 7 and 8 (template population)**, you MUST follow the `/populate-templates` workflow rules. Read `.windsurf/workflows/populate-templates.md` before populating any template file. The strict rules in that workflow override any inclination to condense, rephrase, or restructure template content.
 
 6. **After all steps complete**, summarize what was generated and list any `[TODO]` placeholders that remain for the user to fill in post-deployment.

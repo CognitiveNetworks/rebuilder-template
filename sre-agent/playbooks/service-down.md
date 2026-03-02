@@ -3,7 +3,7 @@
 ## Trigger
 
 - GCP Uptime Check fails (health endpoint returns non-2xx or times out)
-- PagerDuty alert with description matching: "Uptime Check", "health check failed", "service unavailable", "Cloud Run service not responding"
+- Monitoring alert with description matching: "Uptime Check", "health check failed", "service unavailable", "Cloud Run service not responding"
 - `/ops/status` returns connection refused, timeout, or 503
 
 ## Severity
