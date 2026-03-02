@@ -140,7 +140,7 @@ while IFS= read -r file; do
 done <<< "$LOCK_FILES"
 
 # Count actual locks in output (not files)
-ACTUAL_LOCKS=$(grep -c '^  - id:' "$OUTPUT_FILE" 2>/dev/null || echo "0")
+ACTUAL_LOCKS=$(grep -c '^  - id:' "$OUTPUT_FILE" 2>/dev/null) || ACTUAL_LOCKS=0
 
 echo ""
 echo "Scan complete:"
