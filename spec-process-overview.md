@@ -159,22 +159,18 @@ The single biggest lesson from the first rebuild: **how you write standards dete
 
 ```mermaid
 flowchart LR
-    subgraph REF ["Reference Language ✗"]
-        R1["'Never commit to main'"]
-        R2["Agent <i>knows</i> the rule"]
-        R3["Agent does not<br/>apply it to itself"]
-        R1 --> R2 --> R3
-    end
+    REF["Reference ✗<br/><i>'Never commit to main'</i>"]
+    KNOW["Agent <b>knows</b> the rule<br/>but doesn't apply it"]
+    INST["Instruction ✓<br/><i>'<b>You</b> do not run<br/>git push origin main'</i>"]
+    FOLLOW["Agent <b>follows</b> the rule<br/>compliance is deterministic"]
 
-    subgraph INST ["Instruction Language ✓"]
-        I1["'<b>You</b> do not run<br/>git push origin main'"]
-        I2["Agent <i>follows</i> the rule"]
-        I3["Compliance becomes<br/>deterministic"]
-        I1 --> I2 --> I3
-    end
+    REF --> KNOW
+    INST --> FOLLOW
 
     style REF fill:#fde8e8,stroke:#c0392b
+    style KNOW fill:#fde8e8,stroke:#c0392b
     style INST fill:#e8f0e4,stroke:#4daf4a
+    style FOLLOW fill:#e8f0e4,stroke:#4daf4a
 ```
 
 | Pattern (weak) | Fix (strong) |
@@ -182,6 +178,7 @@ flowchart LR
 | "The team should…" | "**You** must…" |
 | "Best practices include…" | "Before [action], **you** always [step]." |
 | "Avoid committing secrets." | "Before every commit, **you** run `grep -r 'API_KEY' .`" |
+| "Tests should pass before merge." | "**You** run `pytest -v` and verify 0 failures before `git push`." |
 
 ---
 
