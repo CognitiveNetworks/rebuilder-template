@@ -32,36 +32,30 @@ The process constrains the LLM to **fill in values**, not decide what the struct
 Same inputs + same process = same outputs (structure, quality, function).
 
 ```mermaid
-flowchart TB
-    subgraph INPUTS ["Inputs — what you provide"]
-        direction LR
-        S["scope.md<br/><i>what it is, what it should be</i>"]
-        I["input.md<br/><i>tech stack, APIs, auth</i>"]
-        R["repo/<br/><i>legacy source code</i>"]
-        A["adjacent/<br/><i>related repos (optional)</i>"]
+flowchart LR
+    subgraph INPUTS ["Inputs"]
+        S["scope.md · input.md<br/>repo/ · adjacent/"]
+    end
+    subgraph PROCESS ["Process"]
+        IP["IDEATION_PROCESS.md<br/>skill.md · STANDARDS.md"]
+    end
+    subgraph OUTPUTS ["Outputs"]
+        O["18 artifacts · codebase<br/>agent configs · TEST_RESULTS.md"]
     end
 
-    subgraph PROCESS ["Process — what the agent executes"]
-        direction LR
-        IP["IDEATION_PROCESS.md<br/><i>18 prescribed steps</i>"]
-        SK["skill.md<br/><i>coding standards + checklists</i>"]
-        ST["STANDARDS.md<br/><i>architecture standards</i>"]
-    end
-
-    subgraph OUTPUTS ["Outputs — what gets delivered"]
-        direction LR
-        O1["18 named artifacts<br/><i>fixed structure, fixed location</i>"]
-        O2["Built codebase<br/><i>standards-compliant, tested</i>"]
-        O3["Agent configs<br/><i>populated, IDE-loadable</i>"]
-        O4["Quality receipt<br/><i>TEST_RESULTS.md</i>"]
-    end
-
-    INPUTS --> PROCESS --> OUTPUTS
+    INPUTS -->|"analyzed by"| PROCESS -->|"produces"| OUTPUTS
 
     style INPUTS fill:#e8f4f8,stroke:#2c7bb6
     style PROCESS fill:#fff3cd,stroke:#d4a017
     style OUTPUTS fill:#e8f0e4,stroke:#4daf4a
 ```
+
+| Inputs | Process | Outputs |
+|---|---|---|
+| **scope.md** — what it is, what it should be | **IDEATION_PROCESS.md** — 18 prescribed steps | **18 named artifacts** — fixed structure, fixed location |
+| **input.md** — tech stack, APIs, auth | **skill.md** — coding standards + checklists | **Built codebase** — standards-compliant, tested |
+| **repo/** — legacy source code | **STANDARDS.md** — architecture standards | **Agent configs** — populated, IDE-loadable |
+| **adjacent/** — related repos (optional) | | **TEST_RESULTS.md** — quality receipt |
 
 ---
 
