@@ -604,6 +604,18 @@ For each dependency:
 > source code for thorough discovery. Providing the full set to all five
 > is simpler than customizing per-step and adds negligible overhead.
 >
+> **Parallel-safe referencing rule:** When running in parallel, sub-agents
+> MUST NOT reference other W2 outputs by name or number. Specifically:
+> - ADRs (Step 9) must not assert what other W2 documents contain (e.g.,
+>   do not write "the Library Transitions table in feature-parity.md
+>   maps every function" — the sub-agent cannot know what Step 10 wrote).
+> - Feature Parity (Step 10) and Data Migration (Step 11) must reference
+>   decisions by describing them (e.g., "DAI dropped per PRD Non-Goal #3")
+>   rather than by ADR number (e.g., "see ADR-009"), since ADR numbers
+>   are assigned by the Step 9 sub-agent and are not in the shared inputs.
+> - Step 11a (consistency check) will reconcile cross-references after all
+>   sub-agents complete — inserting ADR numbers and navigation links.
+>
 > Each sub-agent writes its output to the prescribed location. After all five
 > complete, execute **Step 11a: Cross-Artifact Consistency Check** before
 > proceeding to the Build phase.
@@ -943,6 +955,29 @@ occur when artifacts are produced independently.
 **Check 6: Terminology Consistency**
 - Scan all generated artifacts for domain terms (identified in Step 2's Component Overview)
 - Flag cases where the same concept uses different names across documents (e.g., "device token" in one doc vs. "auth token" in another when referring to the same thing)
+
+**Check 7: Cross-Artifact Navigation Links (parallel execution only)**
+
+When Steps 7–11 ran in parallel, sub-agents could not reference each other's
+outputs by name or number. This check reconciles those references:
+
+- **ADR number insertion:** Scan `docs/feature-parity.md` and
+  `docs/data-migration-mapping.md` for decision references that describe PRD
+  sections (e.g., "DAI dropped per PRD Non-Goal #3"). Match each to the
+  corresponding ADR in `docs/adr/` and insert the ADR number as a
+  cross-reference (e.g., "DAI dropped — see ADR-009").
+- **Forward references in ADRs:** Scan ADRs for assertions about other W2
+  outputs (e.g., "the Library Transitions table in feature-parity.md maps
+  every function"). Verify the assertion is true. If the referenced content
+  exists, keep the reference. If it does not exist, reword to remove the
+  assertion.
+- **Navigational links:** Add "Related Documents" cross-links between W2
+  artifacts where appropriate (e.g., ADRs linking to the feature parity
+  entries they affect, data migration mapping linking to relevant ADRs).
+
+This check is a lightweight post-processing pass, not a rewrite. The
+substantive content of each artifact is unchanged — only navigation and
+numbering are reconciled.
 
 **Output:** If all checks pass, state "Cross-artifact consistency check: PASS" and proceed. If any check fails, fix the inconsistency in the affected artifact(s) before proceeding. Document any fixes made in `output/process-feedback.md`.
 
