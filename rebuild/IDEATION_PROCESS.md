@@ -613,6 +613,10 @@ For each dependency:
 >   decisions by describing them (e.g., "DAI dropped per PRD Non-Goal #3")
 >   rather than by ADR number (e.g., "see ADR-009"), since ADR numbers
 >   are assigned by the Step 9 sub-agent and are not in the shared inputs.
+> - SRE Agent Config (Step 7) and Developer Agent Config (Step 8) must not
+>   reference ADR numbers in configuration files or TODO comments (e.g.,
+>   do not write `<!-- TODO: finalize per ADR-008 -->` — use a description
+>   instead: `<!-- TODO: finalize container platform per PRD §Technical Approach -->`).
 > - Step 11a (consistency check) will reconcile cross-references after all
 >   sub-agents complete — inserting ADR numbers and navigation links.
 >
