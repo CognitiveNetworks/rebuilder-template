@@ -34,7 +34,7 @@ PRD before the next rebuild, so each generation is better than the last.
 
 - [The Contract](#the-contract) — inputs, process, outputs
 - [What Is Fixed vs. What Varies](#what-is-fixed-vs-what-varies) — where determinism ends and acceptable variance begins
-- [How Reproducibility Is Achieved](#how-reproducibility-is-achieved) — the five mechanisms that constrain LLM output
+- [How Reproducibility Is Achieved](#how-reproducibility-is-achieved) — the six mechanisms that constrain LLM output
 - [The Reference vs. Instruction Problem](#the-reference-vs-instruction-problem) — why third-person guidelines fail and how we fixed it
 - [The Agent Architecture](#the-agent-architecture) — developer agent, SRE agent, and how they relate
 - [Reproducibility Evidence](#reproducibility-evidence) — measured results from tv-collection-services
@@ -97,6 +97,8 @@ agent starting from the same inputs will produce structurally identical results:
 | Commit message format | skill.md | Summary + structured body via `git commit -F` |
 | IDE instruction files | Step 8c | `.windsurfrules`, `.github/copilot-instructions.md` |
 | Agent role framing | skill.md Agent Role section | Agent is the developer, standards are binding |
+| Parallel execution windows | IDEATION_PROCESS.md | W1 (Steps 2+3), W2 (Steps 7–11), W3 (Steps 13a+14+15) |
+| Cross-artifact consistency checks | Steps 11a + 15a | Service names, endpoints, tech stack, terminology verified |
 
 ### Determined by inputs (predictable given the same scope.md)
 
@@ -221,6 +223,38 @@ standards documents. This means:
 
 Each run makes the next run more reproducible. The process is a living document
 that converges toward zero manual intervention over successive rebuilds.
+
+### 6. Parallel execution with consistency gates
+
+The 18-step process has a strict dependency graph, but several steps within
+each phase share inputs and produce independent outputs. The process defines
+three **parallel execution windows** (W1, W2, W3) where steps may be dispatched
+concurrently to sub-agents — each receiving the shared input artifacts and
+writing its own output file.
+
+This is an optimization that reduces wall-clock time and token consumption
+(each sub-agent starts with a fresh context containing only the inputs it needs,
+rather than carrying the full conversation history). But independent execution
+creates a coherence risk: two sub-agents might use different names for the same
+service, or reference endpoints inconsistently.
+
+The mitigation is a mandatory **cross-artifact consistency check** after each
+parallel window (Steps 11a and 15a). These checks verify service names,
+endpoint inventories, tech stack entries, schema references, and domain
+terminology across all artifacts produced in the window. If any mismatch is
+found, it is resolved before downstream steps consume the artifacts.
+
+The key insight: because each step's output structure is fully prescribed by the
+process document (section headings, table columns, required fields), the
+consistency check can be mechanical — it compares known fields across known
+files. This is closer to a schema validator than a creative judgment call.
+
+**Token savings are most significant in Window 2** (Steps 7–11, post-PRD).
+In sequential execution, the context window by Step 11 contains the full
+conversation history from Steps 1–10. Each sub-agent in W2 starts fresh with
+only the PRD and its template — dramatically smaller context. For large legacy
+codebases with adjacent repos, this can be the difference between staying within
+context limits and exceeding them.
 
 ## The Reference vs. Instruction Problem
 
