@@ -115,44 +115,6 @@ Change the document → change the behavior. No retraining, no redeployment.
 
 ---
 
-## After Day 1 — The Convergence Loop
-
-Generated code doesn't stay generated. Engineers fix bugs, handle edge cases, and tune performance.
-Two mechanisms keep the spec and code convergent over time:
-
-| Mechanism | What it does |
-|---|---|
-| **Spec-Impact PR Gate** | Every human PR maps changes to PRD sections. Engineer explains the divergence. Entry logged to `SPEC_DEBT.md`. |
-| **Spec-Lock Annotations** | Code blocks the spec can't express (`@spec-lock`) are preserved across regeneration. |
-
-```mermaid
-flowchart LR
-    GEN["Generate<br/>from spec"]
-    DEPLOY["Deploy"]
-    EDIT["Human edits<br/>fix bugs, tune perf"]
-    DEBT["Spec debt<br/>accumulates<br/><i>SPEC_DEBT.md +<br/>spec-locks.yaml</i>"]
-    RECONCILE["Reconcile<br/>merge debt into PRD"]
-    REGEN["Regenerate<br/>with improved spec"]
-
-    GEN --> DEPLOY --> EDIT --> DEBT --> RECONCILE --> REGEN
-    REGEN -->|"next cycle"| DEPLOY
-
-    style GEN fill:#e8f4f8,stroke:#2c7bb6
-    style RECONCILE fill:#fff3cd,stroke:#d4a017
-    style REGEN fill:#e8f0e4,stroke:#4daf4a
-```
-
-Each cycle, the spec absorbs what humans taught it. Lock count should **decrease** over time:
-
-| Locks | Meaning |
-|---|---|
-| 0 | Spec is complete (or nobody is editing — investigate) |
-| 1–5 | Healthy — a few edge cases |
-| 6–15 | Spec has gaps — reconcile before next rebuild |
-| 15+ | Spec needs a rewrite |
-
----
-
 ## The Key Insight — Reference vs. Instruction
 
 The single biggest lesson from the first rebuild: **how you write standards determines whether the agent follows them.**
