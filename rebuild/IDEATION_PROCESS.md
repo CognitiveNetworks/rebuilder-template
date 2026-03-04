@@ -978,6 +978,10 @@ outputs by name or number. This check reconciles those references:
 - **Navigational links:** Add "Related Documents" cross-links between W2
   artifacts where appropriate (e.g., ADRs linking to the feature parity
   entries they affect, data migration mapping linking to relevant ADRs).
+- **Agent config ADR references:** Scan `sre-agent/` and `developer-agent/`
+  config files for ADR number references (e.g., `ADR-008` in TODO comments).
+  Replace each with the corresponding PRD section description (e.g.,
+  `<!-- TODO: finalize container platform per PRD §Technical Approach -->`).
 
 This check is a lightweight post-processing pass, not a rewrite. The
 substantive content of each artifact is unchanged — only navigation and
