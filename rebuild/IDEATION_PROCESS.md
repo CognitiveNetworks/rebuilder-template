@@ -24,7 +24,7 @@ Read the provided `scope.md` and `input.md` files. Extract:
 
 ## Process
 
-Execute the following steps sequentially. Do not ask for approval between steps. Run the entire process and write all output files when complete.
+Execute the following steps in order. Do not ask for approval between steps. Run the entire process and write all output files when complete.
 
 > **Phase structure:** Steps 1–11 (Analyze) produce the analysis artifacts,
 > PRD, agent configs, ADRs, and mapping documents. These are executed by
@@ -32,6 +32,35 @@ Execute the following steps sequentially. Do not ask for approval between steps.
 > generate remaining documentation, and capture process feedback. These are
 > executed during interactive development sessions with the developer agent
 > after the service code is written.
+
+### Parallel Execution Windows
+
+Some steps within each phase share inputs but produce independent outputs.
+When the execution environment supports sub-agents (e.g., `runSubagent` in
+VS Code Copilot, parallel Cascade sessions), steps inside a **parallel
+window** MAY be dispatched concurrently to reduce wall-clock time and token
+consumption. Each sub-agent receives the shared input artifacts and writes
+its own output file — no sub-agent depends on another sub-agent's output.
+
+| Window | After | Parallel Steps | Shared Input | Token Savings |
+|--------|-------|---------------|--------------|---------------|
+| **W1** | Step 1 completes | Steps 2 + 3 | `legacy_assessment.md`, `scope.md`, `input.md`, `repo/` | Moderate — two medium docs |
+| **W2** | Step 6 completes | Steps 7 + 8 + 9 + 10 + 11 | `prd.md` + all Phase 1 artifacts | **High** — five independent outputs, avoids carrying full conversation history |
+| **W3** | Step 12 completes | Steps 13a + 14 + 15 | Built codebase + `prd.md` + Step 12 audit results | Moderate — three independent doc/test tasks |
+
+After each parallel window, a **consistency check** verifies cross-artifact
+coherence (terminology, service names, endpoint lists, schema references).
+See the consistency check steps below.
+
+If sub-agents are not available, execute steps sequentially as before — the
+process produces identical results either way. Parallel execution is an
+optimization, not a requirement.
+
+**Detection:** Before the first parallel window, check whether a sub-agent
+dispatch tool is available in your execution environment (e.g., `runSubagent`
+in VS Code Copilot agent mode). If it is, use parallel dispatch for steps in
+W1, W2, and W3. If it is not, execute all steps sequentially. Do not hardcode
+IDE names in detection logic — check for the capability, not the brand.
 
 ### Step 0: Spec-Debt Reconciliation (re-replication only)
 
@@ -279,6 +308,11 @@ This document describes the **current software as it exists today**, not the reb
 - Draw from the legacy assessment findings, `scope.md`, `input.md`, and the source code.
 
 Write results to `docs/component-overview.md` inside the rebuilt application directory.
+
+> **Parallel Window W1:** Steps 2 and 3 share the same inputs (legacy
+> assessment, `scope.md`, `input.md`, source code) and produce independent
+> outputs. If sub-agents are available, dispatch both concurrently. Step 4
+> depends on Step 3's output, so it must wait for Step 3 to complete.
 
 ### Step 3: Modernization Opportunities
 
@@ -545,6 +579,29 @@ For each dependency:
 
 [Unresolved decisions that need input]
 ```
+
+---
+
+> **Parallel Window W2:** Steps 7, 8, 9, 10, and 11 all depend on the PRD
+> (Step 6) and earlier analysis artifacts, but are **completely independent of
+> each other**. This is the highest-value parallelization point in the process.
+>
+> If sub-agents are available, dispatch all five concurrently. Each sub-agent
+> receives:
+> - `output/prd.md` (the PRD from Step 6)
+> - `output/legacy_assessment.md` (from Step 1)
+> - `scope.md` and `input.md`
+> - The relevant template file(s) for its output
+>
+> Each sub-agent writes its output to the prescribed location. After all five
+> complete, execute **Step 11a: Cross-Artifact Consistency Check** before
+> proceeding to the Build phase.
+>
+> **Token savings:** In sequential execution, by Step 11 the context window
+> contains the full conversation history from Steps 1–10. Each sub-agent
+> starts fresh with only the PRD + its template — dramatically smaller
+> context. For large legacy codebases with adjacent repos, this can be the
+> difference between staying within context limits and hitting them.
 
 ### Step 7: SRE Agent Configuration
 
@@ -843,16 +900,52 @@ Rules:
 - If the legacy schema cannot be fully determined from the provided input, state what is known and flag gaps.
 - Reconciliation queries must be concrete enough to run against real databases — not pseudocode.
 
+### Step 11a: Cross-Artifact Consistency Check
+
+After Steps 7–11 complete (whether run in parallel or sequentially), verify
+cross-artifact coherence before proceeding to the Build phase. This step
+catches terminology drift, naming mismatches, and reference errors that can
+occur when artifacts are produced independently.
+
+**Check 1: Service Name Consistency**
+- Extract service names from: `prd.md` (Technical Approach), `sre-agent/config.md` (Service Registry), `developer-agent/config.md` (Services table), `docs/feature-parity.md` (if service-scoped features exist)
+- All must use identical names. Flag any mismatches and normalize to the PRD's names.
+
+**Check 2: Endpoint Inventory**
+- Extract all API endpoints from the PRD's API Design section
+- Verify every endpoint appears in: `docs/feature-parity.md` (as a feature or integration), `sre-agent/config.md` (if `/ops/*` endpoints are listed)
+- Flag any endpoint in one document but missing from another.
+
+**Check 3: Technology Stack Alignment**
+- Compare the tech stack entries in: `prd.md`, `sre-agent/skill.md`, `sre-agent/config.md`, `developer-agent/skill.md`, `developer-agent/config.md`
+- All must reference the same language, framework, database, cache, and cloud provider. Flag any version or name discrepancies.
+
+**Check 4: Data Schema Coherence**
+- If `docs/data-migration-mapping.md` references target tables or columns, verify they align with the PRD's Data Migration Plan and the database technology in the ADRs.
+- Flag any target schema references in the mapping that contradict the PRD.
+
+**Check 5: ADR Cross-References**
+- Each ADR should reference the PRD section that motivated it
+- The PRD's "ADRs Required" list should match the ADRs actually generated in `docs/adr/`
+- Flag any PRD-listed ADR that was not generated, or any generated ADR not listed in the PRD.
+
+**Check 6: Terminology Consistency**
+- Scan all generated artifacts for domain terms (identified in Step 2's Component Overview)
+- Flag cases where the same concept uses different names across documents (e.g., "device token" in one doc vs. "auth token" in another when referring to the same thing)
+
+**Output:** If all checks pass, state "Cross-artifact consistency check: PASS" and proceed. If any check fails, fix the inconsistency in the affected artifact(s) before proceeding. Document any fixes made in `output/process-feedback.md`.
+
 ---
 
 ## Phase 2: Build (Steps 12–18)
 
-Steps 1–11 above produce the analysis artifacts, PRD, agent configs, ADRs, and
-mapping documents. Steps 12–18 below are executed **during the build phase** —
-after the developer agent has written the service code. They validate the code
-against the standards, generate remaining documentation, and capture process
-feedback. The `run.sh` runner invokes Steps 1–11 automatically; Steps 12–18
-are executed during interactive development sessions with the developer agent.
+Steps 1–11a above produce the analysis artifacts, PRD, agent configs, ADRs,
+mapping documents, and a verified consistency baseline. Steps 12–18 below are
+executed **during the build phase** — after the developer agent has written the
+service code. They validate the code against the standards, generate remaining
+documentation, and capture process feedback. The `run.sh` runner invokes Steps
+1–11a automatically; Steps 12–18 are executed during interactive development
+sessions with the developer agent.
 
 ---
 
@@ -960,6 +1053,13 @@ After any code change that adds, removes, or modifies API endpoints, verify that
 - SRE playbooks — any playbook referencing `/ops/*` endpoints must reflect the current set
 
 **Rule:** If an endpoint exists in code but not in docs, or exists in docs but not in code, the build is not complete.
+
+> **Parallel Window W3:** Steps 13a, 14, and 15 share the same inputs (built
+> codebase, PRD, Step 12 audit results) and produce independent outputs. If
+> sub-agents are available, dispatch all three concurrently. Step 13
+> (Documentation–Code Consistency) must complete first since it may trigger
+> code changes. Step 13b (Docker Runtime) depends on code being finalized.
+> After W3 completes, run **Step 15a: Build Phase Consistency Check**.
 
 ### Step 13a: Domain-Realistic Test Scenarios
 
@@ -1093,6 +1193,31 @@ Write results to `docs/target-architecture.md` using this structure:
 what the rebuilt service looks like and how it works. For the legacy state,
 reference `docs/component-overview.md`. Do not mix legacy description into
 this document beyond the comparison table.
+
+### Step 15a: Build Phase Consistency Check
+
+After Steps 13a, 14, and 15 complete (whether run in parallel or sequentially),
+verify that the build-phase documentation is consistent with the code and with
+Phase 1 artifacts.
+
+**Check 1: Endpoint Inventory vs. Code**
+- Extract all route definitions from the source code (e.g., `@app.get`, `@app.post`, `@router.*`)
+- Compare against: `README.md` endpoint table, `docs/target-architecture.md` endpoint lists, SRE playbooks referencing `/ops/*` endpoints
+- Flag any endpoint in code but not in docs, or in docs but not in code.
+
+**Check 2: Test Coverage Alignment**
+- Verify that every endpoint defined in code has at least one test in the test suite
+- Verify that test class/method names follow the domain-realistic naming from Step 13a (no `TestPostEndpoint`, no `test_abc123`)
+
+**Check 3: Observability Documentation vs. Code**
+- Verify `/ops/metrics` endpoint returns the Golden Signals and RED metrics documented in Step 14
+- Verify middleware metric collection described in Step 14 is actually wired in the application startup
+
+**Check 4: Architecture Documentation vs. Code**
+- Verify the module structure in `docs/target-architecture.md` (Step 15) matches the actual directory/module layout
+- Verify dependency flow diagrams match actual import relationships
+
+**Output:** If all checks pass, state "Build phase consistency check: PASS" and proceed. If any check fails, fix the inconsistency before proceeding. Document any fixes in `output/process-feedback.md`.
 
 ### Step 16: Container Build for Cloud Targets
 
@@ -1377,5 +1502,6 @@ and compliance standards were defined before code was written.]
 - **No gold-plating.** The goal is to rebuild what's needed, not redesign the perfect system. Resist scope creep.
 - **Preserve what works.** Not everything needs to change. Identify and protect the parts of the legacy app that are solid.
 - **Kill fast.** If an opportunity fails feasibility, drop it. Do not rehabilitate weak candidates.
-- **Speed over perfection.** This process should take minutes, not days.
+- **Speed over perfection.** This process should take minutes, not days. Parallel execution windows reduce wall-clock time without sacrificing quality.
+- **Consistency after concurrency.** Any time steps run in parallel (W1, W2, W3), the subsequent consistency check is mandatory — not optional. Artifacts produced independently must be verified as coherent before downstream steps consume them.
 - **Honor spec-locks.** If the input codebase contains `@spec-lock` annotations, those blocks represent human-authoritative implementations. Port them faithfully. Do not regenerate locked code from PRD prose — the lock exists because the prose was insufficient. Only remove a lock after confirming the PRD has been updated to express what the lock protected.
