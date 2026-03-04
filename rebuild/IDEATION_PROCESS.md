@@ -45,7 +45,7 @@ its own output file — no sub-agent depends on another sub-agent's output.
 | Window | After | Parallel Steps | Shared Input | Token Savings |
 |--------|-------|---------------|--------------|---------------|
 | **W1** | Step 1 completes | Steps 2 + 3 | `legacy_assessment.md`, `scope.md`, `input.md`, `repo/` | Moderate — two medium docs |
-| **W2** | Step 6 completes | Steps 7 + 8 + 9 + 10 + 11 | `prd.md` + all Phase 1 artifacts | **High** — five independent outputs, avoids carrying full conversation history |
+| **W2** | Step 6 completes | Steps 7 + 8 + 9 + 10 + 11 | `prd.md`, `legacy_assessment.md`, `modernization_opportunities.md`, `feasibility.md`, `candidate_*.md`, `scope.md`, `input.md`, `repo/`, template files | **High** — five independent outputs, avoids carrying full conversation history |
 | **W3** | Step 12 completes | Steps 13a + 14 + 15 | Built codebase + `prd.md` + Step 12 audit results | Moderate — three independent doc/test tasks |
 
 After each parallel window, a **consistency check** verifies cross-artifact
@@ -319,7 +319,7 @@ Write results to `docs/component-overview.md` inside the rebuilt application dir
 Using the legacy assessment and the pain points from scope.md, identify the top modernization opportunities.
 
 An opportunity qualifies ONLY if:
-- It directly addresses a pain point identified in scope.md or discovered in Steps 1-2
+- It directly addresses a pain point identified in scope.md or discovered in the legacy assessment (Step 1)
 - It has a clear before/after — the improvement is measurable or demonstrable
 - It is technically feasible given the constraints in scope.md
 - It would meaningfully improve the application for its users or maintainers
@@ -590,8 +590,19 @@ For each dependency:
 > receives:
 > - `output/prd.md` (the PRD from Step 6)
 > - `output/legacy_assessment.md` (from Step 1)
+> - `output/modernization_opportunities.md` (from Step 3)
+> - `output/feasibility.md` (from Step 4)
+> - `output/candidate_*.md` (from Step 5 — all candidate files)
 > - `scope.md` and `input.md`
+> - `repo/` (legacy source code — needed for feature discovery and schema mapping)
 > - The relevant template file(s) for its output
+>
+> Not every sub-agent needs every artifact. Steps 7 and 8 primarily need the
+> PRD and templates. Step 9 (ADRs) needs modernization opportunities,
+> feasibility, and candidates for the Alternatives Considered sections.
+> Step 10 (Feature Parity) and Step 11 (Data Migration) need the legacy
+> source code for thorough discovery. Providing the full set to all five
+> is simpler than customizing per-step and adds negligible overhead.
 >
 > Each sub-agent writes its output to the prescribed location. After all five
 > complete, execute **Step 11a: Cross-Artifact Consistency Check** before
