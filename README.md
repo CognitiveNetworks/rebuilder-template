@@ -18,6 +18,8 @@ All rebuilt services follow an **API-first** design — every feature is exposed
 
 Each phase feeds into the next. The overview shows the big picture; the per-phase diagrams show every file.
 
+> **[Download all diagrams as PDF](docs/rebuilder-architecture-diagrams.pdf)**
+
 #### Overview — Three Phases
 
 ```mermaid
