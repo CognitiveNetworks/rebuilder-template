@@ -16,110 +16,154 @@ All rebuilt services follow an **API-first** design — every feature is exposed
 
 ## How the Template Files Relate
 
-The diagram below shows how every file in the template connects during the three-phase rebuild process. Arrows indicate "feeds into" or "produces."
+Each phase feeds into the next. The overview shows the big picture; the per-phase diagrams show every file.
+
+#### Overview — Three Phases
+
+```mermaid
+flowchart LR
+    subgraph P1 ["Phase 1 — Analyze"]
+        direction TB
+        IN["scope.md + input.md<br/>repo/ + adjacent/"]
+        RUN["run.sh → IDEATION_PROCESS.md<br/>(18 steps)"]
+        OUT["PRD, ADRs, agent configs,<br/>feature parity, data mapping"]
+        IN --> RUN --> OUT
+    end
+
+    subgraph P2 ["Phase 2 — Build"]
+        direction TB
+        COPY["Copy configs →<br/>new target repo"]
+        SHIM["IDE shim auto-loads<br/>developer-agent/skill.md<br/>+ config.md"]
+        BUILD["AI agent builds service<br/>from PRD + standards"]
+        COPY --> SHIM --> BUILD
+    end
+
+    subgraph P3 ["Phase 3 — Operate"]
+        direction TB
+        ALERT["Monitoring alert fires"]
+        SRE["SRE agent diagnoses<br/>via /ops/* endpoints"]
+        ACT["Remediates or<br/>escalates to PagerDuty"]
+        ALERT --> SRE --> ACT
+    end
+
+    OUT -->|"populated configs + PRD"| COPY
+    BUILD -->|"deployed service with<br/>/ops/* endpoints"| ALERT
+
+    style P1 fill:#e8f4f8,stroke:#2c7bb6
+    style P2 fill:#e8f0e4,stroke:#4daf4a
+    style P3 fill:#fef3e0,stroke:#ff7f00
+```
+
+---
+
+#### Phase 1 — Analyze (detail)
+
+`run.sh` copies templates into the project directory and invokes the AI agent, which follows `IDEATION_PROCESS.md` to produce all outputs.
 
 ```mermaid
 flowchart TB
-    %% ── Phase 1: Analyze ──────────────────────────────────
-    subgraph PHASE1 ["Phase 1 — Analyze"]
-        direction TB
-
-        subgraph INPUTS ["Inputs  (auto-populated, human-reviewed)"]
-            REPO["repo/<br/>Legacy codebase"]
-            ADJ["adjacent/<br/>Related repos (optional)"]
-            SCOPE["scope.md<br/>Current + target state"]
-            INPUT["input.md<br/>Tech stack, APIs, pain points"]
-        end
-
-        RUNNER["rebuild/run.sh<br/>Creates output dirs,<br/>copies templates,<br/>launches AI agent"]
-        PROCESS["rebuild/IDEATION_PROCESS.md<br/>18-step prescribed process"]
-        STANDARDS["STANDARDS.md<br/>Architecture & migration<br/>reference standards"]
-
-        subgraph TEMPLATES ["Templates  (copied by run.sh, never edited in place)"]
-            DEV_TPL["developer-agent/<br/>skill.md + config.md<br/>Dev agent templates"]
-            SRE_TPL["sre-agent/<br/>skill.md + config.md<br/>SRE agent templates"]
-            DOC_TPL["docs/<br/>cutover-report.md<br/>disaster-recovery.md<br/>feature-parity.md<br/>data-migration-mapping.md"]
-        end
-
-        subgraph OUTPUTS ["Outputs  (written to rebuild-inputs/project/)"]
-            direction LR
-            ASSESS["output/<br/>legacy_assessment.md<br/>modernization_opportunities.md<br/>feasibility.md<br/>candidate_N.md"]
-            PRD["output/prd.md<br/>Product requirements"]
-            ADRS["docs/adr/<br/>Architecture decision<br/>records"]
-            FP["docs/<br/>feature-parity.md<br/>data-migration-mapping.md"]
-            DEV_POP["developer-agent/<br/>skill.md + config.md<br/>(populated)"]
-            SRE_POP["sre-agent/<br/>skill.md + config.md<br/>(populated)"]
-        end
-
-        %% Flow
-        SCOPE & INPUT --> RUNNER
-        RUNNER -->|"copies templates into<br/>project directory"| TEMPLATES
-        RUNNER -->|"invokes AI agent<br/>with process definition"| PROCESS
-        REPO & ADJ --> PROCESS
-        SCOPE & INPUT --> PROCESS
-        STANDARDS --> PROCESS
-        PROCESS -->|"Steps 1–5"| ASSESS
-        ASSESS -->|"Step 6"| PRD
-        PRD -->|"Steps 7–8"| DEV_POP & SRE_POP
-        DEV_TPL -.->|"template for"| DEV_POP
-        SRE_TPL -.->|"template for"| SRE_POP
-        DOC_TPL -.->|"template for"| FP
-        PRD -->|"Steps 9–11"| ADRS & FP
+    subgraph INPUTS ["Inputs  (auto-populated, human-reviewed)"]
+        REPO["repo/<br/>Legacy codebase"]
+        ADJ["adjacent/<br/>Related repos (optional)"]
+        SCOPE["scope.md<br/>Current + target state"]
+        INPUT["input.md<br/>Tech stack, APIs, pain points"]
     end
 
-    %% ── Phase 2: Build ───────────────────────────────────
-    subgraph PHASE2 ["Phase 2 — Build"]
-        direction TB
+    RUNNER["rebuild/run.sh<br/>Creates output dirs, copies templates"]
+    PROCESS["IDEATION_PROCESS.md<br/>18-step prescribed process"]
+    STANDARDS["STANDARDS.md<br/>Architecture & migration standards"]
 
-        NEW_REPO["New target repo<br/>(created by developer)"]
-        COPY_STEP["Copy populated configs<br/>into target repo"]
-        SHIM["IDE shim files<br/>.windsurfrules<br/>.github/copilot-instructions.md<br/>.cursorrules"]
-        DEV_AGENT["Developer agent<br/>skill.md + config.md<br/>auto-loaded on session start"]
-        CODE["Built codebase<br/>API-first service with<br/>/ops/* endpoints, tests,<br/>Terraform, CI/CD, OTEL"]
-        AUDIT["Steps 12–18<br/>Compliance audit,<br/>TEST_RESULTS.md,<br/>docs consistency,<br/>summary-of-work.md"]
-
-        PRD --> COPY_STEP
-        DEV_POP --> COPY_STEP
-        SRE_POP --> COPY_STEP
-        ADRS --> COPY_STEP
-        FP --> COPY_STEP
-        COPY_STEP --> NEW_REPO
-        NEW_REPO --> SHIM
-        SHIM -->|"IDE auto-reads on<br/>every session start"| DEV_AGENT
-        DEV_AGENT -->|"builds from PRD<br/>following skill.md standards"| CODE
-        CODE --> AUDIT
+    subgraph TEMPLATES ["Templates  (copied by run.sh — never edited in place)"]
+        DEV_TPL["developer-agent/<br/>skill.md + config.md"]
+        SRE_TPL["sre-agent/<br/>skill.md + config.md"]
+        DOC_TPL["docs/ templates<br/>cutover-report, disaster-recovery,<br/>feature-parity, data-migration"]
     end
 
-    %% ── Phase 3: Operate ─────────────────────────────────
-    subgraph PHASE3 ["Phase 3 — Operate"]
-        direction TB
-
-        SRE_RUNTIME["sre-agent/runtime/<br/>FastAPI webhook receiver<br/>+ agentic diagnostic loop"]
-        SRE_SKILL["sre-agent/skill.md<br/>(system prompt)"]
-        PLAYBOOKS["sre-agent/playbooks/<br/>high-error-rate.md<br/>high-latency.md<br/>dependency-failure.md<br/>saturation.md<br/>service-down.md<br/>certificate-expiry.md"]
-        SRE_CONFIG["sre-agent/config.md<br/>Service registry,<br/>SLOs, PagerDuty"]
-        ALERTS["Monitoring alerts<br/>(Cloud Monitoring,<br/>New Relic, Datadog)"]
-        OPS["Service /ops/* endpoints"]
-        INCIDENTS["sre-agent/incidents/<br/>Incident reports"]
-        PD["PagerDuty<br/>Escalation"]
-
-        ALERTS --> SRE_RUNTIME
-        SRE_SKILL -->|"loaded as<br/>system prompt"| SRE_RUNTIME
-        SRE_CONFIG --> SRE_RUNTIME
-        PLAYBOOKS --> SRE_RUNTIME
-        CODE -->|"exposes"| OPS
-        SRE_RUNTIME -->|"calls for diagnosis<br/>& remediation"| OPS
-        SRE_RUNTIME --> INCIDENTS
-        SRE_RUNTIME -->|"escalates<br/>when unsure"| PD
+    subgraph OUTPUTS ["Outputs  (written to rebuild-inputs/project/)"]
+        ASSESS["output/<br/>legacy_assessment.md<br/>modernization_opportunities.md<br/>feasibility.md · candidate_N.md"]
+        PRD["output/prd.md"]
+        ADRS["docs/adr/*.md"]
+        FP["docs/feature-parity.md<br/>docs/data-migration-mapping.md"]
+        DEV_POP["developer-agent/<br/>skill.md + config.md<br/>(populated)"]
+        SRE_POP["sre-agent/<br/>skill.md + config.md<br/>(populated)"]
     end
 
-    %% Styling
-    style PHASE1 fill:#e8f4f8,stroke:#2c7bb6
-    style PHASE2 fill:#e8f0e4,stroke:#4daf4a
-    style PHASE3 fill:#fef3e0,stroke:#ff7f00
+    SCOPE & INPUT --> RUNNER
+    RUNNER -->|"copies"| TEMPLATES
+    RUNNER -->|"launches AI agent"| PROCESS
+    REPO & ADJ --> PROCESS
+    SCOPE & INPUT --> PROCESS
+    STANDARDS --> PROCESS
+    PROCESS -->|"Steps 1–5"| ASSESS
+    ASSESS -->|"Step 6"| PRD
+    PRD -->|"Steps 7–8"| DEV_POP & SRE_POP
+    DEV_TPL -.->|"template for"| DEV_POP
+    SRE_TPL -.->|"template for"| SRE_POP
+    DOC_TPL -.->|"template for"| FP
+    PRD -->|"Steps 9–11"| ADRS & FP
+
     style INPUTS fill:#dceefb,stroke:#2c7bb6
     style TEMPLATES fill:#fff3cd,stroke:#d4a017
     style OUTPUTS fill:#d4edda,stroke:#28a745
+```
+
+---
+
+#### Phase 2 — Build (detail)
+
+Phase 1 outputs are copied into a new repo. IDE shim files auto-load the developer agent standards on every session.
+
+```mermaid
+flowchart TB
+    PRD["output/prd.md<br/>(from Phase 1)"]
+    DEV_POP["developer-agent/<br/>skill.md + config.md<br/>(populated in Phase 1)"]
+    SRE_POP["sre-agent/ configs<br/>(populated in Phase 1)"]
+    ADRS["docs/adr/*.md<br/>(from Phase 1)"]
+    FP["docs/ mappings<br/>(from Phase 1)"]
+
+    COPY["Copy all into<br/>new target repo"]
+    NEW_REPO["New target repo"]
+
+    subgraph IDE_LOAD ["IDE auto-loading  (happens on every session)"]
+        SHIM[".windsurfrules<br/>.github/copilot-instructions.md<br/>.cursorrules"]
+        DEV_AGENT["Developer agent reads<br/>skill.md + config.md"]
+        SHIM -->|"IDE auto-reads<br/>on session start"| DEV_AGENT
+    end
+
+    CODE["Built codebase<br/>API-first service, /ops/* endpoints,<br/>tests, Terraform, CI/CD, OTEL"]
+    AUDIT["Steps 12–18<br/>Compliance audit, TEST_RESULTS.md,<br/>docs consistency, summary-of-work.md"]
+
+    PRD & DEV_POP & SRE_POP & ADRS & FP --> COPY --> NEW_REPO --> IDE_LOAD
+    DEV_AGENT -->|"builds from PRD<br/>following standards"| CODE
+    CODE --> AUDIT
+
+    style IDE_LOAD fill:#fff3cd,stroke:#d4a017
+```
+
+---
+
+#### Phase 3 — Operate (detail)
+
+The SRE agent receives monitoring alerts, diagnoses issues via the service's `/ops/*` endpoints, and remediates or escalates.
+
+```mermaid
+flowchart TB
+    ALERTS["Monitoring alerts<br/>(Cloud Monitoring, New Relic, Datadog)"]
+    SRE_RUNTIME["sre-agent/runtime/<br/>FastAPI webhook receiver<br/>+ agentic diagnostic loop"]
+    SRE_SKILL["sre-agent/skill.md<br/>(loaded as system prompt)"]
+    SRE_CONFIG["sre-agent/config.md<br/>Service registry, SLOs, PagerDuty"]
+    PLAYBOOKS["sre-agent/playbooks/<br/>high-error-rate · high-latency<br/>dependency-failure · saturation<br/>service-down · certificate-expiry"]
+    OPS["Service /ops/* endpoints<br/>(built in Phase 2)"]
+    INCIDENTS["sre-agent/incidents/<br/>Incident reports"]
+    PD["PagerDuty escalation"]
+
+    ALERTS --> SRE_RUNTIME
+    SRE_SKILL -->|"system prompt"| SRE_RUNTIME
+    SRE_CONFIG --> SRE_RUNTIME
+    PLAYBOOKS --> SRE_RUNTIME
+    SRE_RUNTIME -->|"calls for diagnosis<br/>& remediation"| OPS
+    SRE_RUNTIME --> INCIDENTS
+    SRE_RUNTIME -->|"escalates<br/>when unsure"| PD
 ```
 
 ### Quick Reference: Which File Does What
