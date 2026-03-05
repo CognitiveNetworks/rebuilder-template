@@ -1,8 +1,4 @@
-<p align="center">
-  <img src="replicator-logo.png" alt="Replicator" width="400">
-</p>
-
-# Replicator
+# Rebuilder Template
 
 Structured process for analyzing legacy applications, producing rebuild and infrastructure migration plans, and generating the agent configurations that carry those standards into development and operations.
 
