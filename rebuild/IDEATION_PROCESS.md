@@ -245,7 +245,7 @@ This document describes the **current software as it exists today**, not the reb
 4. **What It Does** — Description of each major functional area or domain module. For each, state its purpose, what data it manages, and who uses it. Written for comprehension, not as an API reference.
 5. **Pure Utility Functions** (if applicable) — Table of standalone functions with plain-language descriptions. Note that these have no infrastructure dependencies.
 6. **CLI Tools** (if applicable) — Table of command-line entry points with descriptions.
-7. **How It Fits in the Platform** — ASCII diagram showing where this component sits relative to upstream and downstream systems, with a narrative data flow summary.
+7. **How It Fits in the Platform** — Mermaid diagram showing where this component sits relative to upstream and downstream systems, with a narrative data flow summary.
 8. **How Teams Consume It** — Table of consumption modes (library import, API call, event subscription, etc.) with audience and prerequisites for each.
 9. **Technology** — Table of current stack choices with brief notes.
 10. **Deployment** — How the application is currently deployed, configured, and operated.
@@ -254,7 +254,7 @@ This document describes the **current software as it exists today**, not the reb
 
 **Guidance:**
 - Keep it under 300 lines — this is an overview, not a specification.
-- Include at least one ASCII architecture diagram.
+- Include at least one mermaid architecture diagram.
 - Domain terms should be defined where first used, not assumed.
 - Draw from the legacy assessment findings, `scope.md`, `input.md`, and the source code.
 
@@ -1178,7 +1178,7 @@ Write results to `docs/target-architecture.md` using this structure:
 1. **What Changed** — Table mapping each legacy component to its target module.
    Include what each module does. Make the consolidation explicit.
 
-2. **System Architecture** — Full component diagram (ASCII) showing:
+2. **System Architecture** — Full component diagram (mermaid) showing:
    - External callers (TVs, admin tools, internal services)
    - Entry points (load balancer, endpoints grouped by auth model)
    - Domain modules inside the service
@@ -1186,7 +1186,7 @@ Write results to `docs/target-architecture.md` using this structure:
    - Infrastructure integration (DAPR sidecar, Redis, Kafka, etc.)
    - Clear separation of what goes through the sidecar vs. direct connections
 
-3. **Data Flow Diagrams** — One ASCII sequence diagram per major request flow.
+3. **Data Flow Diagrams** — One mermaid sequence diagram per major request flow.
    Show the caller, the service layer, any library calls, and the data store
    interactions. Include at minimum:
    - The primary read path (most common request)
