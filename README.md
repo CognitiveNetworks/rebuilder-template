@@ -6,8 +6,8 @@ Structured process for analyzing legacy applications, producing rebuild and infr
 
 A three-phase workflow for legacy application rebuilds:
 
-1. **Analyze** — Point Cascade at a legacy codebase (and optionally its adjacent repos). It fills out the input documents, runs a 18-step analysis (IDEATION_PROCESS.md), and produces a PRD, architecture decision records, and auto-populated agent configs.
-2. **Build** — Create a new repo for the rebuilt application. Copy the populated agent configs into it. Use Cascade with the developer agent instructions to build the service from the PRD.
+1. **Analyze** — Point an AI coding agent at a legacy codebase (and optionally its adjacent repos). It fills out the input documents, runs an 18-step analysis (IDEATION_PROCESS.md), and produces a PRD, architecture decision records, and auto-populated agent configs.
+2. **Build** — Create a new repo for the rebuilt application. Copy the populated agent configs into it. Use the developer agent instructions to build the service from the PRD.
 3. **Operate** — Deploy the SRE agent. It receives alerts from your monitoring platform (GCP Cloud Monitoring, New Relic, Datadog, etc.), diagnoses issues using the `/ops/*` endpoints your service exposes, takes safe remediation actions, and escalates to humans via PagerDuty when it cannot confidently resolve an issue.
 
 This is **not** for greenfield products. It assumes you already have a running application and want to rebuild it with a modern stack, better architecture, or improved observability.
@@ -24,14 +24,14 @@ flowchart TB
     subgraph PHASE1 ["Phase 1 — Analyze"]
         direction TB
 
-        subgraph INPUTS ["Inputs  (human-provided)"]
+        subgraph INPUTS ["Inputs  (auto-populated, human-reviewed)"]
             REPO["repo/<br/>Legacy codebase"]
             ADJ["adjacent/<br/>Related repos (optional)"]
             SCOPE["scope.md<br/>Current + target state"]
             INPUT["input.md<br/>Tech stack, APIs, pain points"]
         end
 
-        RUNNER["rebuild/run.sh<br/>Creates output dirs,<br/>copies templates,<br/>launches Cascade"]
+        RUNNER["rebuild/run.sh<br/>Creates output dirs,<br/>copies templates,<br/>launches AI agent"]
         PROCESS["rebuild/IDEATION_PROCESS.md<br/>18-step prescribed process"]
         STANDARDS["STANDARDS.md<br/>Architecture & migration<br/>reference standards"]
 
@@ -54,7 +54,7 @@ flowchart TB
         %% Flow
         SCOPE & INPUT --> RUNNER
         RUNNER -->|"copies templates into<br/>project directory"| TEMPLATES
-        RUNNER -->|"invokes Cascade<br/>with process definition"| PROCESS
+        RUNNER -->|"invokes AI agent<br/>with process definition"| PROCESS
         REPO & ADJ --> PROCESS
         SCOPE & INPUT --> PROCESS
         STANDARDS --> PROCESS
@@ -73,7 +73,8 @@ flowchart TB
 
         NEW_REPO["New target repo<br/>(created by developer)"]
         COPY_STEP["Copy populated configs<br/>into target repo"]
-        DEV_AGENT["Developer agent<br/>.windsurfrules / .github/copilot-instructions.md<br/>→ reads skill.md + config.md"]
+        SHIM["IDE shim files<br/>.windsurfrules<br/>.github/copilot-instructions.md<br/>.cursorrules"]
+        DEV_AGENT["Developer agent<br/>skill.md + config.md<br/>auto-loaded on session start"]
         CODE["Built codebase<br/>API-first service with<br/>/ops/* endpoints, tests,<br/>Terraform, CI/CD, OTEL"]
         AUDIT["Steps 12–18<br/>Compliance audit,<br/>TEST_RESULTS.md,<br/>docs consistency,<br/>summary-of-work.md"]
 
@@ -83,7 +84,8 @@ flowchart TB
         ADRS --> COPY_STEP
         FP --> COPY_STEP
         COPY_STEP --> NEW_REPO
-        NEW_REPO --> DEV_AGENT
+        NEW_REPO --> SHIM
+        SHIM -->|"IDE auto-reads on<br/>every session start"| DEV_AGENT
         DEV_AGENT -->|"builds from PRD<br/>following skill.md standards"| CODE
         CODE --> AUDIT
     end
@@ -122,21 +124,26 @@ flowchart TB
 
 ### Quick Reference: Which File Does What
 
+The rebuilder is a fully automated process — the AI agent reads the legacy codebase and populates all files. Humans review and adjust before proceeding, but do not need to fill anything out manually.
+
 | File | Role | When It's Used |
 |---|---|---|
-| `scope.md` | Defines current app + target state | Human fills out before Phase 1 |
-| `rebuild/input.md` | Detailed tech stack, APIs, pain points | Human fills out before Phase 1 |
-| `rebuild/run.sh` | Creates output dirs, copies templates, launches Cascade | Start of Phase 1 |
-| `rebuild/IDEATION_PROCESS.md` | 18-step prescribed analysis + build process | Cascade follows during Phases 1 & 2 |
+| `scope.md` | Defines current app + target state | Auto-populated from legacy code; human reviews/adjusts before proceeding |
+| `rebuild/input.md` | Detailed tech stack, APIs, pain points | Auto-populated from legacy code; human reviews/adjusts before proceeding |
+| `rebuild/run.sh` | Creates output dirs, copies templates, launches AI agent | Start of Phase 1 |
+| `rebuild/IDEATION_PROCESS.md` | 18-step prescribed analysis + build process | AI agent follows during Phases 1 & 2 |
 | `STANDARDS.md` | Architecture, scaling, security, testing standards | Referenced throughout all phases |
-| `developer-agent/skill.md` | Dev coding standards (template → populated) | Template in Phase 1; agent instructions in Phase 2 |
-| `developer-agent/config.md` | Project-specific dev config (template → populated) | Template in Phase 1; agent config in Phase 2 |
+| `.windsurfrules` | IDE shim — tells Windsurf to read `developer-agent/skill.md` + `config.md` | Auto-read by Windsurf on every session start |
+| `.github/copilot-instructions.md` | IDE shim — tells VS Code Copilot to read `developer-agent/skill.md` + `config.md` | Auto-included in every Copilot Chat interaction |
+| `.cursorrules` | IDE shim — tells Cursor to read `developer-agent/skill.md` + `config.md` | Auto-read by Cursor on every session start |
+| `developer-agent/skill.md` | Dev coding standards (template → populated) | Template in Phase 1; auto-loaded by IDE shims in Phase 2 |
+| `developer-agent/config.md` | Project-specific dev config (template → populated) | Template in Phase 1; auto-loaded by IDE shims in Phase 2 |
 | `sre-agent/skill.md` | SRE diagnostic workflow + safety constraints | Template in Phase 1; system prompt in Phase 3 |
 | `sre-agent/config.md` | Service registry, SLOs, PagerDuty config | Template in Phase 1; runtime config in Phase 3 |
 | `sre-agent/playbooks/*.md` | Remediation runbooks by incident type | Phase 3 — agent follows during incidents |
 | `sre-agent/runtime/` | Deployable FastAPI service for alert handling | Phase 3 — receives webhooks, runs agentic loop |
 | `docs/*.md` | Migration planning templates (feature parity, data mapping, DR, cutover) | Templates copied in Phase 1; filled during Phases 1–2 |
-| `output/*.md` | Analysis artifacts + PRD | Written by Cascade in Phase 1 |
+| `output/*.md` | Analysis artifacts + PRD | Written by AI agent in Phase 1 |
 
 ## Repository Structure
 
@@ -258,15 +265,15 @@ git clone git@github.com:your-org/my-project.git replicator/rebuild-inputs/my-pr
 cp replicator/scope.md replicator/rebuild-inputs/my-project/scope.md
 cp replicator/rebuild/input.md replicator/rebuild-inputs/my-project/input.md
 
-# Have Cascade fill them out from the legacy codebase
+# Have the AI agent fill them out from the legacy codebase
 cd replicator/rebuild-inputs/my-project/repo/
-# Open this directory in Windsurf and ask Cascade:
+# Open this directory in your AI-enabled IDE and ask the agent:
 # "Read this codebase and fill out ../scope.md and ../input.md"
 # OR
-# " Please rebuild <repo> using replicator app with all stages completed"
+# "Please rebuild <repo> using rebuilder with all stages completed"
 ```
 
-Cascade examines the legacy code and fills in the guided prompts in both files.
+The AI agent examines the legacy code and fills in the guided prompts in both files.
 
 > [!IMPORTANT]
 > Review the results and adjust the **Target State** section in `scope.md` — especially the target repository, proposed tech stack, constraints, and what's out of scope. The Current Application section comes from the code; the Target State comes from your decisions.
@@ -281,15 +288,15 @@ git clone git@github.com:your-org/flask-app-b.git \
 git clone git@github.com:your-org/shared-auth.git \
   replicator/rebuild-inputs/my-project/adjacent/shared-auth
 
-# Re-run Cascade to update scope.md and input.md with the adjacent repos
+# Re-run the AI agent to update scope.md and input.md with the adjacent repos
 cd replicator/rebuild-inputs/my-project/repo/
-# Open this directory in Windsurf and ask Cascade:
+# Open this directory in your AI-enabled IDE and ask the agent:
 # "Read this codebase and the adjacent repos at ../adjacent/.
 #  Update ../scope.md and ../input.md — fill out the Adjacent Repositories
 #  section and update the dependencies to reflect the integration points
 #  between these repos."
 # OR
-# " Please rebuild <repo> with adjacent <repos> using replicator app with all stages completed"
+# "Please rebuild <repo> with adjacent <repos> using rebuilder with all stages completed"
 ```
 
 Review `scope.md` again — especially the **Adjacent Repositories** section and updated dependency information. Repos not cloned into `adjacent/` are treated as external services — the rebuild will interact with them through their existing interfaces, not modify them.
@@ -303,7 +310,7 @@ cd ../../rebuild/
 ./run.sh ../rebuild-inputs/my-project
 ```
 
-This invokes Cascade, which reads `IDEATION_PROCESS.md` plus the filled-out `input.md` and `scope.md`, then executes all 18 steps. If adjacent repos are present, it reads those codebases too and analyzes cross-repo integration points. All outputs are written into the project directory.
+This invokes the AI agent, which reads `IDEATION_PROCESS.md` plus the filled-out `input.md` and `scope.md`, then executes all 18 steps. If adjacent repos are present, it reads those codebases too and analyzes cross-repo integration points. All outputs are written into the project directory.
 
 ```bash
 # Review the outputs — everything is in the project directory
@@ -333,8 +340,8 @@ cp -r "$REBUILD/docs/" .
 cp ../replicator/prompting.md .
 
 # Build the service using the developer agent
-# Open this directory in Windsurf. skill.md will be loaded as project rules.
-# Ask Cascade:
+# Open this directory in your AI-enabled IDE. skill.md will be loaded as project rules.
+# Ask the agent:
 # "Read the PRD at $REBUILD/output/prd.md and the ADRs in docs/adr/.
 #  Build the service as specified."
 ```
@@ -367,7 +374,7 @@ All outputs are written into the project directory under `rebuild-inputs/<projec
 
 ## Developer Agent
 
-The `developer-agent/` directory contains the daily development instructions for Windsurf (Cascade) sessions. It ensures every service and component in the rebuild is built to the same standards.
+The `developer-agent/` directory contains the daily development instructions for AI-assisted coding sessions. It ensures every service and component in the rebuild is built to the same standards.
 
 **What it covers:**
 - **Coding practices** — error handling, security, input validation, dependency management, removal of outdated code (DP2.5, Stackdriver), no SRE Agent for library repos
@@ -379,11 +386,11 @@ The `developer-agent/` directory contains the daily development instructions for
 - **Observability** — Golden Signals, RED method, SLOs, `/ops/*` endpoints as definition of done
 
 **Components:**
-- **`skill.md`** — the development instructions. Loaded automatically in every Windsurf session.
+- **`skill.md`** — the development instructions. Loaded automatically via IDE instruction files (`.windsurfrules`, `.github/copilot-instructions.md`, or `.cursorrules`).
 - **`config.md`** — per-project configuration: dev commands, CI/CD pipeline, environments, services, secrets references, monitoring links.
 
 > [!TIP]
-> **How it connects to the rebuild:** The rebuild process (`run.sh`) auto-populates `skill.md` and `config.md` from the PRD and chosen rebuild candidate (Step 7). Project name, architecture, development commands, CI/CD pipeline, Terraform settings, and observability config are filled in before the first line of code is written. Copy both files into the target repo, and Cascade will follow the standards defined by the rebuild process.
+> **How it connects to the rebuild:** The rebuild process (`run.sh`) auto-populates `skill.md` and `config.md` from the PRD and chosen rebuild candidate (Step 7). Project name, architecture, development commands, CI/CD pipeline, Terraform settings, and observability config are filled in before the first line of code is written. Copy both files into the target repo, and the AI agent will follow the standards defined by the rebuild process.
 
 ## SRE Agent
 
