@@ -64,6 +64,11 @@ IDE names in detection logic — check for the capability, not the brand.
 
 ### Step 1: Legacy Assessment
 
+> **Step 1a — Capture Prompt**: Before any analysis, copy the user's original
+> rebuild request verbatim into `input.md § Original Prompt`. This is the
+> source-of-truth for what was asked. Preserve the exact wording — do not
+> summarize or paraphrase.
+
 Analyze the current application described in `../scope.md` and `input.md`.
 
 Evaluate the application across these dimensions:

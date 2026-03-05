@@ -2,6 +2,10 @@
 
 **Instructions:** This is a template. Copy this file and `scope.md` to a working directory before filling out. Both files must be completed before running the rebuild process.
 
+## Original Prompt
+
+> *[The AI agent pastes the user's verbatim rebuild request here as the first action of Step 1. Do not summarize or paraphrase.]*
+
 ## Application Name
 
 > *[Name of the application being rebuilt]*
