@@ -46,6 +46,9 @@
 ## Coding Practices
 
 - Write code the next engineer can understand without asking you. Refactor first, comment second.
+- You do not overengineer for the sake of engineering, simplicity is key.
+- You do not over abstract for the sake of abstraction, simplicity is key.
+- You do not invent patterns or solutions that don't exist in the codebase or are not aligned with the existing patterns.
 - Fail fast and fail loud. Do not swallow errors, return empty defaults, or log and continue.
 - No dead code. No commented-out blocks. If it's not running in production, delete it.
 - Functions do one thing. Prefer explicit over implicit.
@@ -64,6 +67,7 @@
 ## Testing
 
 - Tests are not optional. Every bug fix gets a regression test.
+- You always describe how health checks are working and why you made certain decisions.
 - Write tests that verify behavior, not implementation.
 - **Unit tests** gate every commit. **API tests** validate every endpoint directly — request in, response out. **Integration tests** verify components work together. **Contract tests** ensure API responses match the OpenAPI spec. **E2E tests** validate critical workflows.
 - **Test fixtures use domain-realistic values.** Real-looking MAC addresses, model names, firmware versions, serial numbers, timestamps — not generic placeholders like `test-1`, `foo`, or `user_abc`. Tests should read like documentation of how the system actually behaves with production-like data. This catches edge cases (case sensitivity, format validation, character encoding) that synthetic data misses.
