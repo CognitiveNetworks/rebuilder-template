@@ -33,7 +33,7 @@
 > The SRE agent receives alerts from your monitoring/alerting platform (GCP Cloud Monitoring, New Relic, Datadog, etc.) — not from PagerDuty. PagerDuty is used only for escalation when the agent cannot resolve an issue.
 
 - **Alerting Platform:** *[GCP Cloud Monitoring, New Relic, Datadog, etc.]*
-- **Webhook Endpoint:** `<sre-agent-url>/webhook/gcp?auth_token=<ops-auth-token>`
+- **Webhook Endpoint:** `<sre-agent-url>/webhook/alerts?auth_token=<ops-auth-token>`
 - **Alert Routing:** *[describe how alerts flow: e.g., GCP Uptime Check → Alert Policy → webhook notification channel → SRE agent → diagnose → escalate to PagerDuty if unresolved]*
 
 ## PagerDuty Escalation
@@ -93,6 +93,8 @@
 ## Cloud Platform Access
 
 > The SRE agent requires read-only access to cloud provider APIs for diagnostic correlation. It uses this to understand managed service health alongside the `/ops/*` application endpoints. The agent never modifies cloud infrastructure.
+
+> **Template instruction:** Keep only the section that matches your cloud provider. Delete the other section entirely — leftover cloud-provider sections create noise that can mislead the SRE agent about which cloud it is operating in.
 
 ### GCP (if applicable)
 - **Required Roles (secrets — all Cloud Run services):**
@@ -170,5 +172,5 @@ The runtime includes Terraform templates for GCP Cloud Run in `runtime/terraform
 1. Deploy the runtime service
 2. Create a PagerDuty Events API v2 integration on the target PD service
 3. Set `PAGERDUTY_ROUTING_KEY` to the integration key
-4. Configure your alerting platform to send webhooks to `<service_url>/webhook/gcp?auth_token=<ops-auth-token>`
+4. Configure your alerting platform to send webhooks to `<service_url>/webhook/alerts?auth_token=<ops-auth-token>`
 5. Alerts flow to the SRE agent; PagerDuty incidents are only created when the agent escalates
