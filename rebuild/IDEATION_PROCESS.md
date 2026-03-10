@@ -149,6 +149,8 @@ Write results to `output/legacy_assessment.md` using this structure:
 ```
 # Legacy Assessment
 
+> **Reference document.** This is analysis output from the ideation process. It informs decisions but does not override developer-agent/skill.md.
+
 ## Application Overview
 [Summary from scope.md and input.md]
 
@@ -286,7 +288,11 @@ For each opportunity, document:
 
 **No hypothetical improvements.** Every opportunity must trace back to a real pain point or a concrete finding from the assessment. If the current approach works fine, leave it alone.
 
-Write results to `output/modernization_opportunities.md`.
+Write results to `output/modernization_opportunities.md`. Begin the file with:
+
+```
+> **Reference document.** This is analysis output from the ideation process. It informs decisions but does not override developer-agent/skill.md.
+```
 
 ### Step 4: Feasibility Analysis
 
@@ -299,7 +305,11 @@ For each modernization opportunity rated High or Critical impact, validate:
 
 **Feasibility verdict per opportunity:** Go / Caution / No-Go. No-Go opportunities do not become rebuild candidates.
 
-Write results to `output/feasibility.md`.
+Write results to `output/feasibility.md`. Begin the file with:
+
+```
+> **Reference document.** This is analysis output from the ideation process. It informs decisions but does not override developer-agent/skill.md.
+```
 
 ### Step 5: Rebuild Approach Candidates
 
@@ -309,6 +319,8 @@ Each candidate file uses this structure:
 
 ```
 # Rebuild Candidate: [Working Title]
+
+> **Reference document.** This is analysis output from the ideation process. It informs decisions but does not override developer-agent/skill.md.
 
 ## One-Sentence Summary
 
@@ -417,6 +429,8 @@ Write it to `output/prd.md` using this structure:
 
 ```
 # PRD: [Product/Feature Name]
+
+> **Reference document.** This is the product requirements document from the ideation process. It informs implementation but does not override developer-agent/skill.md for coding standards or process rules.
 
 ## Background
 
@@ -1279,6 +1293,8 @@ Write results to `output/summary-of-work.md` using this structure:
 
 ```
 # Summary of Work: [Application Name]
+
+> **Reference document.** This is a summary generated during the ideation process. It informs decisions but does not override developer-agent/skill.md.
 
 ## Overview
 

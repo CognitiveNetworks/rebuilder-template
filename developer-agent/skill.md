@@ -60,9 +60,14 @@
 - Pin dependency versions. Audit regularly. Remove what you don't use.
 - Measure before you optimize. N+1 queries and missing indexes are bugs, not performance tuning.
 - Set timeouts on every external call.
-- You will remove outdated code like DP2.5, Stackdriver.
-- You will not include SRE Agent for library repos
-- DAPR integrations will be a sidecar, ensure that we aren't overcomplicating integration with components like libaries and articulate how DAPR is being used.
+
+### Standing Orders
+
+These rules apply to every task, every commit, every session. They are not situational.
+
+- Remove outdated code (DP2.5, Stackdriver, vendor-specific monitoring clients). If it is not used in the target architecture, delete it.
+- Do not include SRE Agent configuration for library repos — only for deployable services.
+- DAPR runs as a sidecar only. Do not add DAPR client libraries to application code. Document which DAPR components are in use and their binding types.
 
 ## Testing
 
@@ -75,7 +80,7 @@
 
 ## Code Audit Checklist
 
-Before considering a service implementation complete, verify every item below. These are the issues that pass quality gates but cause production incidents.
+Before considering a service implementation complete, verify every item below. Run through each item and confirm it passes. If any item fails, stop and fix it before proceeding — do not defer these to a follow-up PR. These are the issues that pass quality gates but cause production incidents.
 
 ### Security & Auth
 - [ ] Auth token comparisons use `hmac.compare_digest()` or equivalent constant-time comparison — never `==`.

@@ -34,6 +34,7 @@ When escalating, use `create_pagerduty_incident` to page a human. PagerDuty is t
 
 ## Remediation Actions (all idempotent)
 - POST `/ops/cache/flush` — stale cache
+- GET `/ops/circuits` — read circuit breaker state (diagnostic)
 - POST `/ops/circuits` — reset tripped circuit breakers
 - POST `/ops/drain` — remove unhealthy instance
 - POST `/ops/loglevel` — adjust verbosity

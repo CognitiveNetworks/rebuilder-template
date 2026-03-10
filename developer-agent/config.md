@@ -6,7 +6,7 @@
 
 - **Project Name:** *[project name]*
 - **Repository:** *[new repo URL]*
-- **Primary Language:** *[language and version]*
+- **Primary Language:** Python 3.12
 - **Framework:** *[framework and version]*
 - **Cloud Provider:** *[GCP or AWS]*
 
