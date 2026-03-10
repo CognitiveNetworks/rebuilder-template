@@ -661,7 +661,7 @@ Read the PRD generated in Step 6 and the rebuild candidate selected in Step 5. W
 - **Cloud Provider** — from the PRD's Technical Approach (GCP or AWS)
 
 **Development Commands section:**
-- Pre-fill commands based on the language/framework. For example, a Python/FastAPI project gets `pip install -r requirements.txt` for install, `pytest` for tests, `ruff check .` for lint, `docker build` for container build. A Go/Gin project gets `go mod download`, `go test ./...`, `golangci-lint run`, etc.
+- Pre-fill commands based on the language/framework. For example, a Python/FastAPI project gets `pip install -r requirements.txt` for install, `pytest` for tests, `ruff check . && ruff format --check .` for lint, `docker build` for container build. A Go/Gin project gets `go mod download`, `go test ./...`, `golangci-lint run`, etc.
 
 **CI/CD section:**
 - **Pipeline Tool** — infer from the PRD or default to GitHub Actions
