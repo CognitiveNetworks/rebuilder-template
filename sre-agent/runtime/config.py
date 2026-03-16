@@ -9,7 +9,7 @@ import logging
 import os
 from urllib.parse import urlparse
 
-from models import ScalingConfig, ScalingMode, ServiceEndpoint
+from models import ServiceEndpoint
 
 logger = logging.getLogger(__name__)
 
@@ -77,10 +77,6 @@ class Config:
         # Service registry — loaded from environment.
         # Format: SERVICE_REGISTRY=name1|url1|critical,name2|url2|critical
         self.services: list[ServiceEndpoint] = self._load_services()
-
-        # Scaling limits — loaded from environment.
-        # Format: SCALING_LIMITS=name1|min|max|mode,name2|min|max|mode
-        self.scaling_limits: dict[str, ScalingConfig] = self._load_scaling_limits()
 
         # Alert intake pipeline
         self.max_concurrent_alerts: int = int(
@@ -157,52 +153,6 @@ class Config:
                 )
             )
         return services
-
-    def _load_scaling_limits(self) -> dict[str, ScalingConfig]:
-        """Parse and validate scaling limits from SCALING_LIMITS env var."""
-        raw = os.environ.get("SCALING_LIMITS", "")
-        if not raw:
-            return {}
-
-        limits: dict[str, ScalingConfig] = {}
-        for entry in raw.split(","):
-            parts = entry.strip().split("|")
-            if len(parts) != 4:
-                raise ValueError(
-                    f"Invalid SCALING_LIMITS entry: '{entry.strip()}'. "
-                    f"Expected format: name|min|max|mode"
-                )
-            name = parts[0].strip()
-            try:
-                min_inst = int(parts[1].strip())
-                max_inst = int(parts[2].strip())
-            except ValueError as exc:
-                raise ValueError(
-                    f"Invalid SCALING_LIMITS entry for '{name}': "
-                    f"min and max must be integers"
-                ) from exc
-            mode_str = parts[3].strip()
-            if mode_str not in ("application", "cloud_native"):
-                raise ValueError(
-                    f"Invalid scaling mode for '{name}': '{mode_str}'. "
-                    f"Must be 'application' or 'cloud_native'."
-                )
-            if min_inst < 1:
-                raise ValueError(
-                    f"Invalid min_instances for '{name}': {min_inst}. Must be >= 1."
-                )
-            if max_inst < min_inst:
-                raise ValueError(
-                    f"Invalid scaling limits for '{name}': "
-                    f"max ({max_inst}) must be >= min ({min_inst})."
-                )
-            limits[name] = ScalingConfig(
-                service_name=name,
-                min_instances=min_inst,
-                max_instances=max_inst,
-                mode=ScalingMode(mode_str),
-            )
-        return limits
 
     def _get_vertex_ai_token(self) -> str:
         """Get a fresh access token via Application Default Credentials.

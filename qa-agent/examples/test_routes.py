@@ -60,21 +60,6 @@ class TestHealthEndpoint:
         assert response.status_code == 503
         assert response.json()["status"] == "unhealthy"
 
-    @pytest.mark.asyncio
-    async def test_health_returns_503_when_draining(
-        self, client, mock_rds_module, mock_kafka_module
-    ):
-        """GET /health returns 503 with status=draining when drain mode is on."""
-        from app import routes
-
-        routes._drain_mode = True
-        try:
-            response = await client.get("/health")
-            assert response.status_code == 503
-            assert response.json()["status"] == "draining"
-        finally:
-            routes._drain_mode = False
-
 
 # ─── Main Endpoint ────────────────────────────────────────────────────
 # TODO: Replace with your service's main endpoint tests.

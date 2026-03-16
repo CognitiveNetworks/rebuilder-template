@@ -150,20 +150,6 @@ class ServiceEndpoint(BaseModel):
     critical: bool = True
 
 
-class ScalingMode(StrEnum):
-    APPLICATION = "application"
-    CLOUD_NATIVE = "cloud_native"
-
-
-class ScalingConfig(BaseModel):
-    """Per-service scaling bounds and mode."""
-
-    service_name: str
-    min_instances: int = Field(ge=1)
-    max_instances: int = Field(ge=1)
-    mode: ScalingMode
-
-
 class ToolCall(BaseModel):
     """A tool call requested by the SRE agent."""
 

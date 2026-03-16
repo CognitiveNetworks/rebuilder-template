@@ -39,6 +39,6 @@
 
 - Latency remains above SLO after remediation (including scaling if attempted).
 - Service is already at its configured maximum instance count and saturation persists.
-- Saturation is at capacity and cannot be relieved by draining a single instance (and no scaling is configured).
+- Saturation is at capacity and auto-scaling has not resolved the issue.
 - Root cause is a slow database query or missing index (requires code/schema change).
 - Latency spike correlates with a recent deployment.
