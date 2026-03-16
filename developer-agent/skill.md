@@ -51,6 +51,7 @@
 - You do not invent patterns or solutions that don't exist in the codebase or are not aligned with the existing patterns.
 - Fail fast and fail loud. Do not swallow errors, return empty defaults, or log and continue.
 - No dead code. No commented-out blocks. If it's not running in production, delete it.
+- You do not do imports inline inside functions, everything should be at the top of the file.
 - Functions do one thing. Prefer explicit over implicit.
 - Handle errors at the boundary where you can act on them. Every error message answers: what happened, what was expected, what to do about it.
 - Distinguish retryable from fatal errors.
