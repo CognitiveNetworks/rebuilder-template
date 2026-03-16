@@ -202,18 +202,18 @@ The rebuilder is a fully automated process — the AI agent reads the legacy cod
 ## Repository Structure
 
 ```
-replicator/
+rebuilder-template/
 ├── STANDARDS.md                # Migration reference — architecture, data migration, cutover, DR, ADRs
 ├── README.md                  # This file
 ├── spec-driven-development.md # Leadership doc — reproducibility, agent architecture
+├── spec-process-overview.md   # Process overview — high-level summary of the rebuild workflow
 ├── scope.md                   # Scope template — copy to a working directory before filling out
 ├── prompting.md               # Audit trail of prompting commands and outcomes
 ├── .gitignore                 # Python, Terraform, IDE, OS ignores + rebuild-inputs/
-├── .windsurfrules             # Windsurf IDE — loads developer-agent/skill.md + config.md
+├── .windsurfrules             # Windsurf IDE — loads developer-agent + qa-agent skill.md and config.md
 ├── .github/
-│   ├── copilot-instructions.md    # VS Code Copilot — loads developer-agent/skill.md + config.md
-│   ├── PULL_REQUEST_TEMPLATE.md   # PR template — engineer sign-off
-│   └── workflows/
+│   ├── copilot-instructions.md    # VS Code Copilot — loads developer-agent + qa-agent skill.md and config.md
+│   └── PULL_REQUEST_TEMPLATE.md   # PR template — engineer sign-off
 ├── rebuild/
 │   ├── IDEATION_PROCESS.md    # The rebuild analysis process definition (18 steps)
 │   ├── input.md               # Input template — copy to a working directory before filling out
@@ -257,10 +257,9 @@ replicator/
 │   ├── feature-parity.md         # Feature parity matrix and status tracking
 │   ├── cutover-report.md         # Post-cutover documentation
 │   ├── disaster-recovery.md      # DR plan — RTO/RPO, backups, runbooks
+│   ├── rebuilder-architecture-diagrams.pdf  # Downloadable PDF of all mermaid diagrams
 │   ├── adr/                      # Template directory (generated ADRs go in rebuild-inputs/)
-│   │   └── .gitkeep
 │   └── postmortems/              # Incident postmortems
-│       └── .gitkeep
 ├── developer-agent/
 │   ├── README.md              # Developer agent overview
 │   ├── skill.md               # Daily dev instructions template — coding, testing, CI/CD, environments, bootstrap
@@ -293,7 +292,6 @@ replicator/
 │   │   ├── service-down.md
 │   │   └── certificate-expiry.md
 │   ├── incidents/             # Agent-written incident reports
-│   │   └── .gitkeep
 │   └── runtime/               # SRE agent runtime service
 │       ├── README.md          # Architecture, setup, and deployment guide
 │       ├── main.py            # FastAPI webhook receiver + alert intake pipeline
