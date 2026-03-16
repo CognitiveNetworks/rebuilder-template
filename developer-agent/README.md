@@ -18,11 +18,20 @@ Each IDE has its own convention for reading project-level instructions automatic
 | **VS Code + GitHub Copilot** | `.github/copilot-instructions.md` | `.github/` at repo root | Included in every Copilot Chat interaction |
 | **Cursor** | `.cursorrules` | repo root | Read at the start of every session (same content as `.windsurfrules`) |
 
-All files contain the same instruction: read `developer-agent/skill.md` and `developer-agent/config.md` before performing any task.
+All files contain the same instruction: read `developer-agent/skill.md`, `developer-agent/config.md`, `qa-agent/skill.md`, and `qa-agent/config.md` before performing any task. Both agents are always-on — the developer agent defines what standards to follow, the QA agent defines how compliance is verified.
 
-**Without the correct file for your IDE at the project root, the developer agent prompt is NOT loaded automatically.** You would have to manually reference the files in every session.
+**Without the correct file for your IDE at the project root, neither agent prompt is loaded automatically.** You would have to manually reference the files in every session.
 
 This mirrors how the SRE agent works: `agent.py` reads `skill.md` from disk and sends it as the system prompt on every alert. The developer agent relies on IDE instruction files to achieve the same guarantee for human development sessions.
+
+### On-Demand Workflows
+
+In addition to auto-loading, two Windsurf workflows provide explicit activation:
+
+| Workflow | Command | Purpose |
+|---|---|---|
+| **Developer reload** | `/developer` | Re-read all agent files mid-session (e.g., after editing skill.md) |
+| **QA verification** | `/qa` | Run all quality gates independently and generate a verification report |
 
 ## When to Use
 
@@ -32,8 +41,8 @@ Every AI-assisted development session — the IDE instruction files ensure it ha
 
 | File | Purpose |
 |---|---|
-| `.windsurfrules` | Project rules for Windsurf — placed at repo root, auto-read on session start |
-| `.github/copilot-instructions.md` | Project rules for VS Code + GitHub Copilot — placed in `.github/` at repo root, auto-included in Copilot Chat |
+| `.windsurfrules` | Project rules for Windsurf — placed at repo root, auto-read on session start. Loads both developer and QA agents. |
+| `.github/copilot-instructions.md` | Project rules for VS Code + GitHub Copilot — placed in `.github/` at repo root, auto-included in Copilot Chat. Loads both developer and QA agents. |
 | `skill.md` | Development instructions — loaded by IDE instruction files |
 | `config.md` | Per-project config — loaded by IDE instruction files |
 | `README.md` | This file |
