@@ -725,6 +725,41 @@ Without these files in the built repo, the developer agent prompt is not loaded 
 
 > **Note:** If your team uses Cursor, the equivalent file is `.cursorrules` at the repo root. The content is identical to `.windsurfrules`.
 
+#### 8d: Populate QA Agent Configuration
+
+The QA agent verifies that the developer agent's output meets quality standards. It does **not** replace the developer agent — it is a check on it. The QA agent reads the same `developer-agent/skill.md` and `developer-agent/config.md` as the developer; `qa-agent/skill.md` adds the verification procedures and acceptance criteria.
+
+Read the PRD generated in Step 6 and the developer agent config populated in Steps 8a–8b. Write the matching values into the QA agent's `config.md` (path provided by the runner), replacing the `[TODO]` placeholders:
+
+**Project section:**
+- **Project Name** — from the PRD title (same as developer-agent config)
+- **Repository** — from the PRD's Target Repository
+- **Original Legacy Repo** — the legacy repo being rebuilt
+
+**Required Environment Variables for Tests:**
+- Pre-fill the test env var table with every variable from the project's `environment-check.sh` `always_required_vars` array, plus app-specific variables. Each gets a safe test default value.
+
+**Acceptance Criteria — App-Specific:**
+- **API Endpoints to Verify** — list every endpoint from the PRD or developer-agent config (method, path, expected status code)
+- **Event Types to Verify** — list every event type the service handles with validation rules and output shape
+- **Environment Variable Mapping** — document all renames from the original legacy service (e.g., `FLASK_ENV` → removed, `RDS_HOST` → same)
+
+**External Dependency Mocking:**
+- Map each infrastructure dependency (RDS, Kafka, Redis, etc.) to its mock strategy in tests
+
+Leave the Comparison Checklist items unchecked — the QA agent checks them off during verification.
+
+**Copy the populated `qa-agent/` into the built repo:**
+
+| File | Source (project working dir) | Destination (built repo) |
+|---|---|---|
+| `skill.md` | `qa-agent/skill.md` | `<repo>/qa-agent/skill.md` |
+| `config.md` | `qa-agent/config.md` | `<repo>/qa-agent/config.md` |
+| `TEST_RESULTS_TEMPLATE.md` | `qa-agent/TEST_RESULTS_TEMPLATE.md` | `<repo>/qa-agent/TEST_RESULTS_TEMPLATE.md` |
+| `examples/` | `qa-agent/examples/` | `<repo>/qa-agent/examples/` |
+
+The QA agent is activated on demand (via the `/qa` Windsurf workflow or during Step 12), not auto-loaded on every session. Human operators customize `qa-agent/config.md` with project-specific acceptance criteria after the initial population.
+
 ### Step 9: Architecture Decision Records
 
 Generate the initial ADRs identified in the PRD's "ADRs Required" section. Write each ADR to the `docs/adr/` directory (path provided by the runner) using the naming convention `NNN-<short-title>.md` (e.g., `001-use-postgresql.md`).
@@ -1024,6 +1059,21 @@ After the code is written, perform a line-by-line compliance check against every
 - [ ] `.github/copilot-instructions.md` — exists at `.github/` in **built repo root** (not just the project working directory), instructs VS Code + GitHub Copilot to read `developer-agent/skill.md` and `developer-agent/config.md` before any work
 - [ ] `developer-agent/skill.md` — exists inside the **built repo** with all placeholders populated
 - [ ] `developer-agent/config.md` — exists inside the **built repo** with project-specific values filled in
+- [ ] `qa-agent/skill.md` — exists inside the **built repo** (universal QA standards — not project-specific)
+- [ ] `qa-agent/config.md` — exists inside the **built repo** with project-specific acceptance criteria filled in (endpoints, event types, env var mapping, mock strategy)
+- [ ] `qa-agent/TEST_RESULTS_TEMPLATE.md` — exists inside the **built repo**
+- [ ] `qa-agent/examples/` — exists inside the **built repo** with example test patterns
+
+**QA Agent Verification (independent quality check):**
+
+The QA agent is a second opinion on the developer agent's work. After the developer agent claims compliance, activate the QA agent (via `/qa` workflow) and have it independently verify:
+
+- [ ] Re-run all quality gates (pytest, ruff, mypy, radon, vulture, pip-audit, interrogate, pylint, C901) — compare results against the developer agent's `TEST_RESULTS.md`
+- [ ] Verify every `/ops/*` endpoint returns the required fields per the SRE contract in `qa-agent/skill.md`
+- [ ] Verify `environment-check.sh` accounts for every original env var (using the mapping in `qa-agent/config.md`)
+- [ ] Verify Dockerfile, entrypoint.sh, and Helm chart match template patterns
+- [ ] Generate an independent `tests/TEST_RESULTS.md` from the QA agent's own gate runs
+- [ ] Flag any discrepancies between the developer agent's claims and the QA agent's findings
 
 **CI/CD pipeline rules:**
 

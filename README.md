@@ -77,6 +77,7 @@ flowchart TB
 
     subgraph TEMPLATES ["Templates  (copied by run.sh — never edited in place)"]
         DEV_TPL["developer-agent/<br/>skill.md + config.md"]
+        QA_TPL["qa-agent/<br/>skill.md + config.md<br/>+ examples/"]
         SRE_TPL["sre-agent/<br/>skill.md + config.md"]
         DOC_TPL["docs/ templates<br/>cutover-report, disaster-recovery,<br/>feature-parity, data-migration"]
     end
@@ -87,6 +88,7 @@ flowchart TB
         ADRS["docs/adr/*.md"]
         FP["docs/feature-parity.md<br/>docs/data-migration-mapping.md"]
         DEV_POP["developer-agent/<br/>skill.md + config.md<br/>(populated)"]
+        QA_POP["qa-agent/<br/>config.md (populated)<br/>skill.md + examples/ (universal)"]
         SRE_POP["sre-agent/<br/>skill.md + config.md<br/>(populated)"]
     end
 
@@ -98,8 +100,9 @@ flowchart TB
     STANDARDS --> PROCESS
     PROCESS -->|"Steps 1–5"| ASSESS
     ASSESS -->|"Step 6"| PRD
-    PRD -->|"Steps 7–8"| DEV_POP & SRE_POP
+    PRD -->|"Steps 7–8"| DEV_POP & QA_POP & SRE_POP
     DEV_TPL -.->|"template for"| DEV_POP
+    QA_TPL -.->|"template for"| QA_POP
     SRE_TPL -.->|"template for"| SRE_POP
     DOC_TPL -.->|"template for"| FP
     PRD -->|"Steps 9–11"| ADRS & FP
@@ -113,12 +116,13 @@ flowchart TB
 
 #### Phase 2 — Build (detail)
 
-Phase 1 outputs are copied into a new repo. IDE shim files auto-load the developer agent standards on every session.
+Phase 1 outputs are copied into a new repo. IDE shim files auto-load the developer and QA agent standards on every session.
 
 ```mermaid
 flowchart TB
     PRD["output/prd.md<br/>(from Phase 1)"]
     DEV_POP["developer-agent/<br/>skill.md + config.md<br/>(populated in Phase 1)"]
+    QA_POP["qa-agent/<br/>skill.md + config.md<br/>(populated in Phase 1)"]
     SRE_POP["sre-agent/ configs<br/>(populated in Phase 1)"]
     ADRS["docs/adr/*.md<br/>(from Phase 1)"]
     FP["docs/ mappings<br/>(from Phase 1)"]
@@ -128,16 +132,18 @@ flowchart TB
 
     subgraph IDE_LOAD ["IDE auto-loading  (happens on every session)"]
         SHIM[".windsurfrules<br/>.github/copilot-instructions.md<br/>.cursorrules"]
-        DEV_AGENT["Developer agent reads<br/>skill.md + config.md"]
-        SHIM -->|"IDE auto-reads<br/>on session start"| DEV_AGENT
+        DEV_AGENT["Developer agent reads<br/>developer-agent/skill.md + config.md"]
+        QA_AGENT["QA agent reads<br/>qa-agent/skill.md + config.md"]
+        SHIM -->|"IDE auto-reads<br/>on session start"| DEV_AGENT & QA_AGENT
     end
 
     CODE["Built codebase<br/>API-first service, /ops/* endpoints,<br/>tests, Terraform, CI/CD, OTEL"]
-    AUDIT["Steps 12–18<br/>Compliance audit, TEST_RESULTS.md,<br/>docs consistency, summary-of-work.md"]
+    AUDIT["Steps 12–18<br/>Compliance audit, TEST_RESULTS.md,<br/>QA verification, summary-of-work.md"]
 
-    PRD & DEV_POP & SRE_POP & ADRS & FP --> COPY --> NEW_REPO --> IDE_LOAD
+    PRD & DEV_POP & QA_POP & SRE_POP & ADRS & FP --> COPY --> NEW_REPO --> IDE_LOAD
     DEV_AGENT -->|"builds from PRD<br/>following standards"| CODE
     CODE --> AUDIT
+    QA_AGENT -->|"verifies developer<br/>agent's output"| AUDIT
 
     style IDE_LOAD fill:#fff3cd,stroke:#d4a017
 ```
@@ -179,11 +185,13 @@ The rebuilder is a fully automated process — the AI agent reads the legacy cod
 | `rebuild/run.sh` | Creates output dirs, copies templates, launches AI agent | Start of Phase 1 |
 | `rebuild/IDEATION_PROCESS.md` | 18-step prescribed analysis + build process | AI agent follows during Phases 1 & 2 |
 | `STANDARDS.md` | Architecture, scaling, security, testing standards | Referenced throughout all phases |
-| `.windsurfrules` | IDE shim — tells Windsurf to read `developer-agent/skill.md` + `config.md` | Auto-read by Windsurf on every session start |
-| `.github/copilot-instructions.md` | IDE shim — tells VS Code Copilot to read `developer-agent/skill.md` + `config.md` | Auto-included in every Copilot Chat interaction |
-| `.cursorrules` | IDE shim — tells Cursor to read `developer-agent/skill.md` + `config.md` | Auto-read by Cursor on every session start |
+| `.windsurfrules` | IDE shim — tells Windsurf to read developer-agent + qa-agent skill.md and config.md | Auto-read by Windsurf on every session start |
+| `.github/copilot-instructions.md` | IDE shim — tells VS Code Copilot to read developer-agent + qa-agent skill.md and config.md | Auto-included in every Copilot Chat interaction |
+| `.cursorrules` | IDE shim — tells Cursor to read developer-agent + qa-agent skill.md and config.md | Auto-read by Cursor on every session start |
 | `developer-agent/skill.md` | Dev coding standards (template → populated) | Template in Phase 1; auto-loaded by IDE shims in Phase 2 |
 | `developer-agent/config.md` | Project-specific dev config (template → populated) | Template in Phase 1; auto-loaded by IDE shims in Phase 2 |
+| `qa-agent/skill.md` | QA verification procedures + quality gates (universal) | Template in Phase 1; auto-loaded by IDE shims in Phase 2 |
+| `qa-agent/config.md` | Project-specific QA config (template → populated) | Template in Phase 1; auto-loaded by IDE shims in Phase 2 |
 | `sre-agent/skill.md` | SRE diagnostic workflow + safety constraints | Template in Phase 1; system prompt in Phase 3 |
 | `sre-agent/config.md` | Service registry, SLOs, PagerDuty config | Template in Phase 1; runtime config in Phase 3 |
 | `sre-agent/playbooks/*.md` | Remediation runbooks by incident type | Phase 3 — agent follows during incidents |
@@ -194,18 +202,18 @@ The rebuilder is a fully automated process — the AI agent reads the legacy cod
 ## Repository Structure
 
 ```
-replicator/
+rebuilder-template/
 ├── STANDARDS.md                # Migration reference — architecture, data migration, cutover, DR, ADRs
 ├── README.md                  # This file
 ├── spec-driven-development.md # Leadership doc — reproducibility, agent architecture
+├── spec-process-overview.md   # Process overview — high-level summary of the rebuild workflow
 ├── scope.md                   # Scope template — copy to a working directory before filling out
 ├── prompting.md               # Audit trail of prompting commands and outcomes
 ├── .gitignore                 # Python, Terraform, IDE, OS ignores + rebuild-inputs/
-├── .windsurfrules             # Windsurf IDE — loads developer-agent/skill.md + config.md
+├── .windsurfrules             # Windsurf IDE — loads developer-agent + qa-agent skill.md and config.md
 ├── .github/
-│   ├── copilot-instructions.md    # VS Code Copilot — loads developer-agent/skill.md + config.md
-│   ├── PULL_REQUEST_TEMPLATE.md   # PR template — engineer sign-off
-│   └── workflows/
+│   ├── copilot-instructions.md    # VS Code Copilot — loads developer-agent + qa-agent skill.md and config.md
+│   └── PULL_REQUEST_TEMPLATE.md   # PR template — engineer sign-off
 ├── rebuild/
 │   ├── IDEATION_PROCESS.md    # The rebuild analysis process definition (18 steps)
 │   ├── input.md               # Input template — copy to a working directory before filling out
@@ -229,6 +237,11 @@ replicator/
 │       ├── developer-agent/              # Step 8: populated dev agent config
 │       │   ├── skill.md
 │       │   └── config.md
+│       ├── qa-agent/                     # Step 8d: populated QA agent config
+│       │   ├── skill.md
+│       │   ├── config.md
+│       │   ├── TEST_RESULTS_TEMPLATE.md
+│       │   └── examples/
 │       ├── sre-agent/                    # Step 7: populated SRE agent config
 │       │   ├── skill.md
 │       │   └── config.md
@@ -244,17 +257,29 @@ replicator/
 │   ├── feature-parity.md         # Feature parity matrix and status tracking
 │   ├── cutover-report.md         # Post-cutover documentation
 │   ├── disaster-recovery.md      # DR plan — RTO/RPO, backups, runbooks
+│   ├── rebuilder-architecture-diagrams.pdf  # Downloadable PDF of all mermaid diagrams
 │   ├── adr/                      # Template directory (generated ADRs go in rebuild-inputs/)
-│   │   └── .gitkeep
 │   └── postmortems/              # Incident postmortems
-│       └── .gitkeep
 ├── developer-agent/
 │   ├── README.md              # Developer agent overview
 │   ├── skill.md               # Daily dev instructions template — coding, testing, CI/CD, environments, bootstrap
 │   ├── config.md              # Per-project config template — commands, environments, services, CI/CD
-│   ├── .windsurfrules         # Windsurf IDE hook — reads skill.md + config.md on session start
+│   ├── .windsurfrules         # Windsurf IDE hook — reads developer-agent + qa-agent on session start
 │   └── .github/
-│       └── copilot-instructions.md  # VS Code Copilot hook
+│       └── copilot-instructions.md  # VS Code Copilot hook — reads developer-agent + qa-agent
+├── qa-agent/
+│   ├── README.md              # QA agent overview — activation, customization, IDE usage
+│   ├── skill.md               # QA verification procedures — quality gates, test strategy, /ops/* contract
+│   ├── config.md              # Per-project QA config template — thresholds, env vars, acceptance criteria
+│   ├── TEST_RESULTS_TEMPLATE.md  # Quality gate report template
+│   └── examples/              # Example test patterns for rebuilt services
+│       ├── conftest.py        # Fixtures — OTEL disable, env vars, sys.modules mocks
+│       ├── test_routes.py     # API endpoint tests — status, health, main endpoint
+│       ├── test_ops_endpoints.py  # /ops/* SRE contract tests (14 endpoints)
+│       └── e2e/               # E2E shell scripts for live instance verification
+│           ├── test_health.sh
+│           ├── test_ops_contract.sh
+│           └── test_smoke.sh
 ├── sre-agent/
 │   ├── README.md              # SRE agent overview
 │   ├── skill.md               # SRE agent instructions template — diagnostic workflow and response framework
@@ -267,7 +292,6 @@ replicator/
 │   │   ├── service-down.md
 │   │   └── certificate-expiry.md
 │   ├── incidents/             # Agent-written incident reports
-│   │   └── .gitkeep
 │   └── runtime/               # SRE agent runtime service
 │       ├── README.md          # Architecture, setup, and deployment guide
 │       ├── main.py            # FastAPI webhook receiver + alert intake pipeline
@@ -293,6 +317,8 @@ replicator/
 │           └── deploy.auto.tfvars
 └── .windsurf/
     └── workflows/             # Windsurf workflow definitions
+        ├── developer.md       # /developer — reload developer + QA agent mid-session
+        ├── qa.md              # /qa — run all quality gates and generate verification report
         ├── populate-templates.md
         └── run-replicator.md
 ```
@@ -381,6 +407,7 @@ cd your-new-service/
 REBUILD=../replicator/rebuild-inputs/my-project
 cp ../replicator/STANDARDS.md .
 cp -r "$REBUILD/developer-agent/" .
+cp -r "$REBUILD/qa-agent/" .
 cp -r "$REBUILD/sre-agent/" .
 cp -r "$REBUILD/docs/" .
 cp ../replicator/prompting.md .
@@ -416,6 +443,7 @@ All outputs are written into the project directory under `rebuild-inputs/<projec
 | Feature parity matrix | `docs/feature-parity.md` | Every feature cataloged with rebuild status |
 | Data migration mapping | `docs/data-migration-mapping.md` | Schema mapping between legacy and target |
 | Developer agent config | `developer-agent/skill.md` + `config.md` | Project name, architecture, commands, CI/CD, environments |
+| QA agent config | `qa-agent/skill.md` + `config.md` + `TEST_RESULTS_TEMPLATE.md` + `examples/` | QA verification procedures, project-specific acceptance criteria, example test patterns |
 | SRE agent config | `sre-agent/skill.md` + `config.md` | Tech stack, service registry, SLO thresholds |
 
 ## Developer Agent
@@ -437,6 +465,30 @@ The `developer-agent/` directory contains the daily development instructions for
 
 > [!TIP]
 > **How it connects to the rebuild:** The rebuild process (`run.sh`) auto-populates `skill.md` and `config.md` from the PRD and chosen rebuild candidate (Step 7). Project name, architecture, development commands, CI/CD pipeline, Terraform settings, and observability config are filled in before the first line of code is written. Copy both files into the target repo, and the AI agent will follow the standards defined by the rebuild process.
+
+## QA Agent
+
+The `qa-agent/` directory contains quality verification procedures for rebuilt services. The QA agent independently verifies that the developer agent's output meets quality standards — it does **not** replace the developer agent, it checks it.
+
+**What it does:**
+1. **Re-runs every quality gate independently** — pytest, coverage, ruff, mypy, radon, vulture, pip-audit, interrogate, pylint, jscpd, C901. Compares results against the developer agent's `TEST_RESULTS.md` and flags discrepancies.
+2. **Verifies `/ops/*` endpoint compliance** — checks that every required diagnostic and remediation endpoint exists and returns the correct fields per the SRE contract.
+3. **Checks template conformance** — Dockerfile, entrypoint.sh, Helm chart, environment-check.sh, IDE instruction files must match template patterns.
+4. **Produces an independent quality report** — generates `TEST_RESULTS.md` from its own gate runs, not from the developer agent's claims.
+5. **Flags gaps for human review** — categorizes findings as Critical / Important / Minor. Does not silently fix business logic.
+
+**Components:**
+- **`skill.md`** — QA verification procedures: 5-level test strategy, 11 quality gates, `/ops/*` contract verification, acceptance criteria framework, comparison workflow, and bug reporting protocol. This file is universal — the same standards apply to every rebuilt service.
+- **`config.md`** — per-project QA configuration: test commands, quality gate thresholds, env var mapping, mock strategy, endpoint list, event types, and acceptance criteria. **Human operators customize this file** to add app-specific checks and adjust thresholds.
+- **`TEST_RESULTS_TEMPLATE.md`** — template for the quality gate report. Includes sections for tool versions, codebase metrics, core and extended gate results, bugs found, untestable items, and template conformance.
+- **`examples/`** — example test patterns including `conftest.py` (fixtures), `test_routes.py` (API tests), `test_ops_endpoints.py` (`/ops/*` contract tests), and E2E shell scripts for live instance verification.
+
+**How it's activated:**
+- **Always-on** — IDE instruction files (`.windsurfrules`, `.github/copilot-instructions.md`) load both developer and QA agent files on every session, giving the AI assistant awareness of both development standards and verification criteria.
+- **On-demand** — Type `/qa` in Windsurf to run the full QA verification workflow. Type `/developer` to reload all agent files mid-session.
+
+> [!TIP]
+> **How it connects to the rebuild:** The rebuild process (`run.sh`) auto-populates `config.md` from the PRD and developer agent config (Step 8d). Endpoint lists, env var mappings, and mock strategies are filled in before the first quality check. Human operators then customize the acceptance criteria — adding app-specific checks, adjusting thresholds, and defining verification rules beyond the universal standards. After the developer agent claims compliance (Step 12), activate the QA agent via `/qa` to independently verify.
 
 ## SRE Agent
 
