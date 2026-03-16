@@ -260,19 +260,6 @@ class TestOpsRemediationAuth:
         )
         assert resp.status_code == 400
 
-    def test_drain_requires_auth(self, client):
-        resp = client.post("/ops/drain")
-        assert resp.status_code == 401
-
-    def test_drain_sets_draining_flag(self, client):
-        import main as main_module  # noqa: I001
-
-        resp = client.post(
-            "/ops/drain",
-            headers={"Authorization": "Bearer ops-test"},
-        )
-        assert resp.status_code == 200
-        assert main_module.state.draining is True
 
 
 class TestWebhookSignatureVerification:

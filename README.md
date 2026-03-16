@@ -496,10 +496,10 @@ The `sre-agent/` directory contains a complete, deployable SRE agent that provid
 
 **What it does:**
 1. **Receives alerts from monitoring platforms** — webhooks from GCP Cloud Monitoring, New Relic, Datadog, or similar trigger the agent. The alert intake pipeline deduplicates by incident ID, serializes per service, enforces a global concurrency limit (default: 3), and orders queued alerts by priority.
-2. **Diagnoses issues** — calls `/ops/status`, `/ops/health`, `/ops/metrics`, `/ops/errors`, and `/ops/dependencies` on the affected service. Follows the dependency chain to find the root cause.
+2. **Diagnoses issues** — calls `/ops/status`, `/ops/health` (includes dependency health with latency), `/ops/metrics`, and `/ops/errors` on the affected service. Follows the dependency chain to find the root cause.
 3. **Classifies the problem** — infrastructure, application, dependency, data, or configuration.
-4. **Remediates safely** — executes playbook-defined actions (cache flush, circuit breaker reset, instance drain, log level adjustment, bounded scaling). All actions are idempotent and non-destructive. Scaling is limited to pre-configured min/max bounds per service.
-5. **Escalates when unsure** — if no playbook matches, remediation fails, or the issue involves data integrity, security, or infrastructure changes beyond bounded scaling, the agent escalates to a human via PagerDuty with a full diagnostic summary.
+4. **Remediates safely** — executes playbook-defined actions (cache flush, cache refresh, circuit breaker reset, log level adjustment). All actions are idempotent and non-destructive.
+5. **Escalates when unsure** — if no playbook matches, remediation fails, or the issue involves data integrity, security, or infrastructure changes, the agent escalates to a human via PagerDuty with a full diagnostic summary.
 6. **Tracks token usage** — every API call's token consumption is tracked per incident and globally. Configurable per-incident and hourly token budgets prevent runaway costs — the agent auto-escalates to a human when a budget is exceeded.
 7. **Documents everything** — writes an incident report for every alert it responds to, including token usage.
 

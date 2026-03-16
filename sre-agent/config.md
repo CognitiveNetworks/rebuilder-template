@@ -62,25 +62,9 @@
 | P3 — Medium | [Team lead] | [Slack channel] |
 | P4 — Low | [Team queue] | [GitHub issue] |
 
-## Scaling Limits
+## Scaling
 
-> Per-service scaling bounds. The SRE agent can only scale services that appear in this table, and only within the configured min/max range. Services without an entry here cannot be scaled by the agent — saturation alerts for those services will be escalated.
-
-| Service Name | Min Instances | Max Instances | Scaling Mode | Notes |
-|---|---|---|---|---|
-| *[service-name]* | *[min]* | *[max]* | *[application or cloud_native]* | *[notes]* |
-
-### Scaling Modes
-
-- **application** — the service manages its own scaling. The agent calls `POST /ops/scale` on the service with `{"target_instances": N, "reason": "..."}`. The service is responsible for adjusting its own instance count.
-- **cloud_native** — the agent adjusts the replica/instance count directly via cloud provider APIs (GKE HPA, Cloud Run instance count, ECS desired count). Requires write IAM permissions (see Cloud Platform Access below).
-
-### Scaling Safety
-
-- The agent always uses absolute targets, never relative increments.
-- The agent never scales below min or above max.
-- If the service is already at max and still saturated, the agent escalates for capacity planning.
-- Scaling is a remediation action, not a substitute for root cause analysis. If saturation is caused by a leak or runaway process, scaling will not fix it.
+> Scaling is managed by cloud-native mechanisms (KEDA, GKE HPA, Cloud Run auto-scaling, ECS auto-scaling) — not by application-level `/ops/scale` endpoints. The SRE agent does not scale services directly. If saturation alerts fire and auto-scaling cannot resolve them, the agent escalates to a human for capacity planning.
 
 ## Agent Auth
 

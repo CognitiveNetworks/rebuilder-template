@@ -58,7 +58,7 @@ Service is completely unavailable. All API requests fail. Downstream consumers r
 ### If the service is crash-looping:
 
 1. Check logs for the specific error
-2. If it's a dependency timeout (Redis, DB) → check `/ops/dependencies` on the service (if reachable) or check the dependency directly
+2. If it's a dependency timeout (Redis, DB) → check `/ops/health` on the service (if reachable) or check the dependency directly
 3. If the dependency has recovered, the service may self-heal on next restart attempt
 4. Wait 2 minutes for Cloud Run to retry
 5. Re-check `/ops/status`

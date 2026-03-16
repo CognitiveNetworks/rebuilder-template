@@ -4,7 +4,7 @@
 
 - Monitoring alert indicating TLS certificate is expiring or has expired
 - `/ops/errors` shows TLS handshake failures, certificate validation errors, or connection refused errors with TLS context
-- `/ops/dependencies` shows a dependency as unreachable with TLS-related error messages
+- `/ops/health` shows a dependency as unreachable with TLS-related error messages
 
 ## Diagnostic Steps
 
@@ -14,7 +14,7 @@
    - `certificate is not yet valid` — clock skew or premature cert rotation
    - `unable to verify the first certificate` — CA chain issue
    - `TLS handshake timeout` — may be cert-related or network-related
-3. **Check `/ops/dependencies`** — Identify which connections are failing with TLS errors.
+3. **Check `/ops/health`** — Identify which connections are failing with TLS errors.
    - Is it the service's own certificate (clients can't connect to it)?
    - Is it a dependency's certificate (this service can't connect to a downstream)?
    - Is it an external third-party API with an expired cert?
@@ -44,7 +44,7 @@ Certificate expiry is always an escalation. Include in the escalation:
 1. Which service is affected.
 2. Whether it's the service's own cert or a dependency's cert.
 3. The exact error message from `/ops/errors`.
-4. Which connections are failing from `/ops/dependencies`.
+4. Which connections are failing from `/ops/health`.
 5. When the alert first fired (to determine urgency — expired vs. expiring soon).
 
 ## Prevention Note

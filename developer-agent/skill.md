@@ -299,8 +299,8 @@ When creating a new service or component, it ships with these from day one — n
 - Structured logs only. Health checks are mandatory.
 - Every service must answer **"is this service healthy?"** via `/ops/status` — a composite rollup of Golden Signals, RED metrics, SLO burn rate, and dependency health into a single verdict: **healthy**, **degraded**, or **unhealthy**. The service owns this computation, not an external aggregator.
 - SRE agent `/ops/*` endpoints are part of the definition of done for every service. A service without them is not shippable. Build them alongside your feature endpoints, not after.
-  - **Diagnostics** (build with every service): `/ops/status`, `/ops/health`, `/ops/metrics`, `/ops/config`, `/ops/dependencies`, `/ops/errors`
-  - **Remediation** (build with every service): `/ops/drain`, `/ops/cache/flush`, `/ops/circuits`, `/ops/loglevel`, `/ops/scale` (for services with application-managed scaling)
+  - **Diagnostics** (build with every service): `/ops/status`, `/ops/health` (includes dependency health with latency), `/ops/metrics`, `/ops/config`, `/ops/cache`, `/ops/errors`
+  - **Remediation** (build with every service): `/ops/cache/flush`, `/ops/cache/refresh`, `/ops/circuits`, `/ops/loglevel`, `/ops/log-level`
   - All remediation endpoints must be idempotent and non-destructive. See `STANDARDS.md` for full spec.
   - **These endpoints are the contract with the SRE agent.** The SRE agent calls them to diagnose and remediate incidents. If `/ops/*` endpoints are down, the agent cannot operate. Treat `/ops/*` availability with the same priority as the main API — they should not be behind feature flags, separate deployments, or optional middleware that could fail independently.
 - **Logging:** *[Logging framework and format — e.g., "Structured JSON to stdout via Python `logging`"]*

@@ -99,44 +99,14 @@ check_get "/ops/status"       "status"         "Composite status"
 check_get "/ops/health"       "status"         "Health checks"
 check_get "/ops/metrics"      "golden_signals" "Golden Signals"
 check_get "/ops/config"       "service_name"   "Runtime config"
-check_get "/ops/dependencies" "dependencies"   "Dependency status"
 check_get "/ops/errors"       "total"          "Error summary"
 check_get "/ops/cache"        "entry_count"    "Cache stats"
-check_get "/ops/scale"        "scaling"        "Scale info"
 
 echo ""
 echo "── Remediation Endpoints (POST) ──"
 check_post "/ops/loglevel" '{"level":"DEBUG"}' "200" "level"
 check_post "/ops/loglevel" '{"level":"TRACE"}' "400" ""
 check_post "/ops/circuits" '{}' "200" "circuits"
-
-echo ""
-echo "── Drain Mode Lifecycle ──"
-# Enable drain
-check_post "/ops/drain" '{"enabled":true}' "200" "drain_mode"
-
-# Health should return 503 while draining
-DRAIN_HEALTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health")
-if [ "$DRAIN_HEALTH_CODE" = "503" ]; then
-  echo "   ✅ /health → 503 while draining"
-  PASS=$((PASS + 1))
-else
-  echo "   ❌ /health → $DRAIN_HEALTH_CODE while draining (expected 503)"
-  FAIL=$((FAIL + 1))
-fi
-
-# Disable drain
-check_post "/ops/drain" '{"enabled":false}' "200" "drain_mode"
-
-# Health should return 200 after undrain
-UNDRAIN_HEALTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health")
-if [ "$UNDRAIN_HEALTH_CODE" = "200" ]; then
-  echo "   ✅ /health → 200 after undrain"
-  PASS=$((PASS + 1))
-else
-  echo "   ❌ /health → $UNDRAIN_HEALTH_CODE after undrain (expected 200)"
-  FAIL=$((FAIL + 1))
-fi
 
 echo ""
 echo "═══════════════════════════════════════════════"

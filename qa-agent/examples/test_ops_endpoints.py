@@ -93,18 +93,6 @@ class TestOpsConfig:
         assert "service_name" in data
 
 
-class TestOpsDependencies:
-    @pytest.mark.asyncio
-    async def test_returns_dependency_list(
-        self, client, mock_rds_module, mock_kafka_module
-    ):
-        """GET /ops/dependencies returns status of each dependency."""
-        mock_rds_module.execute_query.return_value = [(1,)]
-        mock_kafka_module.health_check.return_value = True
-        response = await client.get("/ops/dependencies")
-        assert response.status_code == 200
-        data = response.json()
-        assert "dependencies" in data
 
 
 class TestOpsErrors:
@@ -128,54 +116,11 @@ class TestOpsCache:
         assert "entry_count" in data
 
 
-class TestOpsScale:
-    @pytest.mark.asyncio
-    async def test_returns_scaling_info(self, client):
-        """GET /ops/scale returns scaling strategy info."""
-        response = await client.get("/ops/scale")
-        assert response.status_code == 200
-        data = response.json()
-        assert "scaling" in data
 
 
 # ─── Remediation Endpoints (POST) ────────────────────────────────────
 
 
-class TestOpsDrain:
-    @pytest.mark.asyncio
-    async def test_enable_drain(self, client):
-        """POST /ops/drain enables drain mode."""
-        from app import routes
-
-        try:
-            response = await client.post("/ops/drain", json={"enabled": True})
-            assert response.status_code == 200
-            assert response.json()["drain_mode"] is True
-        finally:
-            routes._drain_mode = False
-
-    @pytest.mark.asyncio
-    async def test_disable_drain(self, client):
-        """POST /ops/drain disables drain mode."""
-        from app import routes
-
-        routes._drain_mode = True
-        try:
-            response = await client.post("/ops/drain", json={"enabled": False})
-            assert response.status_code == 200
-            assert response.json()["drain_mode"] is False
-        finally:
-            routes._drain_mode = False
-
-    @pytest.mark.asyncio
-    async def test_invalid_json_returns_400(self, client):
-        """POST /ops/drain with bad JSON returns 400."""
-        response = await client.post(
-            "/ops/drain",
-            content=b"not json",
-            headers={"content-type": "application/json"},
-        )
-        assert response.status_code == 400
 
 
 class TestOpsLogLevel:
@@ -238,36 +183,3 @@ class TestOpsCircuits:
 # ─── Drain Mode Integration ──────────────────────────────────────────
 
 
-class TestDrainModeIntegration:
-    """Verify the drain → health → undrain sequence works end-to-end."""
-
-    @pytest.mark.asyncio
-    async def test_drain_affects_health(
-        self, client, mock_rds_module, mock_kafka_module
-    ):
-        """Full drain mode lifecycle: enable → health 503 → disable → health 200."""
-        from app import routes
-
-        mock_rds_module.execute_query.return_value = [(1,)]
-        mock_kafka_module.health_check.return_value = True
-
-        try:
-            # Enable drain
-            resp = await client.post("/ops/drain", json={"enabled": True})
-            assert resp.json()["drain_mode"] is True
-
-            # Health should return 503
-            resp = await client.get("/health")
-            assert resp.status_code == 503
-            assert resp.json()["status"] == "draining"
-
-            # Disable drain
-            resp = await client.post("/ops/drain", json={"enabled": False})
-            assert resp.json()["drain_mode"] is False
-
-            # Health should return 200
-            resp = await client.get("/health")
-            assert resp.status_code == 200
-            assert resp.json()["status"] == "healthy"
-        finally:
-            routes._drain_mode = False

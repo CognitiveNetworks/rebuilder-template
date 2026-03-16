@@ -16,26 +16,24 @@
    - **Connection pool:** All connections to database or cache are in use. Possible connection leak or slow query holding connections.
    - **Queue depth:** Background job backlog growing faster than workers can process.
 3. **Check `/ops/health`** — Look at connection pool utilization and queue depths specifically.
-4. **Check `/ops/dependencies`** — Is the saturation caused by a slow dependency holding resources open?
+4. **Check `/ops/health`** — Is the saturation caused by a slow dependency holding resources open?
 5. **Check `/ops/errors`** — Are there timeout errors or rejected connection errors correlating with saturation?
 
 ## Remediation Actions
 
 | Condition | Action |
 |---|---|
-| Single instance saturated, others healthy | Drain the saturated instance via `/ops/drain`. The orchestrator should route traffic to healthy instances. |
+| Single instance saturated, others healthy | **Escalate** — the orchestrator (KEDA/HPA) should handle instance rotation. If it doesn’t, a human must investigate. |
 | Cache is consuming excessive memory | Flush cache via `/ops/cache/flush`. Monitor memory after flush. |
 | Connection pool exhausted due to tripped circuit (connections stuck waiting) | Reset circuit via `/ops/circuits`. Connections should release. |
-| All instances saturated — traffic spike (scaling configured) | Scale the service to a higher instance count within configured bounds using `scale_service`. Choose a target based on traffic increase (e.g., if traffic doubled, double the instance count, up to max). If already at configured max, **escalate** for capacity planning. |
-| All instances saturated — traffic spike (no scaling configured) | Drain the most impaired instance, then **escalate** — needs horizontal scaling. |
+| All instances saturated — traffic spike | **Escalate** — scaling is managed by cloud-native auto-scaling (KEDA/HPA/Cloud Run). If auto-scaling hasn’t resolved the issue, escalate for capacity planning. |
 | All instances saturated — no traffic spike | **Escalate** — likely a memory leak, connection leak, or runaway process. Scaling will not fix the root cause. Requires investigation. |
 | Disk saturation | **Escalate** — agent does not delete files or modify storage. |
-| Queue depth growing — workers cannot keep pace (scaling configured) | Scale workers to a higher instance count within configured bounds using `scale_service`. If already at max, **escalate**. |
-| Queue depth growing — workers cannot keep pace (no scaling configured) | **Escalate** — requires worker scaling or investigation into why jobs are failing/slow. |
+| Queue depth growing — workers cannot keep pace | **Escalate** — scaling is managed by cloud-native auto-scaling. If auto-scaling hasn’t resolved the issue, escalate for capacity planning or investigation into why jobs are failing/slow. |
 
 ## After Remediation
 
-1. Wait 5 minutes after drain, cache flush, or scaling action.
+1. Wait 5 minutes after cache flush or circuit reset.
 2. Re-check `/ops/status` and `/ops/metrics` saturation values.
 3. If saturation drops below warning threshold, monitor for 5 minutes.
 4. If scaling was performed, verify that new instances are healthy via `/ops/status`.
@@ -43,7 +41,7 @@
 
 ## Escalation Criteria
 
-- All instances are saturated and draining one does not relieve pressure on the others.
+- All instances are saturated and auto-scaling has not resolved the issue.
 - Service is already at its configured maximum instance count and still saturated.
 - Saturation is caused by a resource leak (memory, connections) that requires a code fix. Scaling will not resolve leaks.
 - Disk is full — requires log rotation, cleanup, or storage expansion.

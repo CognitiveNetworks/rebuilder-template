@@ -9,10 +9,10 @@ The agent uses any **OpenAI-compatible LLM API** (GitHub Models, OpenAI, Azure O
 1. **Receives alerts** — accepts webhooks from monitoring platforms (GCP Cloud Monitoring, New Relic, Datadog, etc.) via `POST /webhook/gcp`.
 2. **Deduplicates and prioritizes** — rejects duplicate alerts for the same incident, serializes alerts per service, and queues by priority (P1 first). Stale queued alerts expire automatically.
 3. **Runs the agentic loop** — on every alert, `agent.py` reads the full text of `skill.md` from disk and sends it to the LLM as the **system prompt** — the first message in the conversation. The alert payload is then sent as the first **user message**. This means `skill.md` is the single document that defines everything the agent knows, believes, and is allowed to do. The diagnostic workflow, escalation rules, remediation actions, hard safety constraints, and tech-stack context are all encoded in this one file. If it's not in the system prompt, the agent doesn't know about it. The LLM responds with function calls (`tool_use`), the agent executes them via `tools.py`, feeds the results back, and the loop continues — up to 20 turns or 5 minutes — until the issue is resolved or escalated.
-4. **Diagnoses the issue** — checks `/ops/status` for a composite health verdict, then drills into `/ops/health`, `/ops/metrics`, `/ops/errors`, and `/ops/dependencies`. Follows the dependency chain to find the root cause.
+4. **Diagnoses the issue** — checks `/ops/status` for a composite health verdict, then drills into `/ops/health` (includes dependency health with latency), `/ops/metrics`, and `/ops/errors`. Follows the dependency chain to find the root cause.
 5. **Classifies the problem** — infrastructure, application, dependency, data, or configuration.
 6. **Matches a playbook** — checks if the classification matches a remediation playbook (high error rate, high latency, dependency failure, saturation, certificate expiry).
-7. **Remediates safely** — executes playbook actions: cache flush, circuit breaker reset, instance drain, log level adjustment, and bounded scaling (within configured min/max limits). All actions are idempotent and non-destructive.
+7. **Remediates safely** — executes playbook actions: cache flush, cache refresh, circuit breaker reset, and log level adjustment. All actions are idempotent and non-destructive.
 8. **Verifies the fix** — waits 5 minutes after remediation, re-checks `/ops/status`, and monitors for stability.
 9. **Escalates when unsure** — if no playbook matches, remediation fails, or the issue involves data integrity, security, or infrastructure changes, the agent escalates to a human by creating a PagerDuty incident with a full diagnostic summary and recommended next action. Humans are only paged when the agent can't resolve it.
 10. **Documents everything** — writes a structured incident report for every alert it responds to, whether resolved or escalated.
@@ -20,8 +20,7 @@ The agent uses any **OpenAI-compatible LLM API** (GitHub Models, OpenAI, Azure O
 ## What It Does NOT Do
 
 - Deploy code or trigger rollbacks
-- Modify infrastructure beyond bounded scaling (no config changes, no IAM modifications, no instance type changes)
-- Scale beyond configured min/max limits per service
+- Modify infrastructure (no config changes, no IAM modifications, no instance type changes, no scaling — scaling is managed by cloud-native auto-scaling)
 - Access or rotate secrets
 - Delete data or modify persistent state
 - Guess. If the diagnosis is uncertain, it escalates.
@@ -80,7 +79,7 @@ It defines:
 - **Tech stack** — placeholder, populated per-project during rebuild
 - **Diagnostic workflow** — 7-step process: check status, drill into health/deps/errors, classify, remediate or escalate
 - **Escalation rules** — when to stop trying and hand off to a human (uses `create_pagerduty_incident` to page humans)
-- **Remediation actions** — cache flush, circuit reset, drain, log level, bounded scaling (all idempotent)
+- **Remediation actions** — cache flush, cache refresh, circuit reset, log level (all idempotent)
 - **Hard rules** — API-only access, no destructive actions, no deployments, no secret access, no guessing
 - **Incident report requirement** — must call `write_incident_report` and `email_incident_report` for every alert
 
@@ -132,7 +131,7 @@ The agent runtime. A Python/FastAPI application that:
 - Exposes its own `/ops/*` endpoints for self-observability (Golden Signals, composite health, dependencies)
 - Exports metrics, traces, and logs via OpenTelemetry (OTLP) to APM platforms — runs as a no-op when not configured
 - Emits structured JSON logs with trace ID correlation
-- Supports drain mode and graceful shutdown
+- Supports graceful shutdown
 - Includes unit and API tests, linter config (ruff), and `.env.example` for local development
 
 See `runtime/README.md` for setup, testing, deployment, and customization instructions.
@@ -168,8 +167,8 @@ Every interaction goes through one of three API surfaces:
 
 | Interface | Purpose | Examples |
 |---|---|---|
-| **Service `/ops/*` endpoints** | Diagnose and remediate application-level issues | `GET /ops/status`, `POST /ops/cache/flush`, `POST /ops/drain`, `POST /ops/scale` |
-| **Cloud provider APIs** | Infrastructure diagnostics + bounded scaling | Cloud Monitoring metrics, Cloud Logging queries, managed service status, replica count adjustments (within configured limits) |
+| **Service `/ops/*` endpoints** | Diagnose and remediate application-level issues | `GET /ops/status`, `GET /ops/health`, `POST /ops/cache/flush`, `POST /ops/circuits`, `POST /ops/loglevel` |
+| **Cloud provider APIs** | Infrastructure diagnostics | Cloud Monitoring metrics, Cloud Logging queries, managed service status |
 | **PagerDuty API** | Escalation to humans | Create incidents (Events API v2), add notes, manage incident lifecycle |
 
 This means the agent can only act on services that expose `/ops/*` endpoints. If a service doesn't implement the `/ops/*` contract defined in `STANDARDS.md`, the agent cannot diagnose or remediate it — it can only escalate based on the alert context alone.

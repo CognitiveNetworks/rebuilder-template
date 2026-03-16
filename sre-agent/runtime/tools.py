@@ -14,7 +14,6 @@ from typing import Any
 
 import httpx
 
-from models import ScalingConfig
 from telemetry import get_tracer
 
 logger = logging.getLogger(__name__)
@@ -28,9 +27,9 @@ TOOL_DEFINITIONS = [
         "description": (
             "Call an /ops/* endpoint on a monitored service. "
             "Use GET for diagnostic endpoints (status, health, metrics, config, "
-            "dependencies, errors). Use POST for remediation endpoints (drain, "
-            "cache/flush, circuits, loglevel). All remediation actions are "
-            "idempotent and non-destructive."
+            "errors, cache). Use POST for remediation endpoints ("
+            "cache/flush, cache/refresh, circuits, loglevel, log-level). "
+            "All remediation actions are idempotent and non-destructive."
         ),
         "input_schema": {
             "type": "object",
@@ -44,8 +43,8 @@ TOOL_DEFINITIONS = [
                     "description": (
                         "The /ops/* endpoint path. Examples: /ops/status, "
                         "/ops/health, /ops/metrics, /ops/errors, "
-                        "/ops/dependencies, /ops/config, /ops/drain, "
-                        "/ops/cache/flush, /ops/circuits, /ops/loglevel"
+                        "/ops/config, /ops/cache, /ops/cache/flush, "
+                        "/ops/cache/refresh, /ops/circuits, /ops/loglevel"
                     ),
                 },
                 "method": {
@@ -257,42 +256,6 @@ TOOL_DEFINITIONS = [
             "required": ["summary", "severity", "details"],
         },
     },
-    {
-        "name": "scale_service",
-        "description": (
-            "Scale a service to a target instance count. Two modes: "
-            "'application' calls POST /ops/scale on the service, "
-            "'cloud_native' adjusts replica count via cloud provider API. "
-            "The target must be within the service's configured min/max bounds. "
-            "Always use an absolute target, never a relative increment."
-        ),
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "service_name": {
-                    "type": "string",
-                    "description": "Name of the service from the service registry.",
-                },
-                "target_instances": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "description": (
-                        "The desired instance count. Must be between the "
-                        "service's configured min and max."
-                    ),
-                },
-                "reason": {
-                    "type": "string",
-                    "description": (
-                        "Why scaling is needed. Logged in the incident report. "
-                        "Example: 'All instances saturated due to traffic spike, "
-                        "scaling from 3 to 6 instances.'"
-                    ),
-                },
-            },
-            "required": ["service_name", "target_instances", "reason"],
-        },
-    },
 ]
 
 
@@ -306,7 +269,6 @@ class ToolExecutor:
         pagerduty_api_token: str,
         incidents_dir: str,
         trace_id: str = "",
-        scaling_config: dict[str, ScalingConfig] | None = None,
         smtp_config: dict[str, str] | None = None,
         pagerduty_routing_key: str = "",
     ) -> None:
@@ -316,7 +278,6 @@ class ToolExecutor:
         self.pagerduty_routing_key = pagerduty_routing_key
         self.incidents_dir = Path(incidents_dir)
         self.trace_id = trace_id
-        self.scaling_config = scaling_config or {}
         self.smtp_config = smtp_config or {}
         self.http_client = httpx.AsyncClient(timeout=30.0)
 
@@ -335,7 +296,6 @@ class ToolExecutor:
             "create_pagerduty_incident": self._create_pagerduty_incident,
             "write_incident_report": self._write_incident_report,
             "email_incident_report": self._email_incident_report,
-            "scale_service": self._scale_service,
         }
 
         handler = handlers.get(tool_name)
@@ -717,104 +677,6 @@ class ToolExecutor:
                 self.trace_id,
             )
             return json.dumps({"error": f"Email send failed: {str(e)}"})
-
-    async def _scale_service(self, input: dict[str, Any]) -> str:
-        """Scale a service to a target instance count within configured bounds."""
-        tracer = get_tracer()
-        service_name = input.get("service_name", "")
-        target = input.get("target_instances", 0)
-        reason = input.get("reason", "")
-
-        if not service_name or not target or not reason:
-            return json.dumps(
-                {"error": "service_name, target_instances, and reason are required"}
-            )
-
-        # Validate service has scaling config
-        scaling = self.scaling_config.get(service_name)
-        if not scaling:
-            return json.dumps({
-                "error": f"Service '{service_name}' does not have scaling limits "
-                f"configured. Cannot scale. Escalate to a human for "
-                f"capacity changes."
-            })
-
-        # Validate bounds
-        if target < scaling.min_instances:
-            return json.dumps({
-                "error": f"Target {target} is below minimum ({scaling.min_instances}) "
-                f"for service '{service_name}'."
-            })
-        if target > scaling.max_instances:
-            return json.dumps({
-                "error": f"Target {target} exceeds maximum ({scaling.max_instances}) "
-                f"for service '{service_name}'. Escalate for capacity planning."
-            })
-
-        logger.info(
-            "Scaling service: service=%s target=%d mode=%s reason=%s trace_id=%s",
-            service_name,
-            target,
-            scaling.mode,
-            reason,
-            self.trace_id,
-        )
-
-        if scaling.mode == "application":
-            # Call POST /ops/scale on the service
-            base_url = self.services.get(service_name)
-            if not base_url:
-                return json.dumps(
-                    {"error": f"Service '{service_name}' not in service registry"}
-                )
-
-            url = f"{base_url.rstrip('/')}/ops/scale"
-            headers = self._base_headers()
-            if self.ops_auth_token:
-                headers["Authorization"] = f"Bearer {self.ops_auth_token}"
-
-            with tracer.start_as_current_span(
-                "sre_agent.tool.scale_service",
-                attributes={
-                    "scale.service": service_name,
-                    "scale.target": target,
-                    "scale.mode": "application",
-                },
-            ):
-                response = await self.http_client.post(
-                    url,
-                    headers=headers,
-                    json={"target_instances": target, "reason": reason},
-                )
-
-            content_type = response.headers.get("content-type", "")
-            if content_type.startswith("application/json"):
-                body_data = response.json()
-            else:
-                body_data = response.text
-
-            return json.dumps({
-                "status": "scaling_requested",
-                "mode": "application",
-                "service": service_name,
-                "target_instances": target,
-                "response_status": response.status_code,
-                "response_body": body_data,
-            })
-
-        elif scaling.mode == "cloud_native":
-            # TODO: Implement for your cloud provider.
-            # GCP Cloud Run: Use google-cloud-run to update service instance count
-            # GCP GKE: Use google-cloud-container to update deployment replicas
-            # AWS ECS: Use boto3 to update service desired count
-            # AWS EKS: Use boto3 to update deployment replicas
-            return json.dumps({
-                "error": "Cloud-native scaling not yet implemented. "
-                "Implement _scale_service cloud_native mode for your "
-                "cloud provider in tools.py."
-            })
-
-        return json.dumps({"error": f"Unknown scaling mode: {scaling.mode}"})
 
     async def close(self) -> None:
         """Clean up HTTP client."""

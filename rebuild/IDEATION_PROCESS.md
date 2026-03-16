@@ -1045,8 +1045,8 @@ After the code is written, perform a line-by-line compliance check against every
 - [ ] CI/CD pipeline — must include all stages: lint, test, build, **scan** (container vulnerability), auto-deploy to dev on merge, terraform plan on PR
 - [ ] Terraform module — `terraform/` with environment-specific variable files for dev, staging, prod
 - [ ] `/health` endpoint — must check critical dependencies and **return 503 if unhealthy** (not always 200)
-- [ ] `/ops/*` diagnostic endpoints — verify all 6 exist and return real data: `/ops/status`, `/ops/health`, `/ops/metrics`, `/ops/config`, `/ops/dependencies`, `/ops/errors`
-- [ ] `/ops/*` remediation endpoints — verify all 5 exist and are functional: `/ops/drain`, `/ops/cache/flush`, `/ops/circuits`, `/ops/loglevel`, `/ops/scale`
+- [ ] `/ops/*` diagnostic endpoints — verify all 6 exist and return real data: `/ops/status`, `/ops/health` (includes dependency health with latency), `/ops/metrics`, `/ops/config`, `/ops/errors`, `/ops/cache`
+- [ ] `/ops/*` remediation endpoints — verify all exist and are functional: `/ops/cache/flush`, `/ops/cache/refresh`, `/ops/circuits`, `/ops/loglevel`, `/ops/log-level`
 - [ ] `/ops/metrics` specifically — must be wired to middleware that records every request. Must return real Golden Signals (latency p50/p95/p99, traffic, errors, saturation) and RED metrics (rate, errors, duration). Placeholder zeros are not compliant.
 - [ ] OpenAPI spec — auto-generated or checked into repo
 - [ ] OpenAPI response models — every endpoint (GET, POST, PUT, DELETE) must declare a Pydantic `response_model`. No bare `dict` returns anywhere.

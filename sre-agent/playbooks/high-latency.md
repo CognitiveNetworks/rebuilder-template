@@ -12,7 +12,7 @@
 2. **Check `/ops/metrics`** — Review latency distribution (p50, p95, p99).
    - Is p50 elevated (everything is slow) or only p99 (tail latency)?
    - Check saturation — CPU, memory, connection pool utilization. Is the service resource-constrained?
-3. **Check `/ops/dependencies`** — Is a downstream service slow?
+3. **Check `/ops/health`** — Is a downstream service slow?
    - If a dependency shows degraded latency, the root cause is likely downstream. Follow the chain.
 4. **Check `/ops/health`** — Are connection pools exhausted? Queue depths elevated?
 5. **Check `/ops/errors`** — Are there timeout errors correlating with the latency spike?
@@ -23,10 +23,9 @@
 |---|---|
 | Latency caused by stale or oversized cache responses | Flush cache via `/ops/cache/flush` |
 | Latency caused by a slow dependency with an open circuit | Reset circuit via `/ops/circuits` (only if dependency has recovered) |
-| Single instance with high latency, others normal | Drain the slow instance via `/ops/drain` |
+| Single instance with high latency, others normal | **Escalate** — the orchestrator (KEDA/HPA) should handle instance rotation |
 | Connection pool exhaustion | **Escalate** — may need pool size increase or connection leak investigation |
-| CPU/memory saturation across all instances (scaling configured) | Scale the service to a higher instance count within configured bounds using `scale_service`. Choose a target based on load increase. If already at configured max, **escalate**. |
-| CPU/memory saturation across all instances (no scaling configured) | Drain one instance if it helps, then **escalate** — likely needs scaling |
+| CPU/memory saturation across all instances | **Escalate** — scaling is managed by cloud-native auto-scaling (KEDA/HPA/Cloud Run). If auto-scaling hasn’t resolved the issue, escalate for capacity planning |
 | Downstream dependency is the root cause | Triage the dependency service (run this workflow against it) |
 
 ## After Remediation

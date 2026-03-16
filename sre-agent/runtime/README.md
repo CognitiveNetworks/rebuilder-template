@@ -47,7 +47,6 @@ Monitoring Platform Alert (webhook)
 │                          │  call_ops_endpoint  → GET/POST /ops/*
 │                          │  query_cloud_logs   → Cloud Logging / CloudWatch
 │                          │  query_cloud_metrics→ Cloud Monitoring / CloudWatch
-│                          │  scale_service      → POST /ops/scale or cloud API
 │                          │  escalate_pagerduty → PagerDuty API (escalation)
 │                          │  acknowledge_alert  → PagerDuty API (escalation)
 │                          │  write_incident_report → local filesystem
@@ -145,7 +144,7 @@ The spec is generated from Pydantic models and endpoint type annotations — it 
 | `INCIDENTS_DIR` | No | Incident report output dir (default: `/app/incidents`) |
 | `PAGERDUTY_ROUTING_KEY` | Yes | PagerDuty Events API v2 integration key — the agent uses this to create PagerDuty incidents on escalation. |
 | `PAGERDUTY_ESCALATION_POLICY_ID` | No | PagerDuty escalation policy for human handoff |
-| `SCALING_LIMITS` | No | Comma-separated scaling bounds: `name\|min\|max\|mode` (e.g., `api\|2\|10\|application`) |
+| `SCALING_LIMITS` | No | *(Deprecated — scaling is managed by cloud-native auto-scaling)* |
 | `MAX_CONCURRENT_ALERTS` | No | Max concurrent agent runs (default: `3`). Excess alerts queue with priority ordering. |
 | `ALERT_QUEUE_TTL_SECONDS` | No | Queued alert expiry in seconds (default: `600`). Stale alerts are discarded. |
 | `MAX_TOKENS_PER_INCIDENT` | No | Per-incident token ceiling (default: `100000`). Agent escalates when exceeded. `0` = unlimited. |
@@ -288,10 +287,9 @@ The runtime exposes `/ops/*` endpoints for its own observability, following the 
 | Endpoint | Description |
 |---|---|
 | `/ops/status` | Composite health verdict (healthy/degraded/unhealthy) with Golden Signals breakdown |
-| `/ops/health` | Deep dependency check — probes PagerDuty API, verifies system prompt |
+| `/ops/health` | Deep dependency check (includes dependency health with latency) — probes PagerDuty API, verifies system prompt |
 | `/ops/metrics` | Golden Signals and RED metrics snapshot — latency percentiles, request rate, error rate, saturation |
 | `/ops/config` | Sanitized running configuration — no secrets exposed |
-| `/ops/dependencies` | Dependency graph with per-dependency status |
 | `/ops/errors` | Recent errors with types, counts, and details |
 
 ### Remediation (POST, requires `OPS_AUTH_TOKEN`)
@@ -299,7 +297,6 @@ The runtime exposes `/ops/*` endpoints for its own observability, following the 
 | Endpoint | Description |
 |---|---|
 | `/ops/loglevel` | Adjust log verbosity without a redeploy. Body: `{"level": "DEBUG"}` |
-| `/ops/drain` | Enter drain mode — stop accepting new webhooks, finish in-flight work |
 
 ### Design Decisions
 
@@ -352,7 +349,6 @@ OTEL uses standard environment variables — no custom configuration:
 - `sre_agent.agent.turn` — per-turn span in the agent loop
 - `sre_agent.tool.execute` — tool execution span with tool name
 - `sre_agent.tool.call_ops_endpoint` — outbound `/ops/*` call span
-- `sre_agent.tool.scale_service` — scaling operation span
 - Outbound HTTP spans via httpx auto-instrumentation
 
 **Logs** — structured JSON logs bridged to OTEL with trace/span ID correlation.
@@ -431,7 +427,6 @@ During incident response, the agent enters an agentic loop where it decides whic
 - `escalate_pagerduty` — escalate an incident to a human responder
 - `acknowledge_alert` — acknowledge or resolve a PagerDuty incident
 - `write_incident_report` — write a markdown incident report
-- `scale_service` — scale a service within configured min/max bounds
 
 To add new tools:
 

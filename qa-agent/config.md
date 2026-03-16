@@ -119,12 +119,10 @@
 | GET | `/ops/health` | 200 | Dependency-level health |
 | GET | `/ops/metrics` | 200 | Golden Signals + RED |
 | GET | `/ops/config` | 200 | Non-sensitive runtime config |
-| GET | `/ops/dependencies` | 200 | Dependency status list |
 | GET | `/ops/errors` | 200 | Error summary |
 | GET | `/ops/cache` | 200 | Cache statistics |
-| GET | `/ops/scale` | 200 | Scaling info |
-| POST | `/ops/drain` | 200 | Enable/disable drain mode |
 | POST | `/ops/loglevel` | 200 or 400 | Change log level |
+| POST | `/ops/log-level` | 200 or 400 | Change log level (canonical path) |
 | POST | `/ops/cache/flush` | 200 or 500 | Flush and refresh cache |
 | POST | `/ops/cache/refresh` | 200 | Refresh cache from source |
 | POST | `/ops/circuits` | 200 | Circuit breaker state |

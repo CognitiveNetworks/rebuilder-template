@@ -12,7 +12,7 @@
 2. **Check `/ops/errors`** — Get error types, counts, and sample stack traces.
    - Are the errors a single type (one root cause) or multiple types (systemic issue)?
    - Are the stack traces pointing to application code or a dependency call?
-3. **Check `/ops/dependencies`** — Is a downstream service failing?
+3. **Check `/ops/health`** — Is a downstream service failing?
    - If yes, follow the dependency chain — the error source may be upstream.
 4. **Check `/ops/metrics`** — Look at traffic and latency.
    - Did traffic spike before errors started? (load-related)
@@ -26,7 +26,7 @@
 |---|---|
 | Errors caused by a dependency that has recovered | Reset circuit breakers via `/ops/circuits` |
 | Errors correlate with stale cache data | Flush cache via `/ops/cache/flush` |
-| Single instance producing all errors | Drain the instance via `/ops/drain` |
+| Single instance producing all errors | **Escalate** — the orchestrator (KEDA/HPA) should handle instance rotation |
 | Errors are application bugs (NPE, type errors, logic errors) | **Escalate** — requires a code fix |
 | Errors across all instances with no dependency issue | **Escalate** — likely a bad deployment or config change |
 

@@ -4,12 +4,12 @@
 
 - Monitoring alert indicating a downstream service or external dependency is unreachable
 - `/ops/status` shows **degraded** or **unhealthy** with dependency health as the contributing signal
-- `/ops/dependencies` shows one or more dependencies as impaired or unreachable
+- `/ops/health` shows one or more dependencies as impaired or unreachable
 
 ## Diagnostic Steps
 
 1. **Check `/ops/status`** — Confirm the service is degraded/unhealthy.
-2. **Check `/ops/dependencies`** — Identify which dependencies are impaired.
+2. **Check `/ops/health`** — Identify which dependencies are impaired (dependency health with latency is included in this endpoint).
    - Is it an internal service or an external third-party API?
    - Is it the database, cache, or a downstream microservice?
 3. **For each impaired dependency:**
@@ -33,7 +33,7 @@
 ## After Remediation
 
 1. If a circuit was reset, wait 5 minutes.
-2. Re-check `/ops/status` and `/ops/dependencies`.
+2. Re-check `/ops/status` and `/ops/health`.
 3. If the dependency shows as healthy and the service status improves, monitor for 5 minutes.
 4. If the dependency remains impaired, escalate.
 

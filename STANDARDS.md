@@ -161,17 +161,16 @@
 - Every service must expose a set of operational API endpoints designed for consumption by SRE agents. These endpoints allow agents to understand system state, diagnose issues, and take safe remediation actions without human intervention.
 - **Read-only diagnostic endpoints** (no auth escalation required):
   - `/ops/status` — composite health verdict (healthy / degraded / unhealthy) with breakdown of Golden Signals, RED metrics, SLO burn rate, and dependency status. This is the first endpoint an agent or human checks. One call answers "is this service healthy?"
-  - `/ops/health` — deep health check including all downstream dependencies, connection pools, and queue depths. Returns structured JSON with per-dependency status, not just a 200 OK.
+  - `/ops/health` — deep health check including all downstream dependencies (with latency), connection pools, and queue depths. Returns structured JSON with per-dependency status, not just a 200 OK. This is the single source of dependency health — no separate `/ops/dependencies` endpoint.
   - `/ops/metrics` — current Golden Signals and RED metrics snapshot. Agents use this to assess individual signal details after `/ops/status` flags a concern.
   - `/ops/config` — running configuration (sanitized — no secrets). Allows agents to verify expected vs. actual config without SSH access.
-  - `/ops/dependencies` — dependency graph with status of each. Shows what this service talks to and whether those connections are healthy.
   - `/ops/errors` — recent error summary with counts, types, and sample stack traces. Gives agents enough context to classify the failure without tailing logs.
 - **Safe remediation endpoints** (require SRE agent auth role, all actions are idempotent and non-destructive):
-  - `/ops/drain` — put the service instance into drain mode. It stops accepting new traffic but finishes in-flight requests. Does not kill the process.
   - `/ops/cache/flush` — flush application-level caches. Safe to call at any time. The service rebuilds cache from source on next request.
+  - `/ops/cache/refresh` — refresh application-level caches from the source of truth. Safe to call at any time.
   - `/ops/circuits` — view and reset circuit breakers. Agents can identify tripped circuits and reset them after the downstream dependency recovers.
   - `/ops/loglevel` — temporarily adjust log verbosity for debugging without a redeploy. Reverts to default after a configurable TTL.
-  - `/ops/scale` — set the target instance count for services with application-managed scaling. Body: `{"target_instances": N, "reason": "..."}`. Returns current and target counts. Bounded by the service's configured min/max limits. Services that scale through cloud-native mechanisms (GKE HPA, Cloud Run, ECS) do not implement this endpoint — the SRE agent scales them directly via cloud provider APIs.
+  - `/ops/log-level` — canonical path alias for `/ops/loglevel`.
 - **Hard rules for SRE agent endpoints:**
   - No endpoint may delete data, drop connections to databases, restart processes, or modify persistent state. Agents diagnose and stabilize — they do not perform destructive operations.
   - All remediation endpoints are idempotent. Calling them twice produces the same result as calling them once.

@@ -4,7 +4,6 @@ import json
 
 import pytest
 
-from models import ScalingConfig, ScalingMode
 from tools import TOOL_DEFINITIONS, ToolExecutor
 
 
@@ -33,7 +32,6 @@ class TestToolDefinitions:
             "escalate_pagerduty",
             "acknowledge_alert",
             "write_incident_report",
-            "scale_service",
         }
         assert expected == names
 
@@ -192,117 +190,3 @@ class TestToolExecutor:
         assert executor.http_client.is_closed
 
 
-class TestScaleService:
-    """Tests for the scale_service tool."""
-
-    @pytest.fixture()
-    def scaling_config(self):
-        return {
-            "api": ScalingConfig(
-                service_name="api",
-                min_instances=2,
-                max_instances=10,
-                mode=ScalingMode.APPLICATION,
-            ),
-            "worker": ScalingConfig(
-                service_name="worker",
-                min_instances=1,
-                max_instances=5,
-                mode=ScalingMode.CLOUD_NATIVE,
-            ),
-        }
-
-    @pytest.fixture()
-    def executor_with_scaling(self, tmp_path, scaling_config):
-        return ToolExecutor(
-            services={"api": "https://api.example.com", "worker": "https://worker.example.com"},
-            ops_auth_token="test-token",
-            pagerduty_api_token="pd-token",
-            incidents_dir=str(tmp_path),
-            trace_id="test-trace-123",
-            scaling_config=scaling_config,
-        )
-
-    @pytest.mark.asyncio
-    async def test_scale_rejects_service_not_in_scaling_config(self, tmp_path):
-        executor = ToolExecutor(
-            services={"api": "https://api.example.com"},
-            ops_auth_token="test-token",
-            pagerduty_api_token="pd-token",
-            incidents_dir=str(tmp_path),
-            trace_id="test-trace-123",
-            scaling_config={},
-        )
-        result = await executor.execute(
-            "scale_service",
-            {"service_name": "api", "target_instances": 5, "reason": "traffic spike"},
-        )
-        parsed = json.loads(result)
-        assert "error" in parsed
-        assert "scaling limits" in parsed["error"].lower()
-
-    @pytest.mark.asyncio
-    async def test_scale_rejects_below_min(self, executor_with_scaling):
-        result = await executor_with_scaling.execute(
-            "scale_service",
-            {"service_name": "api", "target_instances": 1, "reason": "scale down"},
-        )
-        parsed = json.loads(result)
-        assert "error" in parsed
-        assert "below minimum" in parsed["error"].lower()
-
-    @pytest.mark.asyncio
-    async def test_scale_rejects_above_max(self, executor_with_scaling):
-        result = await executor_with_scaling.execute(
-            "scale_service",
-            {"service_name": "api", "target_instances": 15, "reason": "scale up"},
-        )
-        parsed = json.loads(result)
-        assert "error" in parsed
-        assert "exceeds maximum" in parsed["error"].lower()
-
-    @pytest.mark.asyncio
-    async def test_scale_rejects_missing_fields(self, executor_with_scaling):
-        result = await executor_with_scaling.execute(
-            "scale_service",
-            {"service_name": "", "target_instances": 5, "reason": "test"},
-        )
-        parsed = json.loads(result)
-        assert "error" in parsed
-
-    @pytest.mark.asyncio
-    async def test_scale_cloud_native_returns_not_implemented(self, executor_with_scaling):
-        result = await executor_with_scaling.execute(
-            "scale_service",
-            {"service_name": "worker", "target_instances": 3, "reason": "queue backlog"},
-        )
-        parsed = json.loads(result)
-        assert "error" in parsed
-        assert "not yet implemented" in parsed["error"].lower()
-
-    @pytest.mark.asyncio
-    async def test_scale_application_rejects_unknown_service_in_registry(self, tmp_path):
-        """Service in scaling config but not in service registry."""
-        scaling_config = {
-            "ghost": ScalingConfig(
-                service_name="ghost",
-                min_instances=1,
-                max_instances=5,
-                mode=ScalingMode.APPLICATION,
-            ),
-        }
-        executor = ToolExecutor(
-            services={},
-            ops_auth_token="test-token",
-            pagerduty_api_token="pd-token",
-            incidents_dir=str(tmp_path),
-            trace_id="test-trace-123",
-            scaling_config=scaling_config,
-        )
-        result = await executor.execute(
-            "scale_service",
-            {"service_name": "ghost", "target_instances": 3, "reason": "test"},
-        )
-        parsed = json.loads(result)
-        assert "error" in parsed
-        assert "not in service registry" in parsed["error"].lower()

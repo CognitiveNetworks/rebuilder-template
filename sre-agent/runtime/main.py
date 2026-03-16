@@ -742,13 +742,6 @@ async def ops_config() -> dict[str, Any]:
     }
 
 
-@app.get("/ops/dependencies")
-async def ops_dependencies() -> dict[str, Any]:
-    """Dependency graph with status of each."""
-    deps = await _check_dependencies()
-    return {"service": "sre-agent", "dependencies": deps}
-
-
 @app.get("/ops/errors")
 async def ops_errors() -> dict[str, Any]:
     """Recent errors with types and counts."""
@@ -782,22 +775,6 @@ async def ops_loglevel(request: Request) -> dict[str, str]:
     logging.root.setLevel(getattr(logging, level))
     logger.info("Log level changed to %s", level)
     return {"status": "ok", "level": level}
-
-
-@app.post("/ops/drain")
-async def ops_drain(request: Request) -> dict[str, Any]:
-    """Put the service into drain mode.
-
-    Stops accepting new webhooks but finishes in-flight alert processing.
-    Does not kill the process.
-    """
-    _require_ops_auth(request)
-    state.draining = True
-    logger.info("Service entering drain mode")
-    return {
-        "status": "draining",
-        "active_incidents": len(state.active_incidents),
-    }
 
 
 # --- Internal Helpers ---

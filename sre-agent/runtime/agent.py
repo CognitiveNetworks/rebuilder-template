@@ -127,7 +127,6 @@ async def run_agent(
         pagerduty_api_token=config.pagerduty_api_token,
         incidents_dir=config.incidents_dir,
         trace_id=trace_id,
-        scaling_config=config.scaling_limits,
         smtp_config={
             "host": config.smtp_host,
             "port": config.smtp_port,

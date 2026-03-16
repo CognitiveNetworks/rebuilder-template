@@ -184,28 +184,18 @@ Every rebuilt service with `/ops/*` endpoints must pass these contract tests:
 | `/ops/health` | `status`, `checks` (dict of dependency → status) | 200 |
 | `/ops/metrics` | `golden_signals.latency`, `.traffic`, `.errors`, `.saturation`, `red`, `uptime_seconds` | 200 |
 | `/ops/config` | `service_name`, non-sensitive runtime config | 200 |
-| `/ops/dependencies` | `dependencies` (list of dependency status objects) | 200 |
 | `/ops/errors` | `total`, `recent` | 200 |
 | `/ops/cache` | `entry_count` (if service uses caching) | 200 |
-| `/ops/scale` | `scaling` with strategy info | 200 |
 
 ### Remediation Endpoints (POST)
 
 | Endpoint | Input | Required Behavior |
 |----------|-------|-------------------|
-| `/ops/drain` | `{"enabled": true/false}` | Returns `drain_mode` state; health returns 503 when draining |
 | `/ops/loglevel` | `{"level": "DEBUG\|INFO\|WARNING\|ERROR"}` | Returns new `level`; invalid level returns 400 |
+| `/ops/log-level` | `{"level": "DEBUG\|INFO\|WARNING\|ERROR"}` | Canonical path alias for `/ops/loglevel` |
 | `/ops/cache/flush` | (none) | Returns `status`; refreshes cache from source |
 | `/ops/cache/refresh` | (none) | Returns `status`; refreshes cache from source |
 | `/ops/circuits` | (none) | Returns `circuits` dict with per-dependency state |
-
-### Drain Mode Verification
-
-Drain mode is critical for graceful shutdown. Verify this sequence:
-1. `POST /ops/drain {"enabled": true}` → 200, `drain_mode: true`
-2. `GET /health` → 503, `status: draining`
-3. `POST /ops/drain {"enabled": false}` → 200, `drain_mode: false`
-4. `GET /health` → 200, `status: healthy`
 
 ## TEST_RESULTS.md Generation
 
