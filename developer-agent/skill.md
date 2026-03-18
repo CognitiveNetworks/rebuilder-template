@@ -73,6 +73,12 @@ These rules apply to every task, every commit, every session. They are not situa
 - Do not include SRE Agent configuration for library repos — only for deployable services.
 - DAPR runs as a sidecar only. Do not add DAPR client libraries to application code. Document which DAPR components are in use and their binding types.
 
+## Required Development Tooling
+
+The required development tools for this project are listed in `config.md`. Those tools are the baseline quality gates — you may add additional tools, but you must not skip, replace, or weaken any tool listed there. If a tool reports errors, fix the code — do not disable the rule, suppress the warning, or remove the tool from the pipeline.
+
+Every tool in `config.md` must pass cleanly before any commit is pushed. "It works" is not sufficient — it must also pass the full toolchain. If you are building a new service or modifying an existing one, the CI pipeline must enforce all of them. Do not ship a CI pipeline that omits any of them.
+
 ## Testing
 
 - Tests are not optional. Every bug fix gets a regression test.

@@ -27,6 +27,19 @@
 | *[run command]* | Run locally |
 | *[seed command]* | Seed local database |
 
+## Required Development Tooling
+
+> Quality gate tools that must pass before every commit. See `skill.md` for enforcement rules.
+
+| Tool | Purpose | Command |
+|---|---|---|
+| **pylint** | Static analysis and code quality | *[e.g., `pylint src/`]* |
+| **mypy** | Static type checking (strict mode) | *[e.g., `mypy src/`]* |
+| **black** | Code formatting | *[e.g., `black --check src/ tests/`]* |
+| **pytest** | Unit, API, integration, and E2E tests | *[e.g., `pytest tests/`]* |
+| **complexipy** | Cyclomatic complexity enforcement | *[e.g., `complexipy src/`]* |
+| **Helm Unittest** | Helm chart template validation | *[e.g., `helm unittest charts/`]* |
+
 ## CI/CD
 
 - **Pipeline Tool:** *[GitHub Actions, Cloud Build, etc.]*
