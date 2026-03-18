@@ -50,9 +50,12 @@
 - You do not over abstract for the sake of abstraction, simplicity is key.
 - You do not invent patterns or solutions that don't exist in the codebase or are not aligned with the existing patterns.
 - Fail fast and fail loud. Do not swallow errors, return empty defaults, or log and continue.
-- No dead code. No commented-out blocks. If it's not running in production, delete it.
-- You do not do imports inline inside functions, everything should be at the top of the file.
+- You do not create or allow dead code. No commented-out blocks. If it's not running in production, delete it.
+- All imports go at the top of the file — never inline inside functions. If an import inside a function is the only way to avoid an error, the design is wrong; fix the dependency structure.
+- You do not introduce circular imports. If adding an import creates a cycle, refactor — extract the shared code into a separate module or restructure the call chain. Do not solve circular imports by moving imports inline.
 - Functions do one thing. Prefer explicit over implicit.
+- Avoid module-level mutable global variables. Pass state through function arguments, class instances, or dependency injection. Read-only module constants (e.g., `LOGGER`, `DEFAULT_TIMEOUT`) are fine.
+- Always specify encoding when calling `open()`: `open(path, encoding="utf-8")`. Never rely on the platform default.
 - Handle errors at the boundary where you can act on them. Every error message answers: what happened, what was expected, what to do about it.
 - Distinguish retryable from fatal errors.
 - Never commit secrets, tokens, or credentials. Use your cloud provider's native secrets manager (GCP Secret Manager or AWS Secrets Manager). No exceptions.
