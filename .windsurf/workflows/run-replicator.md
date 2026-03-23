@@ -5,6 +5,8 @@ description: Run the full replicator process on a legacy repo. Triggered by "run
 # Run Replicator
 
 This workflow runs the full legacy rebuild process on a project directory.
+It invokes the `@legacy-rebuild` skill which contains the process definition
+and supporting file references.
 
 ## Prerequisites
 
@@ -24,6 +26,7 @@ The project directory must exist under `rebuild-inputs/` with:
    mkdir -p <project-dir>/output
    mkdir -p <project-dir>/sre-agent
    mkdir -p <project-dir>/developer-agent
+   mkdir -p <project-dir>/qa-agent
    mkdir -p <project-dir>/docs/adr
    mkdir -p <project-dir>/docs/postmortems
    ```
@@ -35,10 +38,13 @@ The project directory must exist under `rebuild-inputs/` with:
    - `developer-agent/config.md` → `<project-dir>/developer-agent/config.md`
    - `developer-agent/.windsurfrules` → `<project-dir>/developer-agent/.windsurfrules`
    - `developer-agent/.github/copilot-instructions.md` → `<project-dir>/developer-agent/.github/copilot-instructions.md`
+   - `qa-agent/skill.md` → `<project-dir>/qa-agent/skill.md`
+   - `qa-agent/config.md` → `<project-dir>/qa-agent/config.md`
+   - `qa-agent/TEST_RESULTS_TEMPLATE.md` → `<project-dir>/qa-agent/TEST_RESULTS_TEMPLATE.md`
    - `docs/cutover-report.md` → `<project-dir>/docs/cutover-report.md`
    - `docs/disaster-recovery.md` → `<project-dir>/docs/disaster-recovery.md`
 
-4. **Read and execute `rebuild/IDEATION_PROCESS.md`** — this is the main process. Read `IDEATION_PROCESS.md`, `<project-dir>/input.md`, and `<project-dir>/scope.md`. Execute Steps 1-11 sequentially, writing outputs to `<project-dir>/output/`.
+4. **Invoke the `@legacy-rebuild` skill.** Read `.windsurf/skills/legacy-rebuild/SKILL.md` for the process overview, then read and execute `rebuild/IDEATION_PROCESS.md`. Read `<project-dir>/input.md` and `<project-dir>/scope.md`. Execute Steps 1-11 sequentially, writing outputs to `<project-dir>/output/`. Tell the user that they should review before continuing on steps 12-18.
 
 5. **For Steps 7 and 8 (template population)**, you MUST follow the `/populate-templates` workflow rules. Read `.windsurf/workflows/populate-templates.md` before populating any template file. The strict rules in that workflow override any inclination to condense, rephrase, or restructure template content.
 

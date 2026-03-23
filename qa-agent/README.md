@@ -20,7 +20,7 @@ The same IDE instruction files that load the developer agent also load the QA ag
 |---|---|---|---|
 | **Windsurf** | `.windsurfrules` | repo root | Read at the start of every Cascade session |
 | **VS Code + GitHub Copilot** | `.github/copilot-instructions.md` | `.github/` at repo root | Included in every Copilot Chat interaction |
-| **Cursor** | `.cursorrules` | repo root | Read at the start of every session (same content as `.windsurfrules`) |
+| **Other tools** | `AGENTS.md` | repo root | Cross-tool standard; depends on tool support |
 
 All IDE instruction files load four files: `developer-agent/skill.md`, `developer-agent/config.md`, `qa-agent/skill.md`, and `qa-agent/config.md`. This gives the AI assistant awareness of both what to build (developer) and how compliance is verified (QA).
 
