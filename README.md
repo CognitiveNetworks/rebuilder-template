@@ -131,7 +131,7 @@ flowchart TB
     NEW_REPO["New target repo"]
 
     subgraph IDE_LOAD ["IDE auto-loading  (happens on every session)"]
-        SHIM[".windsurfrules<br/>.github/copilot-instructions.md<br/>.cursorrules"]
+        SHIM[".windsurfrules<br/>.github/copilot-instructions.md<br/>AGENTS.md"]
         DEV_AGENT["Developer agent reads<br/>developer-agent/skill.md + config.md"]
         QA_AGENT["QA agent reads<br/>qa-agent/skill.md + config.md"]
         SHIM -->|"IDE auto-reads<br/>on session start"| DEV_AGENT & QA_AGENT
@@ -185,9 +185,10 @@ The rebuilder is a fully automated process — the AI agent reads the legacy cod
 | `rebuild/run.sh` | Creates output dirs, copies templates, launches AI agent | Start of Phase 1 |
 | `rebuild/IDEATION_PROCESS.md` | 18-step prescribed analysis + build process | AI agent follows during Phases 1 & 2 |
 | `STANDARDS.md` | Architecture, scaling, security, testing standards | Referenced throughout all phases |
+| `AGENTS.md` | Cross-tool agent bootstrap — points all AI tools to agent files | Always-on in Windsurf; depends on tool support elsewhere |
 | `.windsurfrules` | IDE shim — tells Windsurf to read developer-agent + qa-agent skill.md and config.md | Auto-read by Windsurf on every session start |
 | `.github/copilot-instructions.md` | IDE shim — tells VS Code Copilot to read developer-agent + qa-agent skill.md and config.md | Auto-included in every Copilot Chat interaction |
-| `.cursorrules` | IDE shim — tells Cursor to read developer-agent + qa-agent skill.md and config.md | Auto-read by Cursor on every session start |
+| `.windsurf/skills/legacy-rebuild/` | Windsurf Skill — progressive disclosure entry point for the rebuild process | Invoked on demand when user says "rebuild" or "replicator" |
 | `developer-agent/skill.md` | Dev coding standards (template → populated) | Template in Phase 1; auto-loaded by IDE shims in Phase 2 |
 | `developer-agent/config.md` | Project-specific dev config (template → populated) | Template in Phase 1; auto-loaded by IDE shims in Phase 2 |
 | `qa-agent/skill.md` | QA verification procedures + quality gates (universal) | Template in Phase 1; auto-loaded by IDE shims in Phase 2 |
@@ -209,6 +210,7 @@ rebuilder-template/
 ├── spec-process-overview.md   # Process overview — high-level summary of the rebuild workflow
 ├── scope.md                   # Scope template — copy to a working directory before filling out
 ├── prompting.md               # Audit trail of prompting commands and outcomes
+├── AGENTS.md                  # Cross-tool agent bootstrap (Windsurf, Claude Code, others)
 ├── .gitignore                 # Python, Terraform, IDE, OS ignores + rebuild-inputs/
 ├── .windsurfrules             # Windsurf IDE — loads developer-agent + qa-agent skill.md and config.md
 ├── .github/
@@ -316,11 +318,14 @@ rebuilder-template/
 │           ├── outputs.tf
 │           └── deploy.auto.tfvars
 └── .windsurf/
+    ├── skills/                # Windsurf Skills — progressive disclosure, auto-invoked
+    │   └── legacy-rebuild/    # @legacy-rebuild — rebuild process entry point
+    │       └── SKILL.md
     └── workflows/             # Windsurf workflow definitions
         ├── developer.md       # /developer — reload developer + QA agent mid-session
         ├── qa.md              # /qa — run all quality gates and generate verification report
         ├── populate-templates.md
-        └── run-replicator.md
+        └── run-replicator.md  # /run-replicator — invokes @legacy-rebuild skill
 ```
 
 ## How to Use
@@ -460,7 +465,7 @@ The `developer-agent/` directory contains the daily development instructions for
 - **Observability** — Golden Signals, RED method, SLOs, `/ops/*` endpoints as definition of done
 
 **Components:**
-- **`skill.md`** — the development instructions. Loaded automatically via IDE instruction files (`.windsurfrules`, `.github/copilot-instructions.md`, or `.cursorrules`).
+- **`skill.md`** — the development instructions. Loaded automatically via IDE instruction files (`.windsurfrules`, `.github/copilot-instructions.md`).
 - **`config.md`** — per-project configuration: dev commands, CI/CD pipeline, environments, services, secrets references, monitoring links.
 
 > [!TIP]
@@ -512,4 +517,38 @@ The `sre-agent/` directory contains a complete, deployable SRE agent that provid
 
 > [!TIP]
 > **How it connects to the rebuild:** The rebuild process (`run.sh`) auto-configures the agent's tech stack from the chosen rebuild candidate (Step 7). Your rebuilt services expose `/ops/*` endpoints as defined in `STANDARDS.md`. The agent uses those endpoints to monitor and respond to incidents. Fill in `config.md` with your service URLs, PagerDuty escalation config, and escalation contacts, deploy the runtime, and the agent is operational.
+
+## IDE Compatibility
+
+The rebuilder template supports multiple IDEs through layered bootstrap mechanisms. Each mechanism points to the same canonical agent files (`developer-agent/skill.md`, `developer-agent/config.md`, `qa-agent/skill.md`, `qa-agent/config.md`).
+
+| IDE | Bootstrap File | Auto-loaded | Notes |
+|---|---|---|---|
+| **Windsurf** | `.windsurfrules` | Yes — every session | Also discovers `AGENTS.md` and `.windsurf/skills/` |
+| **VS Code + GitHub Copilot** | `.github/copilot-instructions.md` | Yes — every Copilot Chat | Reads agent files on demand |
+| **Other tools** | `AGENTS.md` | Depends on tool support | Cross-tool standard; adopted by Claude Code and others |
+
+### Windsurf-Specific Features
+
+Windsurf users get additional capabilities through the `.windsurf/` directory:
+
+- **Skills** (`.windsurf/skills/`) — Progressive disclosure: only the skill name and description are in the system prompt. Full content loads on demand. The `@legacy-rebuild` skill wraps the 90KB ideation process so it never occupies context unless invoked.
+- **Workflows** (`.windsurf/workflows/`) — Manual slash commands: `/run-replicator`, `/qa`, `/developer`, `/populate-templates`.
+- **Rules** — `.windsurfrules` at the repo root is always-on. `AGENTS.md` at the root is treated as an always-on rule.
+
+### Windsurf Enterprise
+
+For organizations on Windsurf Enterprise, system-level Skills and Rules can be deployed to all workspaces via IT-managed paths:
+
+| OS | Skills Path | Rules Path |
+|---|---|---|
+| macOS | `/Library/Application Support/Windsurf/skills/` | `/Library/Application Support/Windsurf/rules/` |
+| Linux/WSL | `/etc/windsurf/skills/` | `/etc/windsurf/rules/` |
+| Windows | `C:\ProgramData\Windsurf\skills\` | `C:\ProgramData\Windsurf\rules\` |
+
+This allows org-wide development standards to be enforced as read-only rules that individual developers cannot override. Project-specific config (`config.md`) remains at the workspace level.
+
+### Cursor
+
+Cursor IDE support (`.cursorrules`) is not currently included in this template. Cursor users can manually read the agent files or use `AGENTS.md` if their tool supports it. Adding `.cursorrules` is a future consideration — contributions welcome.
 

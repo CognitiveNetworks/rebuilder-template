@@ -1,7 +1,7 @@
 # Project: [project-name]
 
 > Daily development instructions. Loaded via IDE instruction files at the project root.
-> `.windsurfrules` (Windsurf), `.github/copilot-instructions.md` (VS Code + Copilot), or `.cursorrules` (Cursor)
+> `.windsurfrules` (Windsurf), `.github/copilot-instructions.md` (VS Code + Copilot), or `AGENTS.md` (other tools)
 > instruct the AI assistant to read this file and `config.md` before any work.
 > For migration planning, architecture decisions, data migration, and cutover guidance, see `STANDARDS.md`.
 > For SRE agent configuration and incident response, see `sre-agent/skill.md`.

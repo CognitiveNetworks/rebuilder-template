@@ -723,7 +723,7 @@ Without these files in the built repo, the developer agent prompt is not loaded 
 
 **This is the mechanism that makes auto-loading work.** Each IDE has its own convention for project-level instructions. The SRE agent has an equivalent mechanism (`agent.py` reads `skill.md` from disk and sends it as the system prompt). The developer agent relies on IDE instruction files to achieve the same guarantee for human development sessions.
 
-> **Note:** If your team uses Cursor, the equivalent file is `.cursorrules` at the repo root. The content is identical to `.windsurfrules`.
+> **Note:** For cross-tool compatibility, `AGENTS.md` at the repo root provides the same instructions for tools that support it (Claude Code, etc.). See the IDE Compatibility section in `README.md` for supported IDEs.
 
 #### 8d: Populate QA Agent Configuration
 

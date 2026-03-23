@@ -16,7 +16,7 @@ Each IDE has its own convention for reading project-level instructions automatic
 |---|---|---|---|
 | **Windsurf** | `.windsurfrules` | repo root | Read at the start of every Cascade session |
 | **VS Code + GitHub Copilot** | `.github/copilot-instructions.md` | `.github/` at repo root | Included in every Copilot Chat interaction |
-| **Cursor** | `.cursorrules` | repo root | Read at the start of every session (same content as `.windsurfrules`) |
+| **Other tools** | `AGENTS.md` | repo root | Cross-tool standard; depends on tool support |
 
 All files contain the same instruction: read `developer-agent/skill.md`, `developer-agent/config.md`, `qa-agent/skill.md`, and `qa-agent/config.md` before performing any task. Both agents are always-on — the developer agent defines what standards to follow, the QA agent defines how compliance is verified.
 
@@ -94,7 +94,6 @@ If you ran `rebuild/run.sh`, Steps 7a, 7b, and 7c of the rebuild process have al
 3. Copy the IDE instruction files to your rebuild project repo:
    - **Windsurf:** Copy `.windsurfrules` to the **repo root**
    - **VS Code + Copilot:** Copy `.github/copilot-instructions.md` into `.github/` at the **repo root**
-   - **Cursor:** Copy `.windsurfrules` to the **repo root** and rename to `.cursorrules`
 4. Copy `developer-agent/skill.md` and `developer-agent/config.md` into your rebuild project repo under `developer-agent/`.
 5. Open the project in your IDE — the instruction file will tell the AI assistant to read both files before any work.
 
@@ -103,7 +102,6 @@ If you did **not** run the rebuild process, set up manually:
 1. Copy the IDE instruction file for your editor from `developer-agent/`:
    - **Windsurf:** `.windsurfrules` → repo root
    - **VS Code + Copilot:** `.github/copilot-instructions.md` → `.github/` at repo root
-   - **Cursor:** `.windsurfrules` → repo root, renamed to `.cursorrules`
 2. Fill out `config.md` with your project-specific details — commands, environments, CI/CD config, services.
 3. Fill in the placeholder sections in `skill.md` (project name, architecture, development environment, logging/tracing setup).
 4. Copy both files into `developer-agent/` in your project repo.
