@@ -330,105 +330,59 @@ rebuilder-template/
 
 ## How to Use
 
-### Phase 1: Analyze the legacy application
+### Quick Start
 
-```bash
-# Create a working directory for this project and clone the primary legacy repo into it
-# Use a descriptive name — one directory per rebuild project
-mkdir -p replicator/rebuild-inputs/my-project
-git clone git@github.com:your-org/my-project.git replicator/rebuild-inputs/my-project/repo
+Open this repo in Windsurf and tell Cascade what you want to rebuild:
 
-# Copy the input templates into the working directory (templates stay clean)
-cp replicator/scope.md replicator/rebuild-inputs/my-project/scope.md
-cp replicator/rebuild/input.md replicator/rebuild-inputs/my-project/input.md
+> **"Rebuild evergreen-tvevents"**
 
-# Have the AI agent fill them out from the legacy codebase
-cd replicator/rebuild-inputs/my-project/repo/
-# Open this directory in your AI-enabled IDE and ask the agent:
-# "Read this codebase and fill out ../scope.md and ../input.md"
-# OR
-# "Please rebuild <repo> using rebuilder with all stages completed"
-```
+That's it. Cascade invokes the `@legacy-rebuild` skill, sets up the project directory, and runs the 18-step analysis. You review the outputs and guide the build.
 
-The AI agent examines the legacy code and fills in the guided prompts in both files.
+### Phase 1: Analyze
 
-> [!IMPORTANT]
-> Review the results and adjust the **Target State** section in `scope.md` — especially the target repository, proposed tech stack, constraints, and what's out of scope. The Current Application section comes from the code; the Target State comes from your decisions.
+Clone the legacy repo into `rebuild-inputs/` and run the replicator. You can do this conversationally or with the `/run-replicator` workflow.
 
+**Single repo:**
 
-**Multi-repo rebuilds:** If the primary app works with other repos (shared database, tightly coupled APIs, worker processes), clone them into `adjacent/` so the analysis understands the full picture:
+> *"Rebuild my-service. The legacy repo is at github.com/your-org/my-service."*
 
-```bash
-# Optional — clone related repos that are in scope for the rebuild
-git clone git@github.com:your-org/flask-app-b.git \
-  replicator/rebuild-inputs/my-project/adjacent/flask-app-b
-git clone git@github.com:your-org/shared-auth.git \
-  replicator/rebuild-inputs/my-project/adjacent/shared-auth
+**With adjacent repos** (shared database, tightly coupled APIs, worker processes):
 
-# Re-run the AI agent to update scope.md and input.md with the adjacent repos
-cd replicator/rebuild-inputs/my-project/repo/
-# Open this directory in your AI-enabled IDE and ask the agent:
-# "Read this codebase and the adjacent repos at ../adjacent/.
-#  Update ../scope.md and ../input.md — fill out the Adjacent Repositories
-#  section and update the dependencies to reflect the integration points
-#  between these repos."
-# OR
-# "Please rebuild <repo> with adjacent <repos> using rebuilder with all stages completed"
-```
+> *"Rebuild my-service with adjacent repos flask-app-b and shared-auth."*
 
-Review `scope.md` again — especially the **Adjacent Repositories** section and updated dependency information. Repos not cloned into `adjacent/` are treated as external services — the rebuild will interact with them through their existing interfaces, not modify them.
+**Using the workflow directly:**
+
+> `/run-replicator` on my-service
+
+The agent clones the repos, creates the project directory, copies templates, and executes Steps 1–11 of the ideation process. All outputs land in `rebuild-inputs/<project>/`.
 
 > [!IMPORTANT]
-> You can stop here or continue on to see nuanced individual steps.
+> Review the outputs — especially `scope.md` Target State and `output/prd.md`. The Current Application section comes from the code; the Target State comes from your decisions. Adjust before proceeding to the build phase.
 
-```bash
-# Run the 18-step rebuild analysis
-cd ../../rebuild/
-./run.sh ../rebuild-inputs/my-project
-```
+### Phase 2: Build
 
-This invokes the AI agent, which reads `IDEATION_PROCESS.md` plus the filled-out `input.md` and `scope.md`, then executes all 18 steps. If adjacent repos are present, it reads those codebases too and analyzes cross-repo integration points. All outputs are written into the project directory.
+After reviewing the Phase 1 outputs, create a new repo and ask the agent to build it:
 
-```bash
-# Review the outputs — everything is in the project directory
-ls ../rebuild-inputs/my-project/output/            # Analysis artifacts and PRD
-ls ../rebuild-inputs/my-project/docs/adr/           # Architecture decision records
-cat ../rebuild-inputs/my-project/docs/feature-parity.md    # Feature parity matrix
-cat ../rebuild-inputs/my-project/sre-agent/config.md       # Tech stack populated
-cat ../rebuild-inputs/my-project/developer-agent/config.md  # Project settings populated
-```
+> *"Create a new repo for the rebuilt service and build it from the PRD."*
 
-Each rebuild project gets its own self-contained directory under `rebuild-inputs/` — the cloned repos, inputs, and all generated outputs. Run the process against multiple projects without clobbering previous results.
+The agent copies the populated agent configs, PRD, ADRs, and docs into the new repo. The developer and QA agents auto-load via `.windsurfrules`, and the agent builds the service following the standards in `developer-agent/skill.md`.
 
-### Phase 2: Build the rebuilt service
+After the code is written, run `/qa` to independently verify quality gates.
 
-```bash
-# Create the target repo (name comes from scope.md Target Repository)
-gh repo create your-new-service --private
-git clone git@github.com:your-org/your-new-service.git
-cd your-new-service/
+### Phase 3: Operate
 
-# Copy the populated configs from the project directory into the target repo
-REBUILD=../replicator/rebuild-inputs/my-project
-cp ../replicator/STANDARDS.md .
-cp -r "$REBUILD/developer-agent/" .
-cp -r "$REBUILD/qa-agent/" .
-cp -r "$REBUILD/sre-agent/" .
-cp -r "$REBUILD/docs/" .
-cp ../replicator/prompting.md .
+Deploy the SRE agent from `sre-agent/runtime/`. Fill in `sre-agent/config.md` with service registry URLs and PagerDuty escalation config. The agent receives monitoring webhooks, diagnoses issues via `/ops/*` endpoints, and escalates when it can't resolve. See `sre-agent/runtime/README.md` for deployment instructions.
 
-# Build the service using the developer agent
-# Open this directory in your AI-enabled IDE. skill.md will be loaded as project rules.
-# Ask the agent:
-# "Read the PRD at $REBUILD/output/prd.md and the ADRs in docs/adr/.
-#  Build the service as specified."
-```
+### Examples
 
-The developer agent builds the service from scratch using the PRD as the spec and `skill.md` as the coding standards.
-
-### Phase 3: Operate with the SRE agent
-
-Complete the remaining config in `sre-agent/config.md` — service registry URLs, PagerDuty escalation config, and escalation contacts. Deploy the runtime service from `sre-agent/runtime/` — it receives monitoring platform webhooks and runs the agentic diagnostic loop. See `sre-agent/runtime/README.md` for deployment instructions.
+| What you want | What to say |
+|---|---|
+| Rebuild a single service | *"Rebuild evergreen-tvevents"* |
+| Rebuild with related repos | *"Rebuild my-service with adjacent repos auth-api and worker-app"* |
+| Use the workflow | `/run-replicator` on evergreen-tvevents |
+| Run QA after building | `/qa` |
+| Reload agent standards mid-session | `/developer` |
+| Check what the rebuild process does | *"@legacy-rebuild what steps are in the process?"*
 
 ## What Gets Generated
 
