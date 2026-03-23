@@ -14,6 +14,17 @@ This is **not** for greenfield products. It assumes you already have a running a
 
 All rebuilt services follow an **API-first** design — every feature is exposed and testable through APIs. Services include **SRE agent endpoints** (`/ops/*`) for automated diagnostics and safe remediation, instrumented with **Google SRE best practices** (Golden Signals, RED method, SLOs with error budgets).
 
+## Contents
+
+- [How the Template Files Relate](#how-the-template-files-relate) — diagrams, file reference table
+- [Repository Structure](#repository-structure) — full directory tree
+- [How to Use](#how-to-use) — quick start for Windsurf and VS Code, phase-by-phase guide
+- [What Gets Generated](#what-gets-generated) — output artifacts from the rebuild process
+- [Developer Agent](#developer-agent) — coding standards, testing, CI/CD, observability
+- [QA Agent](#qa-agent) — quality gates, verification procedures, acceptance criteria
+- [SRE Agent](#sre-agent) — incident response, diagnostics, remediation, runtime service
+- [IDE Compatibility](#ide-compatibility) — Windsurf, VS Code, Enterprise, cross-tool support
+
 ## How the Template Files Relate
 
 Each phase feeds into the next. The overview shows the big picture; the per-phase diagrams show every file.
