@@ -330,31 +330,42 @@ rebuilder-template/
 
 ## How to Use
 
-### Quick Start
+### Quick Start (Windsurf)
 
 Open this repo in Windsurf and tell Cascade what you want to rebuild:
 
 > **"Rebuild evergreen-tvevents"**
 
-That's it. Cascade invokes the `@legacy-rebuild` skill, sets up the project directory, and runs the 18-step analysis. You review the outputs and guide the build.
+Cascade invokes the `@legacy-rebuild` skill, sets up the project directory, and runs the 18-step analysis. You review the outputs and guide the build.
+
+### Quick Start (VS Code + Copilot)
+
+Open this repo in VS Code. Copilot auto-loads `.github/copilot-instructions.md`, which reads the developer and QA agent files. Tell Copilot:
+
+> **"Read rebuild/IDEATION_PROCESS.md and rebuild evergreen-tvevents"**
+
+VS Code does not have Windsurf's `/run-replicator` workflow or `@legacy-rebuild` skill, so you reference the process file directly. The agent follows the same 18-step process — it just needs the explicit pointer.
 
 ### Phase 1: Analyze
 
-Clone the legacy repo into `rebuild-inputs/` and run the replicator. You can do this conversationally or with the `/run-replicator` workflow.
+Tell the agent which legacy repo to rebuild. It clones the repo, creates the project directory, copies templates, and executes Steps 1–11.
 
-**Single repo:**
+#### Windsurf
 
-> *"Rebuild my-service. The legacy repo is at github.com/your-org/my-service."*
+| What you want | What to say |
+|---|---|
+| Rebuild a single service | *"Rebuild my-service"* |
+| Rebuild with related repos | *"Rebuild my-service with adjacent repos auth-api and worker-app"* |
+| Use the workflow directly | `/run-replicator` on my-service |
 
-**With adjacent repos** (shared database, tightly coupled APIs, worker processes):
+#### VS Code + Copilot
 
-> *"Rebuild my-service with adjacent repos flask-app-b and shared-auth."*
+| What you want | What to say |
+|---|---|
+| Rebuild a single service | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service. The repo is at github.com/your-org/my-service."* |
+| Rebuild with related repos | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service with adjacent repos auth-api and worker-app."* |
 
-**Using the workflow directly:**
-
-> `/run-replicator` on my-service
-
-The agent clones the repos, creates the project directory, copies templates, and executes Steps 1–11 of the ideation process. All outputs land in `rebuild-inputs/<project>/`.
+All outputs land in `rebuild-inputs/<project>/`.
 
 > [!IMPORTANT]
 > Review the outputs — especially `scope.md` Target State and `output/prd.md`. The Current Application section comes from the code; the Target State comes from your decisions. Adjust before proceeding to the build phase.
@@ -365,24 +376,24 @@ After reviewing the Phase 1 outputs, create a new repo and ask the agent to buil
 
 > *"Create a new repo for the rebuilt service and build it from the PRD."*
 
-The agent copies the populated agent configs, PRD, ADRs, and docs into the new repo. The developer and QA agents auto-load via `.windsurfrules`, and the agent builds the service following the standards in `developer-agent/skill.md`.
+This prompt works in both Windsurf and VS Code. The agent copies the populated agent configs, PRD, ADRs, and docs into the new repo. In the new repo, the developer and QA agents auto-load via `.windsurfrules` (Windsurf) or `.github/copilot-instructions.md` (VS Code).
 
-After the code is written, run `/qa` to independently verify quality gates.
+After the code is written:
+- **Windsurf:** Run `/qa` to independently verify quality gates.
+- **VS Code:** Ask Copilot: *"Read qa-agent/skill.md and run the full QA verification."*
 
 ### Phase 3: Operate
 
 Deploy the SRE agent from `sre-agent/runtime/`. Fill in `sre-agent/config.md` with service registry URLs and PagerDuty escalation config. The agent receives monitoring webhooks, diagnoses issues via `/ops/*` endpoints, and escalates when it can't resolve. See `sre-agent/runtime/README.md` for deployment instructions.
 
-### Examples
+### Quick Reference
 
-| What you want | What to say |
-|---|---|
-| Rebuild a single service | *"Rebuild evergreen-tvevents"* |
-| Rebuild with related repos | *"Rebuild my-service with adjacent repos auth-api and worker-app"* |
-| Use the workflow | `/run-replicator` on evergreen-tvevents |
-| Run QA after building | `/qa` |
-| Reload agent standards mid-session | `/developer` |
-| Check what the rebuild process does | *"@legacy-rebuild what steps are in the process?"*
+| Action | Windsurf | VS Code + Copilot |
+|---|---|---|
+| Rebuild a service | *"Rebuild my-service"* | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service"* |
+| Run QA verification | `/qa` | *"Read qa-agent/skill.md and run QA verification"* |
+| Reload agent standards | `/developer` | *"Re-read developer-agent/skill.md and qa-agent/skill.md"* |
+| Explore the rebuild process | *"@legacy-rebuild what steps are in the process?"* | *"Read rebuild/IDEATION_PROCESS.md and summarize the steps"* |
 
 ## What Gets Generated
 
