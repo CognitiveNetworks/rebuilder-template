@@ -74,6 +74,16 @@
 
 > *[Aspects of the current system that are not worth preserving]*
 
+## Template Repository (Required)
+
+> Every rebuilt service must conform to the patterns in the template repo. This is non-negotiable — the developer agent and QA agent both enforce conformance.
+
+| Field | Value |
+|---|---|
+| Repo | [`rebuilder-evergreen-template-repo-python`](https://github.com/CognitiveNetworks/rebuilder-evergreen-template-repo-python) |
+| Clone Location | `adjacent/rebuilder-evergreen-template-repo-python/` |
+| What it defines | Dockerfile, entrypoint.sh, environment-check.sh, Helm charts, CI workflow, pip-compile, OTEL auto-instrumentation, quality gate tooling |
+
 ## Developer Context (Optional)
 
 > *[Any additional context that would help the rebuild process — team size, constraints, timeline, organizational context]*

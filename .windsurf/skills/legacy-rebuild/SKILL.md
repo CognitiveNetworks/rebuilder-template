@@ -36,10 +36,31 @@ agent after the service code is written.
 
 Before starting, verify these exist in the project working directory:
 
-- `scope.md` — filled out with current and target state
-- `input.md` — filled out with pain points and context
+- `scope.md` — filled out with current and target state (includes Template Repository field)
+- `input.md` — filled out with pain points and context (includes Template Repository field)
 - `repo/` — the cloned legacy repository
-- (optional) `adjacent/` — cloned adjacent repos
+- `adjacent/rebuilder-evergreen-template-repo-python/` — the **required** template repo that defines Dockerfile, entrypoint.sh, environment-check.sh, Helm charts, CI workflow, pip-compile, OTEL auto-instrumentation, and quality gate tooling. **This is not optional.** Every rebuilt service must match these patterns exactly.
+- (optional) `adjacent/` — other cloned adjacent repos
+
+## Template Repository (Non-Negotiable)
+
+[`rebuilder-evergreen-template-repo-python`](https://github.com/CognitiveNetworks/rebuilder-evergreen-template-repo-python)
+is the canonical reference for how every rebuilt service must be structured.
+It defines:
+
+- **Dockerfile** — base image, user pattern, layer ordering
+- **entrypoint.sh** — uvicorn startup, log level, reload flags
+- **environment-check.sh** — required env var validation
+- **Helm chart templates** — deployment, service, configmap, ingress
+- **CI workflow** — GitHub Actions pipeline stages and quality gates
+- **pip-compile** — dependency pinning strategy
+- **OTEL auto-instrumentation** — OpenTelemetry setup pattern
+- **Quality gate tooling** — ruff, mypy, pytest, coverage, radon, vulture, etc.
+
+**Do not deviate from these patterns.** The developer agent's `config.md`
+references this repo. The QA agent's Template Conformance checklist verifies
+against it. If the template repo is not cloned into `adjacent/`, the agent
+cannot verify conformance — the rebuild must not proceed without it.
 
 ## Supporting Files
 
@@ -49,6 +70,7 @@ Before starting, verify these exist in the project working directory:
 | `rebuild/input.md` | Input template |
 | `rebuild/run.sh` | Automated execution script |
 | `scope.md` | Scope template |
+| `adjacent/rebuilder-evergreen-template-repo-python/` | **Required** — canonical patterns for all rebuilt services |
 | `developer-agent/skill.md` | Developer agent standards (template) |
 | `developer-agent/config.md` | Developer agent config (template) |
 | `qa-agent/skill.md` | QA agent standards (template) |
@@ -70,18 +92,22 @@ When populating agent templates (Steps 7–8), follow the strict rules in
 
 ```bash
 # 1. Create project directory
-mkdir -p rebuild-inputs/my-project
+mkdir -p rebuild-inputs/my-project/adjacent
 
 # 2. Clone legacy repo
 git clone <url> rebuild-inputs/my-project/repo
 
-# 3. Copy templates
+# 3. Clone the template repo (required — not optional)
+git clone git@github.com:CognitiveNetworks/rebuilder-evergreen-template-repo-python.git \
+  rebuild-inputs/my-project/adjacent/rebuilder-evergreen-template-repo-python
+
+# 4. Copy templates
 cp scope.md rebuild-inputs/my-project/scope.md
 cp rebuild/input.md rebuild-inputs/my-project/input.md
 
-# 4. Fill out scope.md and input.md
+# 5. Fill out scope.md and input.md
 
-# 5. Run
+# 6. Run
 ./rebuild/run.sh rebuild-inputs/my-project
 ```
 
