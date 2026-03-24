@@ -70,7 +70,7 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 | 1 | Unit + API tests | pytest | 0 failures | `pytest tests/ --cov=src/app --cov-fail-under=80` |
 | 2 | Test coverage | pytest-cov | ≥ 80% line coverage | (included in above) |
 | 3 | Lint | ruff check | 0 errors | `ruff check src/ tests/` |
-| 4 | Format | ruff format | All formatted | `ruff format --check src/ tests/` |
+| 4 | Format | black | All formatted | `black --check src/ tests/` |
 | 5 | Type check | mypy | 0 errors | `mypy src/app/` |
 
 ### Extended Gates (Required — Block Release)

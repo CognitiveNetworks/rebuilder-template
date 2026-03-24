@@ -60,10 +60,10 @@ $ ruff check src/ tests/
 [paste output]
 ```
 
-### 3. Formatter (ruff format) — [PASS ✅ / FAIL ❌]
+### 3. Formatter (black) — [PASS ✅ / FAIL ❌]
 
 ```
-$ ruff format --check src/ tests/
+$ black --check src/ tests/
 [paste output]
 ```
 
@@ -158,7 +158,7 @@ $ tests/test-helm-template.sh -all
 | pytest                  | 0 failures        | X passed, 0 failed    | [✅/❌] |
 | Test coverage           | ≥ 80%             | XX%                   | [✅/❌] |
 | ruff check (lint)       | 0 errors          | X errors              | [✅/❌] |
-| ruff format             | All formatted     | X/X formatted         | [✅/❌] |
+| black                   | All formatted     | X/X formatted         | [✅/❌] |
 | mypy (types)            | 0 errors          | X errors              | [✅/❌] |
 | Cyclomatic complexity   | Average A or B    | X (X.XX)              | [✅/❌] |
 | Maintainability index   | All files A or B  | [All A / mixed]       | [✅/❌] |

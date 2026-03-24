@@ -61,7 +61,7 @@ Use `/qa` after the developer agent claims a feature is complete, during Step 12
 | 1 | Unit + API tests | pytest | All tests pass, 0 failures |
 | 2 | Test coverage | pytest-cov | ≥ 80% line coverage of `src/app/` |
 | 3 | Lint | ruff check | 0 errors |
-| 4 | Format | ruff format | All files formatted |
+| 4 | Format | black | All files formatted |
 | 5 | Type check | mypy | 0 errors (strict mode) |
 | 6 | Cyclomatic complexity | radon cc | Average ≤ B, no function rated C+ without justification |
 | 7 | Dead code | vulture | 0 findings at 80% confidence |

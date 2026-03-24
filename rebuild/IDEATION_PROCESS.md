@@ -661,7 +661,7 @@ Read the PRD generated in Step 6 and the rebuild candidate selected in Step 5. W
 - **Cloud Provider** — from the PRD's Technical Approach (GCP or AWS)
 
 **Development Commands section:**
-- Pre-fill commands based on the language/framework. For example, a Python/FastAPI project gets `pip install -r requirements.txt` for install, `pytest` for tests, `ruff check . && ruff format --check .` for lint, `docker build` for container build. A Go/Gin project gets `go mod download`, `go test ./...`, `golangci-lint run`, etc.
+- Pre-fill commands based on the language/framework. For example, a Python/FastAPI project gets `pip install -r requirements.txt` for install, `pytest` for tests, `ruff check .` for lint, `black --check .` for format, `docker build` for container build. A Go/Gin project gets `go mod download`, `go test ./...`, `golangci-lint run`, etc.
 
 **CI/CD section:**
 - **Pipeline Tool** — infer from the PRD or default to GitHub Actions
@@ -1105,7 +1105,7 @@ After all compliance items pass, run the full quality suite and produce a test r
 2. **Codebase metrics** — source file count, source line count, test file count, test line count
 3. **pytest output** — full verbose test output (`pytest -v --tb=short`), with pass/fail summary and breakdown by test suite
 4. **Linter output** — full lint results (e.g., `ruff check .`), must show 0 errors
-5. **Formatter output** — format check results (e.g., `ruff format --check .`), must show all files formatted
+5. **Formatter output** — format check results (e.g., `black --check .`), must show all files formatted
 6. **Type checker output** — strict type check results (e.g., `mypy src/`), must show 0 errors
 
 **Extended Gates (mandatory — measured baselines or pass/fail):**
@@ -1132,6 +1132,69 @@ npx jscpd  # Node.js — for copy-paste detection
 ```
 
 This file serves as the build's quality receipt. If the report does not exist or shows failures, the build is not complete.
+
+### Step 12a: Template Repository Component Checklist
+
+After the compliance audit passes, verify that **every structural component** from the template repository (`rebuilder-evergreen-template-repo-python`) exists in the built repo. This step catches missing files, directories, and tooling that are part of the organizational standard but not covered by the developer-agent compliance checks.
+
+**Why this step exists:** During the automate rebuild, several template components were missed — `hooks/pre-commit`, `charts/tests/`, `tests/test-helm-template.sh`, and `cves/` — because the compliance audit only checks developer-agent standards, not the template repo's full file inventory. This step closes that gap.
+
+**Procedure:**
+
+1. Read the template repository's `README.md` to identify all documented tooling, scripts, and structural conventions.
+2. List the template repo's top-level directories and key files.
+3. For each item, verify it exists (or has a justified equivalent) in the built repo.
+
+**Required components checklist:**
+
+- [ ] `hooks/pre-commit` — git pre-commit hook running all quality gates (lint, format, test, type check, complexity, helm lint/template/unittest). Adapt tool names if the project uses different tools (e.g., `ruff` instead of `black`).
+- [ ] `charts/` — Helm chart directory with `Chart.yaml`, `values.yaml`, and `templates/` containing all standard templates (Deployment, Service, HTTPRoute, ExternalSecret, Namespace, OtelCollector, PodDisruptionBudget, ScaledObject, ServiceAccount, Dapr, and all helper `_*.tpl` files).
+- [ ] `charts/tests/` — Helm unittest YAML files (at minimum: `deployment_test.yaml`, `service_test.yaml`, `httproute_test.yaml`).
+- [ ] `tests/test-helm-template.sh` — Script that renders Helm templates across environments (dev, qa, prod, pr) to verify rendering correctness.
+- [ ] `cves/` — Directory for VEX (Vulnerability Exploitability Exchange) JSON files. May contain `.gitkeep` if no CVEs have been filed yet.
+- [ ] `scripts/lock.sh` — Dependency locking script using `pip-tools` / `pip-compile` with `--generate-hashes`.
+- [ ] `scripts/entrypoint.sh` — Container entrypoint script sourcing `environment-check.sh` and starting the application.
+- [ ] `scripts/environment-check.sh` or `environment-check.sh` — Environment variable validation script.
+- [ ] `.actrc` — Configuration for running GitHub Actions locally with `act` (specifies `--container-architecture linux/amd64`).
+- [ ] `env.list` — Example environment variables for local container execution.
+- [ ] `monitored-paths.txt` — List of paths that trigger CI pipeline runs.
+- [ ] `.pylintrc` — Pylint configuration file.
+- [ ] `.python-version` — Python version pinning file.
+- [ ] `catalog-info.yaml` — Backstage service catalog descriptor.
+
+**Required development tooling checklist:**
+
+The template repository mandates the following tools in every rebuilt service. Each must be (a) listed as a dependency in `pyproject.toml` (under `[project.optional-dependencies.dev]` or equivalent), (b) configured (in `pyproject.toml`, `.pylintrc`, or dedicated config files), and (c) runnable with the commands below.
+
+| Tool | Purpose | Template command | Adaptation notes |
+|---|---|---|---|
+| **pylint** | Static analysis and code quality | `pylint src tests` | Adjust source dirs to match project layout |
+| **mypy** | Static type checking | `mypy src/ tests/` | Must run clean (0 errors) on both src and tests |
+| **black** | Code formatting | `black src tests` | `black` is the organizational standard formatter. Do not substitute `ruff format`. |
+| **ruff** (lint) | Fast linting (replaces flake8) | `ruff check src/ tests/` | Used for linting only — not formatting |
+| **pytest** | Unit and integration testing | `pytest` | Must include `pytest-cov` for coverage reporting |
+| **complexipy** | Cognitive complexity analysis | `complexipy src -mx 15 -d low` and `complexipy tests -mx 15 -d low` | Run separately for src and tests |
+| **Helm Unittest** | Helm chart unit testing | `helm unittest ./charts` | Requires helm plugin: `helm plugin install https://github.com/helm-unittest/helm-unittest.git` |
+| **Helm lint** | Helm chart validation | `helm lint ./charts` | Must pass with 0 errors |
+| **Helm template** | Helm chart rendering verification | `helm template ./charts` | Must render without errors |
+| **radon** | Cyclomatic complexity and maintainability index | `radon cc src/ -a -s` and `radon mi src/ -s` | Average must be A or B |
+| **vulture** | Dead code detection | `vulture src/ --min-confidence 80` | Must show 0 findings |
+| **pip-audit** | Dependency vulnerability scanning | `pip-audit` | Critical/High CVEs must have remediation plan |
+| **interrogate** | Docstring coverage measurement | `interrogate src/ -v` | Report coverage percentage |
+
+**Verification:** For each tool in the table above, run the command and confirm it executes without import errors or missing-tool failures. If a tool is not installed, add it to `pyproject.toml` dev dependencies and regenerate locked requirements via `scripts/lock.sh`.
+
+**CI pipeline alignment:** Every tool in the table above must also have a corresponding job or step in the CI pipeline (`.github/workflows/ci.yml`). Cross-reference the CI workflow jobs against this table and flag any tool that runs locally but is missing from CI, or vice versa.
+
+**Pre-commit hook alignment:** The `hooks/pre-commit` script must invoke every tool in the table above (or a justified subset). Cross-reference the pre-commit hook against this table and flag any tool missing from the hook.
+
+**Adaptation rules:**
+- Components may be adapted for the specific project (e.g., different service names in `values.yaml`, project-specific source directories in tool commands).
+- Components that are genuinely not applicable (e.g., `Dapr.yaml` if the service does not use DAPR) may be omitted with documented justification in `output/process-feedback.md`.
+- Components must **not** be silently skipped. If a component is missing, either create it or document why it was omitted.
+- Tools must **not** be silently omitted. If a tool from the table is not used, document why in `output/process-feedback.md`.
+
+**Output:** If all components and tooling are present or justified, state "Template component checklist: PASS" and proceed. If any component or tool is missing without justification, create/install it before proceeding.
 
 ### Step 13: Documentation–Code Consistency Check
 
@@ -1541,7 +1604,7 @@ and compliance standards were defined before code was written.]
 |---|---|---|---|---|
 | Unit Tests | pytest | 0 failures | [n passed, n failed] | [PASS/FAIL] |
 | Lint | ruff check | 0 errors | [n errors] | [PASS/FAIL] |
-| Format | ruff format | 0 unformatted | [n/n formatted] | [PASS/FAIL] |
+| Format | black | 0 unformatted | [n/n formatted] | [PASS/FAIL] |
 | Type Check | mypy (strict) | 0 errors | [n errors in n files] | [PASS/FAIL] |
 
 **Extended Gates (measured baselines):**

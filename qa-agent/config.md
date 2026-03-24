@@ -19,7 +19,7 @@
 | `pytest tests/ --cov=src/app --cov-fail-under=80` | Run tests with coverage enforcement |
 | `pytest tests/test_routes.py tests/test_ops_endpoints.py` | Run API + /ops/* contract tests only |
 | `ruff check src/ tests/` | Lint check |
-| `ruff format --check src/ tests/` | Format check |
+| `black --check src/ tests/` | Format check |
 | `mypy src/app/` | Type check |
 | `radon cc src/ -a -nc` | Cyclomatic complexity |
 | `radon mi src/` | Maintainability index |

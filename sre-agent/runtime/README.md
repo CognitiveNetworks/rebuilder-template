@@ -117,7 +117,7 @@ pytest
 ruff check .
 
 # Run formatter check
-ruff format --check .
+black --check .
 ```
 
 ## OpenAPI Spec

@@ -30,7 +30,7 @@ This workflow activates the QA agent to independently verify that the developer 
 
 // turbo
    ```
-   ruff format --check src/ tests/
+   black --check src/ tests/
    ```
 
 // turbo
