@@ -11,7 +11,7 @@
 |--------------|-----------|
 | Python       | 3.12.x    |
 | pytest       | 8.x.x    |
-| ruff         | 0.x.x    |
+| pylint       | x.x.x    |
 | mypy         | x.x.x    |
 | radon        | x.x.x    |
 | vulture      | x.x      |
@@ -53,10 +53,10 @@ Coverage: **XX%** (threshold: 80%)
 
 No module with testable logic is below 50%.
 
-### 2. Linter (ruff check) — [PASS ✅ / FAIL ❌]
+### 2. Linter (pylint) — [PASS ✅ / FAIL ❌]
 
 ```
-$ ruff check src/ tests/
+$ pylint src tests
 [paste output]
 ```
 
@@ -124,10 +124,10 @@ $ pylint --disable=all --enable=duplicate-code src/
 [paste output]
 ```
 
-### 11. Cognitive Complexity (ruff C901) — [PASS ✅ / FAIL ❌]
+### 11. Cognitive Complexity (complexipy) — [PASS ✅ / FAIL ❌]
 
 ```
-$ ruff check src/ --select C901
+$ complexipy src -mx 15 -d low
 [paste output]
 ```
 
@@ -157,7 +157,7 @@ $ tests/test-helm-template.sh -all
 |-------------------------|-------------------|-----------------------|--------|
 | pytest                  | 0 failures        | X passed, 0 failed    | [✅/❌] |
 | Test coverage           | ≥ 80%             | XX%                   | [✅/❌] |
-| ruff check (lint)       | 0 errors          | X errors              | [✅/❌] |
+| pylint (lint)           | 0 errors          | X errors              | [✅/❌] |
 | black                   | All formatted     | X/X formatted         | [✅/❌] |
 | mypy (types)            | 0 errors          | X errors              | [✅/❌] |
 | Cyclomatic complexity   | Average A or B    | X (X.XX)              | [✅/❌] |

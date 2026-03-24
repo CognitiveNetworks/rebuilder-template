@@ -52,7 +52,7 @@ sre-agent/
     ├── intake.py          # Alert intake pipeline — dedup, serialization
     ├── telemetry.py       # OpenTelemetry initialization and metric instruments
     ├── requirements.txt   # Python dependencies
-    ├── requirements-dev.txt # Dev dependencies — pytest, ruff
+    ├── requirements-dev.txt # Dev dependencies — pytest, black, pylint
     ├── pyproject.toml     # Linter and test configuration
     ├── .env.example       # Environment variable template for local development
     ├── Dockerfile         # Container image
@@ -132,7 +132,7 @@ The agent runtime. A Python/FastAPI application that:
 - Exports metrics, traces, and logs via OpenTelemetry (OTLP) to APM platforms — runs as a no-op when not configured
 - Emits structured JSON logs with trace ID correlation
 - Supports graceful shutdown
-- Includes unit and API tests, linter config (ruff), and `.env.example` for local development
+- Includes unit and API tests, linter config (pylint, black), and `.env.example` for local development
 
 See `runtime/README.md` for setup, testing, deployment, and customization instructions.
 

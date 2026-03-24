@@ -55,7 +55,7 @@ It defines:
 - **CI workflow** — GitHub Actions pipeline stages and quality gates
 - **pip-compile** — dependency pinning strategy
 - **OTEL auto-instrumentation** — OpenTelemetry setup pattern
-- **Quality gate tooling** — ruff, mypy, pytest, coverage, radon, vulture, etc.
+- **Quality gate tooling** — pylint, black, mypy, pytest, coverage, radon, vulture, etc.
 
 **Do not deviate from these patterns.** The developer agent's `config.md`
 references this repo. The QA agent's Template Conformance checklist verifies

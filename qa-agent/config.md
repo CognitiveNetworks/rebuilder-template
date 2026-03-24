@@ -18,7 +18,7 @@
 | `pytest tests/ -x` | Run tests, stop on first failure |
 | `pytest tests/ --cov=src/app --cov-fail-under=80` | Run tests with coverage enforcement |
 | `pytest tests/test_routes.py tests/test_ops_endpoints.py` | Run API + /ops/* contract tests only |
-| `ruff check src/ tests/` | Lint check |
+| `pylint src tests` | Lint check |
 | `black --check src/ tests/` | Format check |
 | `mypy src/app/` | Type check |
 | `radon cc src/ -a -nc` | Cyclomatic complexity |
@@ -27,7 +27,7 @@
 | `pip-audit` | Dependency vulnerability scan |
 | `interrogate src/ -v` | Docstring coverage |
 | `pylint --disable=all --enable=duplicate-code src/` | Duplicate code check |
-| `ruff check src/ --select C901` | Cognitive complexity |
+| `complexipy src -mx 15 -d low` | Cognitive complexity |
 | `helm lint charts/` | Helm chart lint |
 | `tests/test-helm-template.sh -all` | Helm template rendering |
 
@@ -57,7 +57,7 @@
 |---|---|
 | Python | 3.12.x |
 | pytest | 8.3.x |
-| ruff | ≥ 0.8.0 |
+| pylint | ≥ 3.2.5 |
 | mypy | latest |
 | radon | ≥ 6.0.0 |
 | vulture | ≥ 2.10 |

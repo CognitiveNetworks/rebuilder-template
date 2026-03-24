@@ -31,7 +31,7 @@
 - *[Database setup — e.g., `alembic upgrade head` to apply migrations]*
 - *[Seed data — e.g., `python seed.py` to populate reference data]*
 - *[Test command — e.g., `pytest`]*
-- *[Lint command — e.g., `ruff check .`]*
+- *[Lint command — e.g., `pylint src tests`]*
 - *[Run command — e.g., `uvicorn main:app --reload`]*
 - *[Verify command — e.g., `curl http://localhost:8000/health`]*
 

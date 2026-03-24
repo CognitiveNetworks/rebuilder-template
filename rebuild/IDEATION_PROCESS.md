@@ -661,7 +661,7 @@ Read the PRD generated in Step 6 and the rebuild candidate selected in Step 5. W
 - **Cloud Provider** — from the PRD's Technical Approach (GCP or AWS)
 
 **Development Commands section:**
-- Pre-fill commands based on the language/framework. For example, a Python/FastAPI project gets `pip install -r requirements.txt` for install, `pytest` for tests, `ruff check .` for lint, `black --check .` for format, `docker build` for container build. A Go/Gin project gets `go mod download`, `go test ./...`, `golangci-lint run`, etc.
+- Pre-fill commands based on the language/framework. For example, a Python/FastAPI project gets `pip install -r requirements.txt` for install, `pytest` for tests, `pylint src tests` for lint, `black --check .` for format, `docker build` for container build. A Go/Gin project gets `go mod download`, `go test ./...`, `golangci-lint run`, etc.
 
 **CI/CD section:**
 - **Pipeline Tool** — infer from the PRD or default to GitHub Actions
@@ -1068,7 +1068,7 @@ After the code is written, perform a line-by-line compliance check against every
 
 The QA agent is a second opinion on the developer agent's work. After the developer agent claims compliance, activate the QA agent (via `/qa` workflow) and have it independently verify:
 
-- [ ] Re-run all quality gates (pytest, ruff, mypy, radon, vulture, pip-audit, interrogate, pylint, C901) — compare results against the developer agent's `TEST_RESULTS.md`
+- [ ] Re-run all quality gates (pytest, pylint, black, mypy, radon, vulture, pip-audit, interrogate, complexipy) — compare results against the developer agent's `TEST_RESULTS.md`
 - [ ] Verify every `/ops/*` endpoint returns the required fields per the SRE contract in `qa-agent/skill.md`
 - [ ] Verify `environment-check.sh` accounts for every original env var (using the mapping in `qa-agent/config.md`)
 - [ ] Verify Dockerfile, entrypoint.sh, and Helm chart match template patterns
@@ -1104,7 +1104,7 @@ After all compliance items pass, run the full quality suite and produce a test r
 1. **Tool versions** — Python, pytest, linter, formatter, type checker, and all analysis tool versions used
 2. **Codebase metrics** — source file count, source line count, test file count, test line count
 3. **pytest output** — full verbose test output (`pytest -v --tb=short`), with pass/fail summary and breakdown by test suite
-4. **Linter output** — full lint results (e.g., `ruff check .`), must show 0 errors
+4. **Linter output** — full lint results (e.g., `pylint src tests`), must show 0 errors
 5. **Formatter output** — format check results (e.g., `black --check .`), must show all files formatted
 6. **Type checker output** — strict type check results (e.g., `mypy src/`), must show 0 errors
 
@@ -1117,7 +1117,7 @@ After all compliance items pass, run the full quality suite and produce a test r
 11. **Dependency vulnerabilities** — `pip-audit`. Report all findings. Critical/High CVEs in runtime dependencies must have a documented remediation plan or documented rationale for deferral.
 12. **Docstring coverage** — `interrogate src/ -v`. Report coverage percentage. Identify gaps. Public API functions and classes should have docstrings; thin wrappers and internal helpers may be excluded with justification.
 13. **Duplicate code (DRY)** — `pylint --disable=all --enable=duplicate-code src/` and `npx jscpd src/ --min-lines 5 --min-tokens 50`. Must show < 3% duplication. Any detected clones must be justified (e.g., intentional structural similarity) or refactored.
-14. **Cognitive complexity** — `ruff check src/ --select C901`. Must show 0 issues at default threshold (10).
+14. **Cognitive complexity** — `complexipy src -mx 15 -d low`. Must show 0 issues at threshold 15.
 
 **Summary and context:**
 
@@ -1147,7 +1147,7 @@ After the compliance audit passes, verify that **every structural component** fr
 
 **Required components checklist:**
 
-- [ ] `hooks/pre-commit` — git pre-commit hook running all quality gates (lint, format, test, type check, complexity, helm lint/template/unittest). Adapt tool names if the project uses different tools (e.g., `ruff` instead of `black`).
+- [ ] `hooks/pre-commit` — git pre-commit hook running all quality gates (lint, format, test, type check, complexity, helm lint/template/unittest). Adapt source directory names to match the project layout.
 - [ ] `charts/` — Helm chart directory with `Chart.yaml`, `values.yaml`, and `templates/` containing all standard templates (Deployment, Service, HTTPRoute, ExternalSecret, Namespace, OtelCollector, PodDisruptionBudget, ScaledObject, ServiceAccount, Dapr, and all helper `_*.tpl` files).
 - [ ] `charts/tests/` — Helm unittest YAML files (at minimum: `deployment_test.yaml`, `service_test.yaml`, `httproute_test.yaml`).
 - [ ] `tests/test-helm-template.sh` — Script that renders Helm templates across environments (dev, qa, prod, pr) to verify rendering correctness.
@@ -1170,8 +1170,7 @@ The template repository mandates the following tools in every rebuilt service. E
 |---|---|---|---|
 | **pylint** | Static analysis and code quality | `pylint src tests` | Adjust source dirs to match project layout |
 | **mypy** | Static type checking | `mypy src/ tests/` | Must run clean (0 errors) on both src and tests |
-| **black** | Code formatting | `black src tests` | `black` is the organizational standard formatter. Do not substitute `ruff format`. |
-| **ruff** (lint) | Fast linting (replaces flake8) | `ruff check src/ tests/` | Used for linting only — not formatting |
+| **black** | Code formatting | `black src tests` | `black` is the organizational standard formatter. |
 | **pytest** | Unit and integration testing | `pytest` | Must include `pytest-cov` for coverage reporting |
 | **complexipy** | Cognitive complexity analysis | `complexipy src -mx 15 -d low` and `complexipy tests -mx 15 -d low` | Run separately for src and tests |
 | **Helm Unittest** | Helm chart unit testing | `helm unittest ./charts` | Requires helm plugin: `helm plugin install https://github.com/helm-unittest/helm-unittest.git` |
@@ -1603,7 +1602,7 @@ and compliance standards were defined before code was written.]
 | Gate | Tool | Threshold | Result | Status |
 |---|---|---|---|---|
 | Unit Tests | pytest | 0 failures | [n passed, n failed] | [PASS/FAIL] |
-| Lint | ruff check | 0 errors | [n errors] | [PASS/FAIL] |
+| Lint | pylint | 0 errors | [n errors] | [PASS/FAIL] |
 | Format | black | 0 unformatted | [n/n formatted] | [PASS/FAIL] |
 | Type Check | mypy (strict) | 0 errors | [n errors in n files] | [PASS/FAIL] |
 
@@ -1618,7 +1617,7 @@ and compliance standards were defined before code was written.]
 | Dependency Vulnerabilities | pip-audit | 0 critical/high | [n CVEs] | [PASS/FLAGGED] |
 | Docstring Coverage | interrogate | measured | [n%] | [MEASURED] |
 | Duplicate Code (DRY) | pylint + jscpd | < 3% duplication | [n% duplication] | [PASS/FAIL] |
-| Cognitive Complexity | ruff C901 | 0 issues | [n issues] | [PASS/FAIL] |
+| Cognitive Complexity | complexipy | 0 issues | [n issues] | [PASS/FAIL] |
 
 [Include brief notes on coverage gaps (e.g., "services require running infrastructure"), any flagged vulnerabilities with remediation plan, and any justified exceptions (e.g., intentional structural similarity in clone detection).]
 

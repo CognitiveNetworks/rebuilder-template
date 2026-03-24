@@ -67,7 +67,7 @@ Monitoring Platform Alert (webhook)
 | `telemetry.py` | OpenTelemetry initialization — tracers, meters, metric instruments |
 | `Dockerfile` | Container image — Python 3.12, non-root, health check |
 | `requirements.txt` | Python dependencies |
-| `requirements-dev.txt` | Dev dependencies — pytest, ruff |
+| `requirements-dev.txt` | Dev dependencies — pytest, black, pylint |
 | `pyproject.toml` | Linter and test configuration |
 | `.env.example` | Environment variable template for local development |
 | `tests/` | Unit and API tests |
@@ -114,7 +114,7 @@ pip install -r requirements-dev.txt
 pytest
 
 # Run linter
-ruff check .
+pylint .
 
 # Run formatter check
 black --check .

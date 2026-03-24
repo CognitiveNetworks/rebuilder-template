@@ -318,7 +318,7 @@ rebuilder-template/
 │       ├── pagerduty_setup.py # PagerDuty service/escalation bootstrapper
 │       ├── deploy.sh          # Deployment script
 │       ├── requirements.txt   # Python dependencies
-│       ├── requirements-dev.txt # Dev dependencies — pytest, ruff
+│       ├── requirements-dev.txt # Dev dependencies — pytest, black, pylint
 │       ├── pyproject.toml     # Linter and test configuration
 │       ├── .env.example       # Environment variable template
 │       ├── Dockerfile         # Container image
@@ -452,7 +452,7 @@ The `developer-agent/` directory contains the daily development instructions for
 The `qa-agent/` directory contains quality verification procedures for rebuilt services. The QA agent independently verifies that the developer agent's output meets quality standards — it does **not** replace the developer agent, it checks it.
 
 **What it does:**
-1. **Re-runs every quality gate independently** — pytest, coverage, ruff, mypy, radon, vulture, pip-audit, interrogate, pylint, jscpd, C901. Compares results against the developer agent's `TEST_RESULTS.md` and flags discrepancies.
+1. **Re-runs every quality gate independently** — pytest, coverage, pylint, black, mypy, radon, vulture, pip-audit, interrogate, jscpd, complexipy. Compares results against the developer agent's `TEST_RESULTS.md` and flags discrepancies.
 2. **Verifies `/ops/*` endpoint compliance** — checks that every required diagnostic and remediation endpoint exists and returns the correct fields per the SRE contract.
 3. **Checks template conformance** — Dockerfile, entrypoint.sh, Helm chart, environment-check.sh, IDE instruction files must match template patterns.
 4. **Produces an independent quality report** — generates `TEST_RESULTS.md` from its own gate runs, not from the developer agent's claims.

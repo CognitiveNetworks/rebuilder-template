@@ -69,7 +69,7 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 |---|------|------|-----------|---------|
 | 1 | Unit + API tests | pytest | 0 failures | `pytest tests/ --cov=src/app --cov-fail-under=80` |
 | 2 | Test coverage | pytest-cov | ≥ 80% line coverage | (included in above) |
-| 3 | Lint | ruff check | 0 errors | `ruff check src/ tests/` |
+| 3 | Lint | pylint | 0 errors | `pylint src tests` |
 | 4 | Format | black | All formatted | `black --check src/ tests/` |
 | 5 | Type check | mypy | 0 errors | `mypy src/app/` |
 
@@ -83,7 +83,7 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 | 9 | Dependency vulns | pip-audit | 0 runtime CVEs | `pip-audit` |
 | 10 | Docstring coverage | interrogate | ≥ 80% | `interrogate src/ -v` |
 | 11 | Duplicate code | pylint | < 3% duplication | `pylint --disable=all --enable=duplicate-code src/` |
-| 12 | Cognitive complexity | ruff C901 | 0 issues | `ruff check src/ --select C901` |
+| 12 | Cognitive complexity | complexipy | 0 issues | `complexipy src -mx 15 -d low` |
 
 ### Helm Gate (Required for deployable services)
 

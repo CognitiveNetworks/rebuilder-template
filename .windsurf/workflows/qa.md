@@ -25,7 +25,7 @@ This workflow activates the QA agent to independently verify that the developer 
 
 // turbo
    ```
-   ruff check src/ tests/
+   pylint src tests
    ```
 
 // turbo
@@ -72,7 +72,7 @@ This workflow activates the QA agent to independently verify that the developer 
 
 // turbo
    ```
-   ruff check src/ --select C901
+   complexipy src -mx 15 -d low
    ```
 
 5. Verify `/ops/*` endpoint contract per `qa-agent/skill.md` — check that every required diagnostic and remediation endpoint exists and returns the required fields. Use the API Endpoints to Verify table in `qa-agent/config.md`.
