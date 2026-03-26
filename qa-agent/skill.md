@@ -91,6 +91,7 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 |---|------|------|-----------|---------|
 | 13 | Helm lint | helm | 0 errors | `helm lint charts/` |
 | 14 | Helm template render | helm template | Renders for dev, qa, prod | `tests/test-helm-template.sh -all` |
+| 15 | Helm unit tests | helm-unittest | 0 failures | `helm unittest ./charts` |
 
 ## Test Fixture Standards
 
