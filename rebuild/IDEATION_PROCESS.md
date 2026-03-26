@@ -705,19 +705,21 @@ The developer agent only works if the IDE can find the instruction files **at th
 
 Both files contain the same instruction: read `developer-agent/skill.md` and `developer-agent/config.md` before doing any work. Copy the content from the templates in the project's `developer-agent/` directory.
 
-**You must also copy the populated `developer-agent/` configs into the built repo:**
+**You must also copy the populated `developer-agent/` configs and the template repo's `skill.md` into the built repo:**
 
 | File | Source (project working dir) | Destination (built repo) |
 |---|---|---|
 | `skill.md` | `developer-agent/skill.md` | `<repo>/developer-agent/skill.md` |
 | `config.md` | `developer-agent/config.md` | `<repo>/developer-agent/config.md` |
+| `skill.md` | `template/skill.md` | `<repo>/template/skill.md` |
 
-**Checklist — all four files must exist in the built repo root:**
+**Checklist — all five files must exist in the built repo root:**
 
 - [ ] `<repo>/.windsurfrules` — points to `developer-agent/skill.md` and `developer-agent/config.md`
 - [ ] `<repo>/.github/copilot-instructions.md` — same content as `.windsurfrules`
 - [ ] `<repo>/developer-agent/skill.md` — populated with project-specific values (from Step 8a)
 - [ ] `<repo>/developer-agent/config.md` — populated with project-specific values (from Step 8b)
+- [ ] `<repo>/template/skill.md` — copied from the cloned template repo. The QA agent validates every checkbox in this file during verification. Do not remove it post-rebuild.
 
 Without these files in the built repo, the developer agent prompt is not loaded — developers would have to manually paste it into every session. **This is the most common gap in previous rebuilds.** The configs get written to the project working directory but never placed inside the repo that developers actually clone.
 
@@ -1091,6 +1093,7 @@ The QA agent is a second opinion on the developer agent's work. After the develo
 - [ ] Verify every `/ops/*` endpoint returns the required fields per the SRE contract in `qa-agent/skill.md`
 - [ ] Verify `environment-check.sh` accounts for every original env var (using the mapping in `qa-agent/config.md`)
 - [ ] Verify Dockerfile, entrypoint.sh, and Helm chart match template patterns
+- [ ] Verify every checkbox in `template/skill.md` has been completed — open the file, walk each item, and confirm it is satisfied by the built code. Mark any N/A items with a justification.
 - [ ] Generate an independent `tests/TEST_RESULTS.md` from the QA agent's own gate runs
 - [ ] Flag any discrepancies between the developer agent's claims and the QA agent's findings
 
