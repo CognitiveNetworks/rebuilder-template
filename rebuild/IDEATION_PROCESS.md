@@ -1023,6 +1023,25 @@ numbering are reconciled.
 
 **Output:** If all checks pass, state "Cross-artifact consistency check: PASS" and proceed. If any check fails, fix the inconsistency in the affected artifact(s) before proceeding. Document any fixes made in `output/process-feedback.md`.
 
+### Step 11b: Automated Output Validation (Phase 1)
+
+Run the output validator to confirm every Phase 1 artifact exists and contains
+its required sections:
+
+```bash
+./rebuild/validate.sh rebuild-inputs/<project> analyze
+```
+
+This checks that every file from Steps 1–11 exists, verifies each file contains
+the required markdown headings from its template, and flags files that are
+suspiciously short (indicating the agent may have produced a truncated version).
+
+**This gate is mandatory.** Do not proceed to Phase 2 until `validate.sh analyze`
+reports zero failures. Warnings should be reviewed but do not block.
+
+If `run.sh` is executing the process automatically, validation runs at the end
+of the Analyze phase before returning control to the operator.
+
 ---
 
 ## Phase 2: Build (Steps 12–18)
@@ -1671,6 +1690,31 @@ and compliance standards were defined before code was written.]
 [file tree]
 ```
 
+### Step 18a: Automated Output Validation (Phase 2)
+
+After Step 18, run the full output validator to confirm every artifact from both
+phases exists and contains its required sections:
+
+```bash
+./rebuild/validate.sh rebuild-inputs/<project> all
+```
+
+This is the final gate. It checks:
+- Every file from Steps 1–18 exists at its expected path
+- Every file contains the required markdown headings from its template
+- `summary-of-work.md` has all 14 required sections (Overview, Estimated Human
+  Time, Spec-Driven Approach, Source Code Metrics, Dependency Cleanup, Legacy
+  Health Scorecard, New Capabilities, Compliance Result, Extended Quality Gate
+  Results, Architecture Decisions, File Inventory)
+- `TEST_RESULTS.md` has core and extended quality gate sections
+- Files meet minimum length thresholds (catches truncated agent output)
+
+**The rebuild is not complete until `validate.sh all` reports zero failures.**
+
+If any step was missed or any output is structurally incomplete, fix it before
+declaring the rebuild done. This prevents the exact failure mode where an agent
+produces a shortened version of a template-specified document.
+
 ## Process Rules
 
 - **No hypotheticals.** Every opportunity must trace to a real pain point or assessment finding.
@@ -1680,4 +1724,5 @@ and compliance standards were defined before code was written.]
 - **Kill fast.** If an opportunity fails feasibility, drop it. Do not rehabilitate weak candidates.
 - **Speed over perfection.** This process should take minutes, not days. Parallel execution windows reduce wall-clock time without sacrificing quality.
 - **Consistency after concurrency.** Any time steps run in parallel (W1, W2, W3), the subsequent consistency check is mandatory — not optional. Artifacts produced independently must be verified as coherent before downstream steps consume them.
+- **Validate after each phase.** Run `rebuild/validate.sh` after Phase 1 (Step 11b) and after Phase 2 (Step 18a). Do not proceed past a phase boundary or declare completion with validation failures outstanding.
 
