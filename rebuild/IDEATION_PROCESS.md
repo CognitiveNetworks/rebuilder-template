@@ -1033,6 +1033,25 @@ documentation, and capture process feedback. The `run.sh` runner invokes Steps
 1–11a automatically; Steps 12–18 are executed during interactive development
 sessions with the developer agent.
 
+### Template Repo Checklist (required before writing code)
+
+> **Before writing any code in the Build phase**, read `template/skill.md` from
+> the cloned template repo at `rebuild-inputs/<project>/template/`. This file is
+> the authoritative checklist for how the rebuilt service must be structured — it
+> defines the required tooling, CI pipeline, Dockerfile pattern, entrypoint and
+> environment-check scripts, Helm chart templates, coding practices, and all
+> supporting files.
+>
+> **Complete every checkbox in `template/skill.md` during the Build phase.** Do
+> not invent your own tooling, configs, or patterns — match what the template repo
+> specifies. If an item does not apply to the target service, mark it N/A with a
+> justification.
+>
+> The template repo is **not** an adjacent repo. Adjacent repos (`adjacent/`) are
+> production code dependencies analyzed for integration points. The template repo
+> (`template/`) is the build standard — it defines *how* to build, not *what* to
+> build. It is never absorbed into the rebuilt service.
+
 ---
 
 ### Step 12: Developer Agent Standards Compliance Audit

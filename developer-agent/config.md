@@ -32,14 +32,19 @@
 > Quality gate tools that must pass before every commit. See `skill.md` for enforcement rules.
 >
 > The required tools, their configurations, CI pipeline definitions, Dockerfile pattern,
-> entrypoint/environment-check scripts, Helm chart templates, and all supporting files are
-> defined in the **adjacent template repo**: [`rebuilder-evergreen-template-repo-python`](https://github.com/CognitiveNetworks/rebuilder-evergreen-template-repo-python).
+> entrypoint/environment-check scripts, Helm chart templates, coding practices, and all
+> supporting files are defined in the **template repo**, cloned to `template/` during the
+> rebuild process (see `rebuild-inputs/<project>/template/`). The canonical source is
+> [`rebuilder-evergreen-template-repo-python`](https://github.com/CognitiveNetworks/rebuilder-evergreen-template-repo-python).
 >
-> **Read `skill.md` in that repo first.** It is the authoritative checklist — every item
-> in it is mandatory. The README is supplementary context; `skill.md` is the punch list.
-> When this repo is provided as an adjacent input during the rebuild process, complete every
-> checkbox in `skill.md`. Do not invent your own tooling, configs, or patterns — match what
-> the template repo specifies. If an item does not apply, mark it N/A with a justification.
+> **Read `template/skill.md` first.** It is the authoritative checklist — every item in it
+> is mandatory. The README is supplementary context; `skill.md` is the punch list. Complete
+> every checkbox in `template/skill.md` during the Build phase. Do not invent your own
+> tooling, configs, or patterns — match what the template repo specifies. If an item does
+> not apply, mark it N/A with a justification.
+>
+> The template repo is **not** an adjacent repo. Adjacent repos (`adjacent/`) are production
+> code dependencies. The template repo (`template/`) is the build standard.
 
 ## CI/CD
 

@@ -14,11 +14,19 @@ The project directory must exist under `rebuild-inputs/` with:
 - `scope.md` — filled out with current and target state
 - `input.md` — filled out with pain points and context
 - `repo/` — the cloned legacy repository
-- (optional) `adjacent/` — cloned adjacent repos
+- `template/` — the cloned template repo (e.g., `rebuilder-evergreen-template-repo-python`). This is the build standard — not an adjacent repo. Its `skill.md` is the authoritative checklist for how the rebuilt service must be structured.
+- (optional) `adjacent/` — cloned adjacent repos (production code dependencies)
 
 ## Steps
 
 1. **Identify the project directory.** The user will say something like "run replicator on vizio-automate" or "run replicator on orderflow". Map this to the path `rebuild-inputs/<project>/`. Verify `scope.md` and `input.md` exist.
+
+// turbo
+1b. **Clone the template repo** if `<project-dir>/template/` does not already exist. The template repo URL is specified in `input.md`. Clone it to `<project-dir>/template/`:
+   ```
+   git clone <template-repo-url> <project-dir>/template
+   ```
+   After cloning, verify `<project-dir>/template/skill.md` exists. This file is the authoritative checklist for the Build phase.
 
 // turbo
 2. **Create output directories** if they don't already exist:
@@ -45,6 +53,8 @@ The project directory must exist under `rebuild-inputs/` with:
    - `docs/disaster-recovery.md` → `<project-dir>/docs/disaster-recovery.md`
 
 4. **Invoke the `@legacy-rebuild` skill.** Read `.windsurf/skills/legacy-rebuild/SKILL.md` for the process overview, then read and execute `rebuild/IDEATION_PROCESS.md`. Read `<project-dir>/input.md` and `<project-dir>/scope.md`. Execute Steps 1-11 sequentially, writing outputs to `<project-dir>/output/`. Tell the user that they should review before continuing on steps 12-18.
+
+   **Before the Build phase (Steps 12–18):** Read `<project-dir>/template/skill.md` in full. Every checkbox in that file is mandatory for the built service. Complete them all during the Build phase. Do not invent your own tooling, configs, or patterns — match what the template repo specifies.
 
 5. **For Steps 7 and 8 (template population)**, you MUST follow the `/populate-templates` workflow rules. Read `.windsurf/workflows/populate-templates.md` before populating any template file. The strict rules in that workflow override any inclination to condense, rephrase, or restructure template content.
 

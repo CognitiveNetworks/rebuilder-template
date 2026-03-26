@@ -76,7 +76,7 @@ These rules apply to every task, every commit, every session. They are not situa
 
 ## Required Development Tooling
 
-The required development tools, configurations, Dockerfile pattern, entrypoint/environment-check scripts, Helm chart templates, CI pipeline structure, and all supporting files for this project are defined by the adjacent template repo referenced in `config.md`. **Read `skill.md` in that repo and complete every checkbox.** That file is the authoritative punch list — not the README.
+The required development tools, configurations, Dockerfile pattern, entrypoint/environment-check scripts, Helm chart templates, CI pipeline structure, coding practices, and all supporting files for this project are defined by the template repo cloned to `template/` (see `config.md` for details). **Read `template/skill.md` and complete every checkbox.** That file is the authoritative punch list — not the README. The template repo is not an adjacent repo — it is the build standard.
 
 Those tools are the only quality gates for this project. Do not add, skip, replace, or weaken any tool the template repo specifies. If a tool reports errors, fix the code — do not disable the rule, suppress the warning, or remove the tool from the pipeline.
 
