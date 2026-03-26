@@ -56,6 +56,19 @@
 - You do not introduce circular imports. If adding an import creates a cycle, refactor — extract the shared code into a separate module or restructure the call chain. Do not solve circular imports by moving imports inline.
 - Functions do one thing. Prefer explicit over implicit.
 - Avoid module-level mutable global variables. Pass state through function arguments, class instances, or dependency injection. Read-only module constants (e.g., `LOGGER`, `DEFAULT_TIMEOUT`) are fine.
+- Do not shadow global variables or constants inside function calls — use distinct local names.
+- All constants must be UPPER_CASE (e.g., `MAX_RETRIES`, `DEFAULT_TIMEOUT`).
+- All functions, classes, and modules must have docstrings.
+- Use f-strings instead of `%` formatting or `.format()` where appropriate.
+- Resolve linter errors instead of ignoring them — avoid `# pylint: disable`, `# type: ignore`, and similar suppression comments wherever possible.
+- No `# type: ignore[arg-type]` or `# type: ignore` comments anywhere — fix the type mismatch instead of suppressing it. Remove any that become unused.
+- Match expected types exactly — if a function expects `bytes`, pass `bytes` (e.g., `.encode()`), not `str`. Do not rely on implicit conversions.
+- Verify argument types against function signatures before calling — check the type hints of every function you call (standard library, third-party, and internal). If a parameter is typed as `bytes`, `int`, `Optional[str]`, etc., the caller must pass exactly that type.
+- When integrating with external modules (kafka_module, rds_module, etc.), read the module's type hints or docstrings to confirm expected parameter types. A producer that expects `bytes` must receive `.encode("utf-8")`, not a raw `str`.
+- Do not write equality checks that can never be true — if mypy reports `comparison-overlap`, the types on both sides of `==` are incompatible. Narrow the type first with `isinstance()` or restructure the logic.
+- Match framework function signatures exactly — e.g., FastAPI's `lifespan` parameter expects `Callable[[FastAPI], AsyncContextManager]`, not `Callable[[], AsyncContextManager]`. Check the framework type stubs when wiring callbacks.
+- Always parameterize generic types — use `dict[str, int]`, `list[EventRecord]`, `Optional[dict[str, bytes]]`, etc. with specific, meaningful types. Never use bare `dict` or `list` in type annotations. Avoid `Any` — use the actual expected type instead.
+- Run `mypy` as a type-mismatch safety net before every commit. Treat every mypy error as a real bug — not a false positive to suppress.
 - Always specify encoding when calling `open()`: `open(path, encoding="utf-8")`. Never rely on the platform default.
 - Handle errors at the boundary where you can act on them. Every error message answers: what happened, what was expected, what to do about it.
 - Distinguish retryable from fatal errors.
