@@ -199,12 +199,22 @@ Every rebuilt service with `/ops/*` endpoints must pass these contract tests:
 
 ## TEST_RESULTS.md Generation
 
-After running all quality gates, generate a `tests/TEST_RESULTS.md` file using the template in `qa-agent/TEST_RESULTS_TEMPLATE.md`. This file:
+After running all quality gates, generate a `tests/TEST_RESULTS.md` file by **filling in every section** of `qa-agent/TEST_RESULTS_TEMPLATE.md`. The template defines the exact report structure — do not skip sections, reorder them, or invent a different format. Every QA run must produce the same structure so reports are comparable across services and over time.
 
-- Records tool versions, codebase metrics, and gate results.
-- Documents any bugs found and fixed during validation.
-- Lists items that cannot be tested offline (infrastructure-dependent).
-- Serves as the quality gate audit trail for the rebuild.
+The report includes these sections in order:
+
+1. **Tool Versions** — exact versions of every tool used
+2. **Codebase Metrics** — source/test file counts and lines
+3. **Core Gates (1-4)** — pytest, pylint, black, mypy with exact command output
+4. **Extended Gates (5-11)** — radon, vulture, pip-audit, interrogate, duplicate-code, complexipy
+5. **Helm Gates (12-13)** — helm lint and template render (or NOT RUN with explanation)
+6. **/ops/\* Endpoint Contract Verification** — independently test every diagnostic and remediation endpoint using `TestClient` with lifespan. Do not just read the test files — run the endpoints yourself and record actual status codes and response fields.
+7. **Quality Gate Summary** — single table with all 14 gates, thresholds, results, and status icons
+8. **Comparison with Developer Agent TEST_RESULTS.md** — delta table comparing prior report metrics to current. If first run, note that.
+9. **Bugs Found and Fixed** — table of issues found during validation
+10. **Not Yet Tested** — infrastructure-dependent items that cannot be verified offline
+11. **Full template/skill.md Checklist Audit** — walk every checkbox in every section (Coding Practices preamble + Sections 1-13) and mark each `[x]`, `[ ]`, `[N/A]`, or `[⚠️]` with explanation. This is the most important section — it verifies template conformance beyond what automated tools catch.
+12. **Findings Summary** — categorized as Passed, Coding Standards Gaps (with resolution table if re-verification), Critical, Important, Advisory, Minor, and Recommendations
 
 The report should be committed to the repo as part of the QA validation step.
 
