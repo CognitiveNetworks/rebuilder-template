@@ -46,7 +46,8 @@ generation is better than the last.
 │  scope.md          What the app is, what it should be    │
 │  input.md          Tech stack, APIs, dependencies, auth  │
 │  repo/             The actual legacy source code         │
-│  adjacent/         Related repos (optional)              │
+│  template/         Build standard repo (skill.md)        │
+│  adjacent/         Related production repos (optional)   │
 │                                                          │
 ├──────────────────────────────────────────────────────────┤
 │                       PROCESS                            │

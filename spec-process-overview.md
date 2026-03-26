@@ -34,7 +34,7 @@ Same inputs + same process = same outputs (structure, quality, function).
 ```mermaid
 flowchart LR
     subgraph INPUTS ["Inputs"]
-        S["scope.md · input.md<br/>repo/ · adjacent/"]
+        S["scope.md · input.md<br/>repo/ · template/ · adjacent/"]
     end
     subgraph PROCESS ["Process"]
         IP["IDEATION_PROCESS.md<br/>skill.md · STANDARDS.md"]
@@ -55,7 +55,8 @@ flowchart LR
 | **scope.md** — what it is, what it should be | **IDEATION_PROCESS.md** — 18 prescribed steps | **18 named artifacts** — fixed structure, fixed location |
 | **input.md** — tech stack, APIs, auth | **skill.md** — coding standards + checklists | **Built codebase** — standards-compliant, tested |
 | **repo/** — legacy source code | **STANDARDS.md** — architecture standards | **Agent configs** — populated, IDE-loadable |
-| **adjacent/** — related repos (optional) | | **TEST_RESULTS.md** — quality receipt |
+| **template/** — build standard repo (skill.md checklist) | | **template/skill.md** — stays in built repo for QA validation |
+| **adjacent/** — related production code repos (optional) | | **TEST_RESULTS.md** — quality receipt |
 
 ---
 

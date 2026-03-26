@@ -96,19 +96,20 @@
 
 ### Template Repository (Required)
 
-> Every rebuilt service must conform to the patterns defined in the template repo. Clone it into `adjacent/` — the rebuild process will not proceed without it.
+> Every rebuilt service must conform to the patterns defined in the template repo. Clone it into `template/` — not `adjacent/`. The template repo is the build standard, not a production dependency. The rebuild process will not proceed without it.
 
 | Field | Value |
 |---|---|
 | Repo | [`rebuilder-evergreen-template-repo-python`](https://github.com/CognitiveNetworks/rebuilder-evergreen-template-repo-python) |
-| Clone Location | `adjacent/rebuilder-evergreen-template-repo-python/` |
-| What it defines | Dockerfile, entrypoint.sh, environment-check.sh, Helm charts, CI workflow, pip-compile, OTEL auto-instrumentation, quality gate tooling |
+| Clone Location | `template/` |
+| Authoritative Checklist | `template/skill.md` — every checkbox must be completed during the Build phase |
+| What it defines | Dockerfile, entrypoint.sh, environment-check.sh, Helm charts, CI workflows, pip-compile, OTEL auto-instrumentation, quality gate tooling, coding practices |
 
-> **This is not optional.** The developer agent's `config.md` references this repo. The QA agent's Template Conformance checklist verifies against it. Do not deviate from these patterns.
+> **This is not optional.** The developer agent's `config.md` references this repo. The QA agent validates every checkbox in `template/skill.md` during verification. `template/skill.md` is copied into the built repo and stays there permanently. Do not deviate from these patterns.
 
 ### Adjacent Repositories (Optional)
 
-> *If this rebuild involves multiple legacy repos that work together (beyond the template repo above), list them here. Clone each into `adjacent/<name>/` in your working directory. Only repos listed here are included in the rebuild scope — all other dependencies are treated as external services.*
+> *If this rebuild involves multiple legacy repos that work together, list them here. Clone each into `adjacent/<name>/` in your working directory. Adjacent repos are production code dependencies — not the template repo (which goes in `template/`). Only repos listed here are included in the rebuild scope — all other dependencies are treated as external services.*
 >
 > *If this is a single-repo rebuild, skip this section.*
 

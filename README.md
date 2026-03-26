@@ -37,7 +37,7 @@ Each phase feeds into the next. The overview shows the big picture; the per-phas
 flowchart LR
     subgraph P1 ["Phase 1 — Analyze"]
         direction TB
-        IN["scope.md + input.md<br/>repo/ + adjacent/"]
+        IN["scope.md + input.md<br/>repo/ + template/ + adjacent/"]
         RUN["run.sh → IDEATION_PROCESS.md<br/>(18 steps)"]
         OUT["PRD, ADRs, agent configs,<br/>feature parity, data mapping"]
         IN --> RUN --> OUT
@@ -77,6 +77,7 @@ flowchart LR
 flowchart TB
     subgraph INPUTS ["Inputs  (auto-populated, human-reviewed)"]
         REPO["repo/<br/>Legacy codebase"]
+        TMPL["template/<br/>Build standard repo<br/>(skill.md checklist)"]
         ADJ["adjacent/<br/>Related repos (optional)"]
         SCOPE["scope.md<br/>Current + target state"]
         INPUT["input.md<br/>Tech stack, APIs, pain points"]
@@ -106,7 +107,7 @@ flowchart TB
     SCOPE & INPUT --> RUNNER
     RUNNER -->|"copies"| TEMPLATES
     RUNNER -->|"launches AI agent"| PROCESS
-    REPO & ADJ --> PROCESS
+    REPO & TMPL & ADJ --> PROCESS
     SCOPE & INPUT --> PROCESS
     STANDARDS --> PROCESS
     PROCESS -->|"Steps 1–5"| ASSESS
@@ -135,6 +136,7 @@ flowchart TB
     DEV_POP["developer-agent/<br/>skill.md + config.md<br/>(populated in Phase 1)"]
     QA_POP["qa-agent/<br/>skill.md + config.md<br/>(populated in Phase 1)"]
     SRE_POP["sre-agent/ configs<br/>(populated in Phase 1)"]
+    TMPL_SKILL["template/skill.md<br/>(build standard checklist)"]
     ADRS["docs/adr/*.md<br/>(from Phase 1)"]
     FP["docs/ mappings<br/>(from Phase 1)"]
 
@@ -149,9 +151,9 @@ flowchart TB
     end
 
     CODE["Built codebase<br/>API-first service, /ops/* endpoints,<br/>tests, Terraform, CI/CD, OTEL"]
-    AUDIT["Steps 12–18<br/>Compliance audit, TEST_RESULTS.md,<br/>QA verification, summary-of-work.md"]
+    AUDIT["Steps 12–18<br/>Compliance audit, TEST_RESULTS.md,<br/>QA validates template/skill.md checkboxes,<br/>summary-of-work.md"]
 
-    PRD & DEV_POP & QA_POP & SRE_POP & ADRS & FP --> COPY --> NEW_REPO --> IDE_LOAD
+    PRD & DEV_POP & QA_POP & SRE_POP & TMPL_SKILL & ADRS & FP --> COPY --> NEW_REPO --> IDE_LOAD
     DEV_AGENT -->|"builds from PRD<br/>following standards"| CODE
     CODE --> AUDIT
     QA_AGENT -->|"verifies developer<br/>agent's output"| AUDIT
@@ -208,6 +210,7 @@ The rebuilder is a fully automated process — the AI agent reads the legacy cod
 | `sre-agent/config.md` | Service registry, SLOs, PagerDuty config | Template in Phase 1; runtime config in Phase 3 |
 | `sre-agent/playbooks/*.md` | Remediation runbooks by incident type | Phase 3 — agent follows during incidents |
 | `sre-agent/runtime/` | Deployable FastAPI service for alert handling | Phase 3 — receives webhooks, runs agentic loop |
+| `template/skill.md` | Build standard checklist from template repo — tooling, CI, Dockerfile, Helm, coding practices | Cloned in Phase 1; read before Build phase; QA validates in Phase 2; stays in built repo |
 | `docs/*.md` | Migration planning templates (feature parity, data mapping, DR, cutover) | Templates copied in Phase 1; filled during Phases 1–2 |
 | `output/*.md` | Analysis artifacts + PRD | Written by AI agent in Phase 1 |
 
@@ -234,6 +237,8 @@ rebuilder-template/
 ├── rebuild-inputs/            # Per-project working directories (gitignored)
 │   └── <project-name>/       # One directory per rebuild project
 │       ├── repo/                         # Cloned primary legacy codebase
+│       ├── template/                     # Cloned template repo (build standard — not an adjacent repo)
+│       │   └── skill.md                  # Authoritative checklist for built service structure
 │       ├── adjacent/                     # Optional: related repos included in rebuild scope
 │       │   └── <related-repo>/
 │       ├── scope.md                      # Filled-out scope

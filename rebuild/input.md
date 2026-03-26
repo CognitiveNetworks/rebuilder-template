@@ -76,13 +76,14 @@
 
 ## Template Repository (Required)
 
-> Every rebuilt service must conform to the patterns in the template repo. This is non-negotiable — the developer agent and QA agent both enforce conformance.
+> Every rebuilt service must conform to the patterns in the template repo. This is non-negotiable — the developer agent and QA agent both enforce conformance. The template repo is **not** an adjacent repo — it is the build standard. It is cloned to `template/`, not `adjacent/`.
 
 | Field | Value |
 |---|---|
 | Repo | [`rebuilder-evergreen-template-repo-python`](https://github.com/CognitiveNetworks/rebuilder-evergreen-template-repo-python) |
-| Clone Location | `adjacent/rebuilder-evergreen-template-repo-python/` |
-| What it defines | Dockerfile, entrypoint.sh, environment-check.sh, Helm charts, CI workflow, pip-compile, OTEL auto-instrumentation, quality gate tooling |
+| Clone Location | `template/` |
+| Authoritative Checklist | `template/skill.md` — every checkbox must be completed during the Build phase |
+| What it defines | Dockerfile, entrypoint.sh, environment-check.sh, Helm charts, CI workflows, pip-compile, OTEL auto-instrumentation, quality gate tooling, coding practices |
 
 ## Developer Context (Optional)
 

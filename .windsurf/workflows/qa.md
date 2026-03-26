@@ -85,6 +85,7 @@ This workflow activates the QA agent to independently verify that the developer 
    - Required files present: `env.list`, `catalog-info.yaml`, `monitored-paths.txt`, `.actrc`
    - `.windsurfrules` and `.github/copilot-instructions.md` exist at built repo root
    - `developer-agent/skill.md` and `developer-agent/config.md` exist in built repo with placeholders filled
+   - `template/skill.md` exists in built repo — open it, walk every checkbox, and confirm each is satisfied by the built code. Mark any N/A items with a justification. This is the authoritative build standard checklist.
 
 7. Compare results against the developer agent's `tests/TEST_RESULTS.md` (if it exists). Flag any discrepancies — coverage numbers that don't match, gates that were claimed as passing but now fail, etc.
 
