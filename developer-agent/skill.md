@@ -76,7 +76,9 @@ These rules apply to every task, every commit, every session. They are not situa
 
 ## Required Development Tooling
 
-The required development tools for this project are defined by the adjacent template repo referenced in `config.md`. Those tools are the baseline quality gates — you may add additional tools, but you must not skip, replace, or weaken any tool the template repo specifies. If a tool reports errors, fix the code — do not disable the rule, suppress the warning, or remove the tool from the pipeline.
+The required development tools, configurations, Dockerfile pattern, entrypoint/environment-check scripts, Helm chart templates, CI pipeline structure, and all supporting files for this project are defined by the adjacent template repo referenced in `config.md`. **Read `skill.md` in that repo and complete every checkbox.** That file is the authoritative punch list — not the README.
+
+Those tools are the only quality gates for this project. Do not add, skip, replace, or weaken any tool the template repo specifies. If a tool reports errors, fix the code — do not disable the rule, suppress the warning, or remove the tool from the pipeline.
 
 Every tool specified by the template repo must pass cleanly before any commit is pushed. "It works" is not sufficient — it must also pass the full toolchain. If you are building a new service or modifying an existing one, the CI pipeline must enforce all of them. Do not ship a CI pipeline that omits any of them.
 

@@ -31,10 +31,15 @@
 
 > Quality gate tools that must pass before every commit. See `skill.md` for enforcement rules.
 >
-> The required tools, their configurations, and CI pipeline definitions are defined in the
-> **adjacent template repo**: [`rebuilder-evergreen-template-repo-python`](https://github.com/CognitiveNetworks/rebuilder-evergreen-template-repo-python).
-> When this repo is provided as an adjacent input during the rebuild process, adopt its
-> tooling, linter configs, CI workflows, and quality gates. Do not invent your own — match what the template repo specifies.
+> The required tools, their configurations, CI pipeline definitions, Dockerfile pattern,
+> entrypoint/environment-check scripts, Helm chart templates, and all supporting files are
+> defined in the **adjacent template repo**: [`rebuilder-evergreen-template-repo-python`](https://github.com/CognitiveNetworks/rebuilder-evergreen-template-repo-python).
+>
+> **Read `skill.md` in that repo first.** It is the authoritative checklist — every item
+> in it is mandatory. The README is supplementary context; `skill.md` is the punch list.
+> When this repo is provided as an adjacent input during the rebuild process, complete every
+> checkbox in `skill.md`. Do not invent your own tooling, configs, or patterns — match what
+> the template repo specifies. If an item does not apply, mark it N/A with a justification.
 
 ## CI/CD
 
