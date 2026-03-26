@@ -98,7 +98,7 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 | # | Gate | Tool | Threshold | Command |
 |---|------|------|-----------|---------|
 | 16 | Container build | docker build | Exit 0 | `docker build -t {service}:ci .` |
-| 17 | Container smoke test | curl | `/status` returns `OK` | `docker run -d -p 8000:8000 -e TEST_CONTAINER=true -e ENV=dev -e AWS_REGION=us-east-1 -e SERVICE_NAME=local-testing -e OTEL_PYTHON_AUTO_INSTRUMENTATION_ENABLED=false --name {service}-ci {service}:ci && sleep 10 && curl --silent --fail http://localhost:8000/status` |
+| 17 | Container smoke test | curl | `/status` returns `OK` | `docker run -d -p 8000:8000 -e TEST_CONTAINER=true -e ENV=dev -e AWS_REGION=us-east-1 -e SERVICE_NAME=local-testing -e LOG_LEVEL=DEBUG -e OTEL_PYTHON_AUTO_INSTRUMENTATION_ENABLED=false --name {service}-ci {service}:ci && sleep 10 && curl --silent --fail http://localhost:8000/status` |
 
 **TEST_CONTAINER mode**: The application must support a `TEST_CONTAINER` environment variable. When `true`, the app skips external dependency connections (RDS, Kafka, etc.) at startup so the container can start in isolation for smoke testing. The `/status` endpoint must return `OK` unconditionally. The `/health` endpoint should report dependencies as `skipped` rather than erroring.
 
