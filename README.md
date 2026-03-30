@@ -418,6 +418,9 @@ Deploy the SRE agent from `sre-agent/runtime/`. Fill in `sre-agent/config.md` wi
 | Rebuild a service | *"Rebuild my-service"* | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service"* |
 | Run QA verification | `/qa` | *"Read qa-agent/skill.md and run QA verification"* |
 | Reload agent standards | `/developer` | *"Re-read developer-agent/skill.md and qa-agent/skill.md"* |
+| Profile a slow endpoint | *"Read performance-agent/skill.md and profile the POST /events endpoint — it's slow at P99"* | *"Read performance-agent/skill.md and profile the POST /events endpoint — it's slow at P99"* |
+| Investigate a memory leak | *"Read performance-agent/skill.md — memory usage keeps climbing in the worker process"* | *"Read performance-agent/skill.md — memory usage keeps climbing in the worker process"* |
+| Check SRE alerting config | *"Read sre-agent/skill.md — what's the alerting config for this service?"* | *"Read sre-agent/skill.md — what's the alerting config for this service?"* |
 | Explore the rebuild process | *"@legacy-rebuild what steps are in the process?"* | *"Read rebuild/IDEATION_PROCESS.md and summarize the steps"* |
 
 ## What Gets Generated
