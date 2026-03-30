@@ -22,8 +22,8 @@ All rebuilt services follow an **API-first** design — every feature is exposed
 - [Repository Structure](#repository-structure) — full directory tree
 - [Developer Agent](#developer-agent) — coding standards, testing, CI/CD, observability
 - [QA Agent](#qa-agent) — quality gates, verification procedures, acceptance criteria
-- [Performance Agent](#performance-agent) — profiling, optimization, benchmarking (on-demand)
 - [SRE Agent](#sre-agent) — incident response, diagnostics, remediation, runtime service
+- [Performance Agent](#performance-agent) — profiling, optimization, benchmarking (on-demand)
 - [IDE Compatibility](#ide-compatibility) — Windsurf, VS Code, Enterprise, cross-tool support
 
 ## How to Use
@@ -502,28 +502,6 @@ The `qa-agent/` directory contains quality verification procedures for rebuilt s
 > [!TIP]
 > **How it connects to the rebuild:** The rebuild process (`run.sh`) auto-populates `config.md` from the PRD and developer agent config (Step 8d). Endpoint lists, env var mappings, and mock strategies are filled in before the first quality check. Human operators then customize the acceptance criteria — adding app-specific checks, adjusting thresholds, and defining verification rules beyond the universal standards. After the developer agent claims compliance (Step 12), activate the QA agent via `/qa` to independently verify.
 
-## Performance Agent
-
-The `performance-agent/` directory provides specialized Python profiling and optimization capabilities. It is loaded **on demand** — not always-on like the developer and QA agents.
-
-**What it covers:**
-- **Profiling tools** — cProfile, line_profiler, memory_profiler, py-spy, tracemalloc
-- **Optimization patterns** — list comprehensions, generators, string concatenation, dictionary lookups, NumPy vectorization, caching, multiprocessing, async I/O
-- **Database optimization** — batch operations, query planning, indexing, connection pooling
-- **Memory management** — leak detection, `__slots__`, weak references, iterators vs lists
-- **Benchmarking** — timeit, pytest-benchmark, custom decorators
-
-**Components:**
-- **`skill.md`** — profiling tools, optimization patterns, and best practices.
-- **`config.md`** — per-project performance configuration: latency targets, hot paths, profiling commands, infrastructure context.
-- **`references/advanced-patterns.md`** — extended examples: NumPy vectorization, caching with `lru_cache`, `__slots__`, multiprocessing, async I/O, database batching, and pytest-benchmark.
-
-**How to activate:**
-- **Windsurf:** *"Read performance-agent/skill.md and profile the event ingestion endpoint"*
-- **VS Code + Copilot:** *"Read performance-agent/skill.md and performance-agent/config.md. The POST /events endpoint is slow at P99 — help me profile it."*
-
-Based on [wshobson/agents — python-performance-optimization](https://github.com/wshobson/agents/tree/main/plugins/python-development/skills/python-performance-optimization), adapted to the rebuilder agent convention.
-
 ## SRE Agent
 
 The `sre-agent/` directory contains a complete, deployable SRE agent that provides automated incident response for your rebuilt services.
@@ -546,6 +524,28 @@ The `sre-agent/` directory contains a complete, deployable SRE agent that provid
 
 > [!TIP]
 > **How it connects to the rebuild:** The rebuild process (`run.sh`) auto-configures the agent's tech stack from the chosen rebuild candidate (Step 7). Your rebuilt services expose `/ops/*` endpoints as defined in `STANDARDS.md`. The agent uses those endpoints to monitor and respond to incidents. Fill in `config.md` with your service URLs, PagerDuty escalation config, and escalation contacts, deploy the runtime, and the agent is operational.
+
+## Performance Agent
+
+The `performance-agent/` directory provides specialized Python profiling and optimization capabilities. It is loaded **on demand** — not always-on like the developer and QA agents.
+
+**What it covers:**
+- **Profiling tools** — cProfile, line_profiler, memory_profiler, py-spy, tracemalloc
+- **Optimization patterns** — list comprehensions, generators, string concatenation, dictionary lookups, NumPy vectorization, caching, multiprocessing, async I/O
+- **Database optimization** — batch operations, query planning, indexing, connection pooling
+- **Memory management** — leak detection, `__slots__`, weak references, iterators vs lists
+- **Benchmarking** — timeit, pytest-benchmark, custom decorators
+
+**Components:**
+- **`skill.md`** — profiling tools, optimization patterns, and best practices.
+- **`config.md`** — per-project performance configuration: latency targets, hot paths, profiling commands, infrastructure context.
+- **`references/advanced-patterns.md`** — extended examples: NumPy vectorization, caching with `lru_cache`, `__slots__`, multiprocessing, async I/O, database batching, and pytest-benchmark.
+
+**How to activate:**
+- **Windsurf:** *"Read performance-agent/skill.md and profile the event ingestion endpoint"*
+- **VS Code + Copilot:** *"Read performance-agent/skill.md and performance-agent/config.md. The POST /events endpoint is slow at P99 — help me profile it."*
+
+Based on [wshobson/agents — python-performance-optimization](https://github.com/wshobson/agents/tree/main/plugins/python-development/skills/python-performance-optimization), adapted to the rebuilder agent convention.
 
 ## IDE Compatibility
 
