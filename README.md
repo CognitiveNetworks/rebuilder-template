@@ -371,6 +371,19 @@ Open this repo in VS Code. Copilot auto-loads `.github/copilot-instructions.md`,
 
 VS Code does not have Windsurf's `/run-replicator` workflow or `@legacy-rebuild` skill, so you reference the process file directly. The agent follows the same 18-step process — it just needs the explicit pointer.
 
+### Full Rebuild (Analyze + Build in One Pass)
+
+By default the process pauses after Phase 1 (Steps 1–11) so you can review the analysis before the build starts. If you want the agent to run all 18 steps without stopping — analyze the legacy code and then build the new service in a single session — add **"run all steps including the build"** to your prompt:
+
+> **Windsurf:** *"Rebuild my-service — run all steps including the build, do not pause between phases"*
+>
+> **VS Code + Copilot:** *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service. Run all 18 steps including the build phase — do not stop after analysis."*
+
+The agent will execute Steps 1–11 (analyze), then continue straight into Steps 12–18 (build) without waiting for approval. You can still review everything afterward — the analysis artifacts are written to `rebuild-inputs/<project>/output/` and the built code lives in the target repo.
+
+> [!NOTE]
+> The analysis-then-review workflow exists for a reason: the PRD and target architecture come from AI analysis of your legacy code, and you may want to adjust them before code is written. Use the full rebuild shortcut when you trust the defaults or want a fast first pass you'll iterate on.
+
 ### Phase 1: Analyze
 
 Tell the agent which legacy repo to rebuild. It clones the repo, creates the project directory, copies templates, and executes Steps 1–11.
@@ -416,6 +429,7 @@ Deploy the SRE agent from `sre-agent/runtime/`. Fill in `sre-agent/config.md` wi
 | Action | Windsurf | VS Code + Copilot |
 |---|---|---|
 | Rebuild a service | *"Rebuild my-service"* | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service"* |
+| Rebuild (all steps, no pause) | *"Rebuild my-service — run all steps including the build, do not pause between phases"* | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service. Run all 18 steps including the build phase — do not stop after analysis."* |
 | Run QA verification | `/qa` | *"Read qa-agent/skill.md and run QA verification"* |
 | Reload agent standards | `/developer` | *"Re-read developer-agent/skill.md and qa-agent/skill.md"* |
 | Profile a slow endpoint | *"Read performance-agent/skill.md and profile the POST /events endpoint — it's slow at P99"* | *"Read performance-agent/skill.md and profile the POST /events endpoint — it's slow at P99"* |
