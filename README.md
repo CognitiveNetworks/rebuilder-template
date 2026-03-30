@@ -16,15 +16,120 @@ All rebuilt services follow an **API-first** design — every feature is exposed
 
 ## Contents
 
-- [How the Template Files Relate](#how-the-template-files-relate) — diagrams, file reference table
-- [Repository Structure](#repository-structure) — full directory tree
 - [How to Use](#how-to-use) — quick start for Windsurf and VS Code, phase-by-phase guide
 - [What Gets Generated](#what-gets-generated) — output artifacts from the rebuild process
+- [How the Template Files Relate](#how-the-template-files-relate) — diagrams, file reference table
+- [Repository Structure](#repository-structure) — full directory tree
 - [Developer Agent](#developer-agent) — coding standards, testing, CI/CD, observability
 - [QA Agent](#qa-agent) — quality gates, verification procedures, acceptance criteria
 - [Performance Agent](#performance-agent) — profiling, optimization, benchmarking (on-demand)
 - [SRE Agent](#sre-agent) — incident response, diagnostics, remediation, runtime service
 - [IDE Compatibility](#ide-compatibility) — Windsurf, VS Code, Enterprise, cross-tool support
+
+## How to Use
+
+### Quick Start (Windsurf)
+
+Open this repo in Windsurf and tell Cascade what you want to rebuild:
+
+> **"Rebuild evergreen-tvevents"**
+
+Cascade invokes the `@legacy-rebuild` skill, sets up the project directory, and runs the 18-step analysis. You review the outputs and guide the build.
+
+### Quick Start (VS Code + Copilot)
+
+Open this repo in VS Code. Copilot auto-loads `.github/copilot-instructions.md`, which reads the developer and QA agent files. Tell Copilot:
+
+> **"Read rebuild/IDEATION_PROCESS.md and rebuild evergreen-tvevents"**
+
+VS Code does not have Windsurf's `/run-replicator` workflow or `@legacy-rebuild` skill, so you reference the process file directly. The agent follows the same 18-step process — it just needs the explicit pointer.
+
+### Full Rebuild (Analyze + Build in One Pass)
+
+By default the process pauses after Phase 1 (Steps 1–11) so you can review the analysis before the build starts. If you want the agent to run all 18 steps without stopping — analyze the legacy code and then build the new service in a single session — add **"run all steps including the build"** to your prompt:
+
+> **Windsurf:** *"Rebuild my-service — run all steps including the build, do not pause between phases"*
+>
+> **VS Code + Copilot:** *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service. Run all 18 steps including the build phase — do not stop after analysis."*
+
+The agent will execute Steps 1–11 (analyze), then continue straight into Steps 12–18 (build) without waiting for approval. You can still review everything afterward — the analysis artifacts are written to `rebuild-inputs/<project>/output/` and the built code lives in the target repo.
+
+> [!NOTE]
+> The analysis-then-review workflow exists for a reason: the PRD and target architecture come from AI analysis of your legacy code, and you may want to adjust them before code is written. Use the full rebuild shortcut when you trust the defaults or want a fast first pass you'll iterate on.
+
+### Phase 1: Analyze
+
+Tell the agent which legacy repo to rebuild. It clones the repo, creates the project directory, copies templates, and executes Steps 1–11.
+
+#### Windsurf
+
+| What you want | What to say |
+|---|---|
+| Rebuild a single service | *"Rebuild my-service"* |
+| Rebuild with related repos | *"Rebuild my-service with adjacent repos auth-api and worker-app"* |
+| Use the workflow directly | `/run-replicator` on my-service |
+
+#### VS Code + Copilot
+
+| What you want | What to say |
+|---|---|
+| Rebuild a single service | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service. The repo is at github.com/your-org/my-service."* |
+| Rebuild with related repos | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service with adjacent repos auth-api and worker-app."* |
+
+All outputs land in `rebuild-inputs/<project>/`.
+
+> [!IMPORTANT]
+> Review the outputs — especially `scope.md` Target State and `output/prd.md`. The Current Application section comes from the code; the Target State comes from your decisions. Adjust before proceeding to the build phase.
+
+### Phase 2: Build
+
+After reviewing the Phase 1 outputs, create a new repo and ask the agent to build it:
+
+> *"Create a new repo for the rebuilt service and build it from the PRD."*
+
+This prompt works in both Windsurf and VS Code. The agent copies the populated agent configs, PRD, ADRs, and docs into the new repo. In the new repo, the developer and QA agents auto-load via `.windsurfrules` (Windsurf) or `.github/copilot-instructions.md` (VS Code).
+
+After the code is written:
+- **Windsurf:** Run `/qa` to independently verify quality gates.
+- **VS Code:** Ask Copilot: *"Read qa-agent/skill.md and run the full QA verification."*
+
+### Phase 3: Operate
+
+Deploy the SRE agent from `sre-agent/runtime/`. Fill in `sre-agent/config.md` with service registry URLs and PagerDuty escalation config. The agent receives monitoring webhooks, diagnoses issues via `/ops/*` endpoints, and escalates when it can't resolve. See `sre-agent/runtime/README.md` for deployment instructions.
+
+### Quick Reference
+
+| Action | Windsurf | VS Code + Copilot |
+|---|---|---|
+| Rebuild a service | *"Rebuild my-service"* | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service"* |
+| Rebuild (all steps, no pause) | *"Rebuild my-service — run all steps including the build, do not pause between phases"* | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service. Run all 18 steps including the build phase — do not stop after analysis."* |
+| Run QA verification | `/qa` | *"Read qa-agent/skill.md and run QA verification"* |
+| Reload agent standards | `/developer` | *"Re-read developer-agent/skill.md and qa-agent/skill.md"* |
+| Profile a slow endpoint | *"Read performance-agent/skill.md and profile the POST /events endpoint — it's slow at P99"* | *"Read performance-agent/skill.md and profile the POST /events endpoint — it's slow at P99"* |
+| Investigate a memory leak | *"Read performance-agent/skill.md — memory usage keeps climbing in the worker process"* | *"Read performance-agent/skill.md — memory usage keeps climbing in the worker process"* |
+| Check SRE alerting config | *"Read sre-agent/skill.md — what's the alerting config for this service?"* | *"Read sre-agent/skill.md — what's the alerting config for this service?"* |
+| Explore the rebuild process | *"@legacy-rebuild what steps are in the process?"* | *"Read rebuild/IDEATION_PROCESS.md and summarize the steps"* |
+
+## What Gets Generated
+
+All outputs are written into the project directory under `rebuild-inputs/<project-name>/`:
+
+| Output | Location | Description |
+|---|---|---|
+| Legacy assessment | `output/legacy_assessment.md` | Architecture, code, ops, data, infrastructure, and DX health ratings |
+| Modernization opportunities | `output/modernization_opportunities.md` | Ranked list tied to real pain points (includes infra migration if applicable) |
+| Feasibility analysis | `output/feasibility.md` | Effort, risk, dependencies, rollback per opportunity |
+| Rebuild candidates | `output/candidate_N.md` | Concrete proposals with stack choices, phased scope, infrastructure migration plan, and DAPR integration notes |
+| PRD | `output/prd.md` | Product requirements including infrastructure migration plan and DAPR integration if changing providers |
+| Summary of work | `output/summary-of-work.md` | Build summary — what was built, commits, quality gates |
+| Compliance audit | `output/compliance-audit.md` | Compliance audit results |
+| Process feedback | `output/process-feedback.md` | Process improvement notes |
+| ADRs | `docs/adr/*.md` | Architecture decision records |
+| Feature parity matrix | `docs/feature-parity.md` | Every feature cataloged with rebuild status |
+| Data migration mapping | `docs/data-migration-mapping.md` | Schema mapping between legacy and target |
+| Developer agent config | `developer-agent/skill.md` + `config.md` | Project name, architecture, commands, CI/CD, environments |
+| QA agent config | `qa-agent/skill.md` + `config.md` + `TEST_RESULTS_TEMPLATE.md` + `examples/` | QA verification procedures, project-specific acceptance criteria, example test patterns |
+| SRE agent config | `sre-agent/skill.md` + `config.md` | Tech stack, service registry, SLO thresholds |
 
 ## How the Template Files Relate
 
@@ -352,111 +457,6 @@ rebuilder-template/
         ├── populate-templates.md
         └── run-replicator.md  # /run-replicator — invokes @legacy-rebuild skill
 ```
-
-## How to Use
-
-### Quick Start (Windsurf)
-
-Open this repo in Windsurf and tell Cascade what you want to rebuild:
-
-> **"Rebuild evergreen-tvevents"**
-
-Cascade invokes the `@legacy-rebuild` skill, sets up the project directory, and runs the 18-step analysis. You review the outputs and guide the build.
-
-### Quick Start (VS Code + Copilot)
-
-Open this repo in VS Code. Copilot auto-loads `.github/copilot-instructions.md`, which reads the developer and QA agent files. Tell Copilot:
-
-> **"Read rebuild/IDEATION_PROCESS.md and rebuild evergreen-tvevents"**
-
-VS Code does not have Windsurf's `/run-replicator` workflow or `@legacy-rebuild` skill, so you reference the process file directly. The agent follows the same 18-step process — it just needs the explicit pointer.
-
-### Full Rebuild (Analyze + Build in One Pass)
-
-By default the process pauses after Phase 1 (Steps 1–11) so you can review the analysis before the build starts. If you want the agent to run all 18 steps without stopping — analyze the legacy code and then build the new service in a single session — add **"run all steps including the build"** to your prompt:
-
-> **Windsurf:** *"Rebuild my-service — run all steps including the build, do not pause between phases"*
->
-> **VS Code + Copilot:** *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service. Run all 18 steps including the build phase — do not stop after analysis."*
-
-The agent will execute Steps 1–11 (analyze), then continue straight into Steps 12–18 (build) without waiting for approval. You can still review everything afterward — the analysis artifacts are written to `rebuild-inputs/<project>/output/` and the built code lives in the target repo.
-
-> [!NOTE]
-> The analysis-then-review workflow exists for a reason: the PRD and target architecture come from AI analysis of your legacy code, and you may want to adjust them before code is written. Use the full rebuild shortcut when you trust the defaults or want a fast first pass you'll iterate on.
-
-### Phase 1: Analyze
-
-Tell the agent which legacy repo to rebuild. It clones the repo, creates the project directory, copies templates, and executes Steps 1–11.
-
-#### Windsurf
-
-| What you want | What to say |
-|---|---|
-| Rebuild a single service | *"Rebuild my-service"* |
-| Rebuild with related repos | *"Rebuild my-service with adjacent repos auth-api and worker-app"* |
-| Use the workflow directly | `/run-replicator` on my-service |
-
-#### VS Code + Copilot
-
-| What you want | What to say |
-|---|---|
-| Rebuild a single service | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service. The repo is at github.com/your-org/my-service."* |
-| Rebuild with related repos | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service with adjacent repos auth-api and worker-app."* |
-
-All outputs land in `rebuild-inputs/<project>/`.
-
-> [!IMPORTANT]
-> Review the outputs — especially `scope.md` Target State and `output/prd.md`. The Current Application section comes from the code; the Target State comes from your decisions. Adjust before proceeding to the build phase.
-
-### Phase 2: Build
-
-After reviewing the Phase 1 outputs, create a new repo and ask the agent to build it:
-
-> *"Create a new repo for the rebuilt service and build it from the PRD."*
-
-This prompt works in both Windsurf and VS Code. The agent copies the populated agent configs, PRD, ADRs, and docs into the new repo. In the new repo, the developer and QA agents auto-load via `.windsurfrules` (Windsurf) or `.github/copilot-instructions.md` (VS Code).
-
-After the code is written:
-- **Windsurf:** Run `/qa` to independently verify quality gates.
-- **VS Code:** Ask Copilot: *"Read qa-agent/skill.md and run the full QA verification."*
-
-### Phase 3: Operate
-
-Deploy the SRE agent from `sre-agent/runtime/`. Fill in `sre-agent/config.md` with service registry URLs and PagerDuty escalation config. The agent receives monitoring webhooks, diagnoses issues via `/ops/*` endpoints, and escalates when it can't resolve. See `sre-agent/runtime/README.md` for deployment instructions.
-
-### Quick Reference
-
-| Action | Windsurf | VS Code + Copilot |
-|---|---|---|
-| Rebuild a service | *"Rebuild my-service"* | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service"* |
-| Rebuild (all steps, no pause) | *"Rebuild my-service — run all steps including the build, do not pause between phases"* | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service. Run all 18 steps including the build phase — do not stop after analysis."* |
-| Run QA verification | `/qa` | *"Read qa-agent/skill.md and run QA verification"* |
-| Reload agent standards | `/developer` | *"Re-read developer-agent/skill.md and qa-agent/skill.md"* |
-| Profile a slow endpoint | *"Read performance-agent/skill.md and profile the POST /events endpoint — it's slow at P99"* | *"Read performance-agent/skill.md and profile the POST /events endpoint — it's slow at P99"* |
-| Investigate a memory leak | *"Read performance-agent/skill.md — memory usage keeps climbing in the worker process"* | *"Read performance-agent/skill.md — memory usage keeps climbing in the worker process"* |
-| Check SRE alerting config | *"Read sre-agent/skill.md — what's the alerting config for this service?"* | *"Read sre-agent/skill.md — what's the alerting config for this service?"* |
-| Explore the rebuild process | *"@legacy-rebuild what steps are in the process?"* | *"Read rebuild/IDEATION_PROCESS.md and summarize the steps"* |
-
-## What Gets Generated
-
-All outputs are written into the project directory under `rebuild-inputs/<project-name>/`:
-
-| Output | Location | Description |
-|---|---|---|
-| Legacy assessment | `output/legacy_assessment.md` | Architecture, code, ops, data, infrastructure, and DX health ratings |
-| Modernization opportunities | `output/modernization_opportunities.md` | Ranked list tied to real pain points (includes infra migration if applicable) |
-| Feasibility analysis | `output/feasibility.md` | Effort, risk, dependencies, rollback per opportunity |
-| Rebuild candidates | `output/candidate_N.md` | Concrete proposals with stack choices, phased scope, infrastructure migration plan, and DAPR integration notes |
-| PRD | `output/prd.md` | Product requirements including infrastructure migration plan and DAPR integration if changing providers |
-| Summary of work | `output/summary-of-work.md` | Build summary — what was built, commits, quality gates |
-| Compliance audit | `output/compliance-audit.md` | Compliance audit results |
-| Process feedback | `output/process-feedback.md` | Process improvement notes |
-| ADRs | `docs/adr/*.md` | Architecture decision records |
-| Feature parity matrix | `docs/feature-parity.md` | Every feature cataloged with rebuild status |
-| Data migration mapping | `docs/data-migration-mapping.md` | Schema mapping between legacy and target |
-| Developer agent config | `developer-agent/skill.md` + `config.md` | Project name, architecture, commands, CI/CD, environments |
-| QA agent config | `qa-agent/skill.md` + `config.md` + `TEST_RESULTS_TEMPLATE.md` + `examples/` | QA verification procedures, project-specific acceptance criteria, example test patterns |
-| SRE agent config | `sre-agent/skill.md` + `config.md` | Tech stack, service registry, SLO thresholds |
 
 ## Developer Agent
 
