@@ -27,6 +27,14 @@ this project, read these four files in full:
 
 Do not proceed with any task until all four files have been read.
 
+## Performance Agent
+
+The performance agent (`performance-agent/`) provides specialized Python
+profiling and optimization capabilities. It is loaded on demand — not
+always-on like the developer and QA agents. Reference
+`performance-agent/skill.md` and `performance-agent/config.md` when
+investigating latency, memory, or throughput issues.
+
 ## SRE Agent
 
 The SRE agent (`sre-agent/`) is a runtime operational agent. It is not loaded
