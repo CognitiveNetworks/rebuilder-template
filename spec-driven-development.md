@@ -436,8 +436,8 @@ copy the skill unchanged and populate a fresh config.
 
 **How it loads:** The IDE reads an instruction file at repo root
 (`.windsurfrules` for Windsurf, `.github/copilot-instructions.md` for VS Code
-+ Copilot) which tells the agent to read `developer-agent/skill.md` and
-`developer-agent/config.md` before any work.
++ Copilot) which tells the agent to read `python-developer-agent/skill.md` and
+`python-developer-agent/config.md` before any work.
 
 **What it knows:**
 - `skill.md` — coding practices, testing standards, CI/CD pipeline,
@@ -524,7 +524,7 @@ The two agents use different loading mechanisms but the same two-file pattern:
           │                                        │
           ▼                                        ▼
   ┌─────────────────────┐                  ┌─────────────────────┐
-  │ developer-agent/    │                  │ sre-agent/          │
+  │ python-developer-agent/    │                  │ sre-agent/          │
   │   skill.md          │ ◄── HOW to act   │   skill.md          │
   │   config.md         │ ◄── WHAT to act  │   config.md         │
   │                     │     on           │                     │
@@ -553,7 +553,7 @@ session starts by loading the skill from disk. This means:
                           │
               ┌───────────┴───────────┐
               ▼                       ▼
-     developer-agent/            sre-agent/
+     python-developer-agent/            sre-agent/
      skill.md                     skill.md
      config.md                    config.md
               │                       │

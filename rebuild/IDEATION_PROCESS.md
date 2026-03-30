@@ -149,7 +149,7 @@ Write results to `output/legacy_assessment.md` using this structure:
 ```
 # Legacy Assessment
 
-> **Reference document.** This is analysis output from the ideation process. It informs decisions but does not override developer-agent/skill.md.
+> **Reference document.** This is analysis output from the ideation process. It informs decisions but does not override {lang}-developer-agent/skill.md.
 
 ## Application Overview
 [Summary from scope.md and input.md]
@@ -291,7 +291,7 @@ For each opportunity, document:
 Write results to `output/modernization_opportunities.md`. Begin the file with:
 
 ```
-> **Reference document.** This is analysis output from the ideation process. It informs decisions but does not override developer-agent/skill.md.
+> **Reference document.** This is analysis output from the ideation process. It informs decisions but does not override {lang}-developer-agent/skill.md.
 ```
 
 ### Step 4: Feasibility Analysis
@@ -308,7 +308,7 @@ For each modernization opportunity rated High or Critical impact, validate:
 Write results to `output/feasibility.md`. Begin the file with:
 
 ```
-> **Reference document.** This is analysis output from the ideation process. It informs decisions but does not override developer-agent/skill.md.
+> **Reference document.** This is analysis output from the ideation process. It informs decisions but does not override {lang}-developer-agent/skill.md.
 ```
 
 ### Step 5: Rebuild Approach Candidates
@@ -320,7 +320,7 @@ Each candidate file uses this structure:
 ```
 # Rebuild Candidate: [Working Title]
 
-> **Reference document.** This is analysis output from the ideation process. It informs decisions but does not override developer-agent/skill.md.
+> **Reference document.** This is analysis output from the ideation process. It informs decisions but does not override {lang}-developer-agent/skill.md.
 
 ## One-Sentence Summary
 
@@ -430,7 +430,7 @@ Write it to `output/prd.md` using this structure:
 ```
 # PRD: [Product/Feature Name]
 
-> **Reference document.** This is the product requirements document from the ideation process. It informs implementation but does not override developer-agent/skill.md for coding standards or process rules.
+> **Reference document.** This is the product requirements document from the ideation process. It informs implementation but does not override {lang}-developer-agent/skill.md for coding standards or process rules.
 
 ## Background
 
@@ -638,6 +638,21 @@ This ensures the SRE agent is configured for the exact stack being built from da
 
 After the PRD is generated, populate the developer agent's per-project configuration so teams start with accurate, project-specific settings from day one.
 
+**Target Language Selection:** Determine the target language from the PRD's
+Technical Approach / Tech Stack section (or from `scope.md` if specified
+explicitly). The language determines which agent directory and template repo
+to use:
+
+| Language | Developer Agent | QA Agent | Template Repo |
+|---|---|---|---|
+| Python | `python-developer-agent/` | `python-qa-agent/` | `rebuilder-evergreen-template-repo-python` |
+| C | `c-developer-agent/` | `c-qa-agent/` | `rebuilder-evergreen-template-repo-c` |
+| Go | `go-developer-agent/` | `go-qa-agent/` | `rebuilder-evergreen-template-repo-go` |
+
+Throughout Steps 8a–8d below, `{lang}` refers to the target language prefix
+(e.g., `python`, `c`, `go`). Replace `{lang}` with the actual value in all
+file paths and references.
+
 #### 8a: Populate skill.md
 
 Read the PRD generated in Step 6 and update the developer agent's `skill.md` (path provided by the runner):
@@ -703,22 +718,22 @@ The developer agent only works if the IDE can find the instruction files **at th
 | **Windsurf** | `.windsurfrules` | repo root | Read on every Cascade session start |
 | **VS Code + GitHub Copilot** | `.github/copilot-instructions.md` | `.github/` at repo root | Included in every Copilot Chat interaction |
 
-Both files contain the same instruction: read `developer-agent/skill.md` and `developer-agent/config.md` before doing any work. Copy the content from the templates in the project's `developer-agent/` directory.
+Both files contain the same instruction: read `{lang}-developer-agent/skill.md` and `{lang}-developer-agent/config.md` before doing any work. Copy the content from the templates in the project's `{lang}-developer-agent/` directory.
 
-**You must also copy the populated `developer-agent/` configs and the template repo's `skill.md` into the built repo:**
+**You must also copy the populated `{lang}-developer-agent/` configs and the template repo's `skill.md` into the built repo:**
 
 | File | Source (project working dir) | Destination (built repo) |
 |---|---|---|
-| `skill.md` | `developer-agent/skill.md` | `<repo>/developer-agent/skill.md` |
-| `config.md` | `developer-agent/config.md` | `<repo>/developer-agent/config.md` |
+| `skill.md` | `{lang}-developer-agent/skill.md` | `<repo>/{lang}-developer-agent/skill.md` |
+| `config.md` | `{lang}-developer-agent/config.md` | `<repo>/{lang}-developer-agent/config.md` |
 | `skill.md` | `template/skill.md` | `<repo>/template/skill.md` |
 
 **Checklist — all five files must exist in the built repo root:**
 
-- [ ] `<repo>/.windsurfrules` — points to `developer-agent/skill.md` and `developer-agent/config.md`
+- [ ] `<repo>/.windsurfrules` — points to `{lang}-developer-agent/skill.md` and `{lang}-developer-agent/config.md`
 - [ ] `<repo>/.github/copilot-instructions.md` — same content as `.windsurfrules`
-- [ ] `<repo>/developer-agent/skill.md` — populated with project-specific values (from Step 8a)
-- [ ] `<repo>/developer-agent/config.md` — populated with project-specific values (from Step 8b)
+- [ ] `<repo>/{lang}-developer-agent/skill.md` — populated with project-specific values (from Step 8a)
+- [ ] `<repo>/{lang}-developer-agent/config.md` — populated with project-specific values (from Step 8b)
 - [ ] `<repo>/template/skill.md` — copied from the cloned template repo. The QA agent validates every checkbox in this file during verification. Do not remove it post-rebuild.
 
 Without these files in the built repo, the developer agent prompt is not loaded — developers would have to manually paste it into every session. **This is the most common gap in previous rebuilds.** The configs get written to the project working directory but never placed inside the repo that developers actually clone.
@@ -729,12 +744,12 @@ Without these files in the built repo, the developer agent prompt is not loaded 
 
 #### 8d: Populate QA Agent Configuration
 
-The QA agent verifies that the developer agent's output meets quality standards. It does **not** replace the developer agent — it is a check on it. The QA agent reads the same `developer-agent/skill.md` and `developer-agent/config.md` as the developer; `qa-agent/skill.md` adds the verification procedures and acceptance criteria.
+The QA agent verifies that the developer agent's output meets quality standards. It does **not** replace the developer agent — it is a check on it. The QA agent reads the same `{lang}-developer-agent/skill.md` and `{lang}-developer-agent/config.md` as the developer; `{lang}-qa-agent/skill.md` adds the verification procedures and acceptance criteria.
 
 Read the PRD generated in Step 6 and the developer agent config populated in Steps 8a–8b. Write the matching values into the QA agent's `config.md` (path provided by the runner), replacing the `[TODO]` placeholders:
 
 **Project section:**
-- **Project Name** — from the PRD title (same as developer-agent config)
+- **Project Name** — from the PRD title (same as `{lang}-developer-agent` config)
 - **Repository** — from the PRD's Target Repository
 - **Original Legacy Repo** — the legacy repo being rebuilt
 
@@ -742,7 +757,7 @@ Read the PRD generated in Step 6 and the developer agent config populated in Ste
 - Pre-fill the test env var table with every variable from the project's `environment-check.sh` `always_required_vars` array, plus app-specific variables. Each gets a safe test default value.
 
 **Acceptance Criteria — App-Specific:**
-- **API Endpoints to Verify** — list every endpoint from the PRD or developer-agent config (method, path, expected status code)
+- **API Endpoints to Verify** — list every endpoint from the PRD or `{lang}-developer-agent` config (method, path, expected status code)
 - **Event Types to Verify** — list every event type the service handles with validation rules and output shape
 - **Environment Variable Mapping** — document all renames from the original legacy service (e.g., `FLASK_ENV` → removed, `RDS_HOST` → same)
 
@@ -751,16 +766,16 @@ Read the PRD generated in Step 6 and the developer agent config populated in Ste
 
 Leave the Comparison Checklist items unchecked — the QA agent checks them off during verification.
 
-**Copy the populated `qa-agent/` into the built repo:**
+**Copy the populated `{lang}-qa-agent/` into the built repo:**
 
 | File | Source (project working dir) | Destination (built repo) |
 |---|---|---|
-| `skill.md` | `qa-agent/skill.md` | `<repo>/qa-agent/skill.md` |
-| `config.md` | `qa-agent/config.md` | `<repo>/qa-agent/config.md` |
-| `TEST_RESULTS_TEMPLATE.md` | `qa-agent/TEST_RESULTS_TEMPLATE.md` | `<repo>/qa-agent/TEST_RESULTS_TEMPLATE.md` |
-| `examples/` | `qa-agent/examples/` | `<repo>/qa-agent/examples/` |
+| `skill.md` | `{lang}-qa-agent/skill.md` | `<repo>/{lang}-qa-agent/skill.md` |
+| `config.md` | `{lang}-qa-agent/config.md` | `<repo>/{lang}-qa-agent/config.md` |
+| `TEST_RESULTS_TEMPLATE.md` | `{lang}-qa-agent/TEST_RESULTS_TEMPLATE.md` | `<repo>/{lang}-qa-agent/TEST_RESULTS_TEMPLATE.md` |
+| `examples/` | `{lang}-qa-agent/examples/` | `<repo>/{lang}-qa-agent/examples/` |
 
-The QA agent is activated on demand (via the `/qa` Windsurf workflow or during Step 12), not auto-loaded on every session. Human operators customize `qa-agent/config.md` with project-specific acceptance criteria after the initial population.
+The QA agent is activated on demand (via the `/qa` Windsurf workflow or during Step 12), not auto-loaded on every session. Human operators customize `{lang}-qa-agent/config.md` with project-specific acceptance criteria after the initial population.
 
 ### Step 9: Architecture Decision Records
 
@@ -965,7 +980,7 @@ catches terminology drift, naming mismatches, and reference errors that can
 occur when artifacts are produced independently.
 
 **Check 1: Service Name Consistency**
-- Extract service names from: `prd.md` (Technical Approach), `sre-agent/config.md` (Service Registry), `developer-agent/config.md` (Services table), `docs/feature-parity.md` (if service-scoped features exist)
+- Extract service names from: `prd.md` (Technical Approach), `sre-agent/config.md` (Service Registry), `{lang}-developer-agent/config.md` (Services table), `docs/feature-parity.md` (if service-scoped features exist)
 - All must use identical names. Flag any mismatches and normalize to the PRD's names.
 
 **Check 2: Endpoint Inventory**
@@ -974,7 +989,7 @@ occur when artifacts are produced independently.
 - Flag any endpoint in one document but missing from another.
 
 **Check 3: Technology Stack Alignment**
-- Compare the tech stack entries in: `prd.md`, `sre-agent/skill.md`, `sre-agent/config.md`, `developer-agent/skill.md`, `developer-agent/config.md`
+- Compare the tech stack entries in: `prd.md`, `sre-agent/skill.md`, `sre-agent/config.md`, `{lang}-developer-agent/skill.md`, `{lang}-developer-agent/config.md`
 - All must reference the same language, framework, database, cache, and cloud provider. Flag any version or name discrepancies.
 
 **Check 4: Data Schema Coherence**
@@ -1012,7 +1027,7 @@ outputs by name or number. This check reconciles those references:
 - **Navigational links:** Add "Related Documents" cross-links between W2
   artifacts where appropriate (e.g., ADRs linking to the feature parity
   entries they affect, data migration mapping linking to relevant ADRs).
-- **Agent config ADR references:** Scan `sre-agent/` and `developer-agent/`
+- **Agent config ADR references:** Scan `sre-agent/` and `{lang}-developer-agent/`
   config files for ADR number references (e.g., `ADR-008` in TODO comments).
   Replace each with the corresponding PRD section description (e.g.,
   `<!-- TODO: finalize container platform per PRD §Technical Approach -->`).
@@ -1081,7 +1096,7 @@ After the code is written, perform a line-by-line compliance check against every
 
 **Service Bootstrap — Required from First PR (all must pass):**
 
-- [ ] `Dockerfile` — pinned base image (e.g., `python:3.12-slim`, not `python:3`), non-root `USER`
+- [ ] `Dockerfile` — pinned base image (e.g., `python:3.12-slim`, `gcc:12-bookworm`, `golang:1.22-bookworm`), non-root `USER`
 - [ ] CI/CD pipeline — must include all stages: lint, test, build, **scan** (container vulnerability), auto-deploy to dev on merge, terraform plan on PR
 - [ ] Terraform module — `terraform/` with environment-specific variable files for dev, staging, prod
 - [ ] `/health` endpoint — must check critical dependencies and **return 503 if unhealthy** (not always 200)
@@ -1095,22 +1110,22 @@ After the code is written, perform a line-by-line compliance check against every
 - [ ] `.env.example` — all environment variables documented
 - [ ] OTEL instrumentation — tracing, metrics (`MeterProvider` configured), and structured logging
 - [ ] `README.md` — how to run locally, how to test, how to deploy
-- [ ] `.windsurfrules` — exists at **built repo root** (not just the project working directory), instructs Windsurf to read `developer-agent/skill.md` and `developer-agent/config.md` before any work
-- [ ] `.github/copilot-instructions.md` — exists at `.github/` in **built repo root** (not just the project working directory), instructs VS Code + GitHub Copilot to read `developer-agent/skill.md` and `developer-agent/config.md` before any work
-- [ ] `developer-agent/skill.md` — exists inside the **built repo** with all placeholders populated
-- [ ] `developer-agent/config.md` — exists inside the **built repo** with project-specific values filled in
-- [ ] `qa-agent/skill.md` — exists inside the **built repo** (universal QA standards — not project-specific)
-- [ ] `qa-agent/config.md` — exists inside the **built repo** with project-specific acceptance criteria filled in (endpoints, event types, env var mapping, mock strategy)
-- [ ] `qa-agent/TEST_RESULTS_TEMPLATE.md` — exists inside the **built repo**
-- [ ] `qa-agent/examples/` — exists inside the **built repo** with example test patterns
+- [ ] `.windsurfrules` — exists at **built repo root** (not just the project working directory), instructs Windsurf to read `{lang}-developer-agent/skill.md` and `{lang}-developer-agent/config.md` before any work
+- [ ] `.github/copilot-instructions.md` — exists at `.github/` in **built repo root** (not just the project working directory), instructs VS Code + GitHub Copilot to read `{lang}-developer-agent/skill.md` and `{lang}-developer-agent/config.md` before any work
+- [ ] `{lang}-developer-agent/skill.md` — exists inside the **built repo** with all placeholders populated
+- [ ] `{lang}-developer-agent/config.md` — exists inside the **built repo** with project-specific values filled in
+- [ ] `{lang}-qa-agent/skill.md` — exists inside the **built repo** (universal QA standards — not project-specific)
+- [ ] `{lang}-qa-agent/config.md` — exists inside the **built repo** with project-specific acceptance criteria filled in (endpoints, event types, env var mapping, mock strategy)
+- [ ] `{lang}-qa-agent/TEST_RESULTS_TEMPLATE.md` — exists inside the **built repo**
+- [ ] `{lang}-qa-agent/examples/` — exists inside the **built repo** with example test patterns
 
 **QA Agent Verification (independent quality check):**
 
 The QA agent is a second opinion on the developer agent's work. After the developer agent claims compliance, activate the QA agent (via `/qa` workflow) and have it independently verify:
 
-- [ ] Re-run all quality gates (pytest, pylint, black, mypy, radon, vulture, pip-audit, interrogate, complexipy) — compare results against the developer agent's `TEST_RESULTS.md`
-- [ ] Verify every `/ops/*` endpoint returns the required fields per the SRE contract in `qa-agent/skill.md`
-- [ ] Verify `environment-check.sh` accounts for every original env var (using the mapping in `qa-agent/config.md`)
+- [ ] Re-run all quality gates (language-appropriate tools per `{lang}-qa-agent/skill.md`) — compare results against the developer agent's `TEST_RESULTS.md`
+- [ ] Verify every `/ops/*` endpoint returns the required fields per the SRE contract in `{lang}-qa-agent/skill.md`
+- [ ] Verify `environment-check.sh` accounts for every original env var (using the mapping in `{lang}-qa-agent/config.md`)
 - [ ] Verify Dockerfile, entrypoint.sh, and Helm chart match template patterns
 - [ ] Verify every checkbox in `template/skill.md` has been completed — open the file, walk each item, and confirm it is satisfied by the built code. Mark any N/A items with a justification.
 - [ ] Generate an independent `tests/TEST_RESULTS.md` from the QA agent's own gate runs
@@ -1176,9 +1191,9 @@ This file serves as the build's quality receipt. If the report does not exist or
 
 ### Step 12a: Template Repository Component Checklist
 
-After the compliance audit passes, verify that **every structural component** from the template repository (`rebuilder-evergreen-template-repo-python`) exists in the built repo. This step catches missing files, directories, and tooling that are part of the organizational standard but not covered by the developer-agent compliance checks.
+After the compliance audit passes, verify that **every structural component** from the template repository (`rebuilder-evergreen-template-repo-python`) exists in the built repo. This step catches missing files, directories, and tooling that are part of the organizational standard but not covered by the `{lang}-developer-agent` compliance checks.
 
-**Why this step exists:** During the automate rebuild, several template components were missed — `hooks/pre-commit`, `charts/tests/`, `tests/test-helm-template.sh`, and `cves/` — because the compliance audit only checks developer-agent standards, not the template repo's full file inventory. This step closes that gap.
+**Why this step exists:** During the automate rebuild, several template components were missed — `hooks/pre-commit`, `charts/tests/`, `tests/test-helm-template.sh`, and `cves/` — because the compliance audit only checks `{lang}-developer-agent` standards, not the template repo's full file inventory. This step closes that gap.
 
 **Procedure:**
 
@@ -1447,7 +1462,7 @@ Write results to `output/summary-of-work.md` using this structure:
 ```
 # Summary of Work: [Application Name]
 
-> **Reference document.** This is a summary generated during the ideation process. It informs decisions but does not override developer-agent/skill.md.
+> **Reference document.** This is a summary generated during the ideation process. It informs decisions but does not override {lang}-developer-agent/skill.md.
 
 ## Overview
 

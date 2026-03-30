@@ -103,9 +103,9 @@ Every tool specified by the template repo must pass cleanly before any commit is
 - **Unit tests** gate every commit. **API tests** validate every endpoint directly — request in, response out. **Integration tests** verify components work together. **Contract tests** ensure API responses match the OpenAPI spec. **E2E tests** validate critical workflows.
 - **Test fixtures use domain-realistic values.** Real-looking MAC addresses, model names, firmware versions, serial numbers, timestamps — not generic placeholders like `test-1`, `foo`, or `user_abc`. Tests should read like documentation of how the system actually behaves with production-like data. This catches edge cases (case sensitivity, format validation, character encoding) that synthetic data misses.
 - Run the full test suite locally before pushing. Do not merge with failing tests.
-- **`pytest.ini` must exclude non-application test directories.** Every rebuilt repo contains `sre-agent/runtime/tests/` and `qa-agent/examples/` which have their own dependencies and are not part of the application test suite. Add them to `norecursedirs` so pytest does not collect them:
+- **`pytest.ini` must exclude non-application test directories.** Every rebuilt repo contains `sre-agent/runtime/tests/` and `python-qa-agent/examples/` which have their own dependencies and are not part of the application test suite. Add them to `norecursedirs` so pytest does not collect them:
   ```ini
-  norecursedirs = .git .venv sre-agent qa-agent
+  norecursedirs = .git .venv sre-agent python-qa-agent
   ```
 
 ## Code Audit Checklist

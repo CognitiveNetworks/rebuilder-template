@@ -73,10 +73,10 @@ proceed without it.
 | `rebuild/run.sh` | Automated execution script |
 | `scope.md` | Scope template |
 | `template/` | **Required** — build standard repo; `template/skill.md` is the authoritative checklist |
-| `developer-agent/skill.md` | Developer agent standards (template) |
-| `developer-agent/config.md` | Developer agent config (template) |
-| `qa-agent/skill.md` | QA agent standards (template) |
-| `qa-agent/config.md` | QA agent config (template) |
+| `{lang}-developer-agent/skill.md` | Developer agent standards (template) |
+| `{lang}-developer-agent/config.md` | Developer agent config (template) |
+| `{lang}-qa-agent/skill.md` | QA agent standards (template) |
+| `{lang}-qa-agent/config.md` | QA agent config (template) |
 | `sre-agent/skill.md` | SRE agent standards (template) |
 | `sre-agent/config.md` | SRE agent config (template) |
 

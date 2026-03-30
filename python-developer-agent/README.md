@@ -18,7 +18,7 @@ Each IDE has its own convention for reading project-level instructions automatic
 | **VS Code + GitHub Copilot** | `.github/copilot-instructions.md` | `.github/` at repo root | Included in every Copilot Chat interaction |
 | **Other tools** | `AGENTS.md` | repo root | Cross-tool standard; depends on tool support |
 
-All files contain the same instruction: read `developer-agent/skill.md`, `developer-agent/config.md`, `qa-agent/skill.md`, and `qa-agent/config.md` before performing any task. Both agents are always-on — the developer agent defines what standards to follow, the QA agent defines how compliance is verified.
+All files contain the same instruction: read `python-developer-agent/skill.md`, `python-developer-agent/config.md`, `python-qa-agent/skill.md`, and `python-qa-agent/config.md` before performing any task. Both agents are always-on — the developer agent defines what standards to follow, the QA agent defines how compliance is verified.
 
 **Without the correct file for your IDE at the project root, neither agent prompt is loaded automatically.** You would have to manually reference the files in every session.
 
@@ -82,7 +82,7 @@ The SRE agent runtime also instruments itself with OTEL because it is a service 
 | Document | Scope | When to Load |
 |---|---|---|
 | `STANDARDS.md` | Migration planning — architecture decisions, technology selection, data migration, cutover, DR, ADRs, RBAC, feature parity | During migration planning phases |
-| `developer-agent/skill.md` | Daily development — coding, testing, CI/CD, environments, service bootstrap, observability | Every development session (via IDE instruction files) |
+| `python-developer-agent/skill.md` | Daily development — coding, testing, CI/CD, environments, service bootstrap, observability | Every development session (via IDE instruction files) |
 | `sre-agent/skill.md` | Incident response — alert triage, diagnostics, remediation, escalation | Loaded by the SRE agent runtime (`agent.py`) |
 
 ## Setup
@@ -94,15 +94,15 @@ If you ran `rebuild/run.sh`, Steps 7a, 7b, and 7c of the rebuild process have al
 3. Copy the IDE instruction files to your rebuild project repo:
    - **Windsurf:** Copy `.windsurfrules` to the **repo root**
    - **VS Code + Copilot:** Copy `.github/copilot-instructions.md` into `.github/` at the **repo root**
-4. Copy `developer-agent/skill.md` and `developer-agent/config.md` into your rebuild project repo under `developer-agent/`.
+4. Copy `python-developer-agent/skill.md` and `python-developer-agent/config.md` into your rebuild project repo under `python-developer-agent/`.
 5. Open the project in your IDE — the instruction file will tell the AI assistant to read both files before any work.
 
 If you did **not** run the rebuild process, set up manually:
 
-1. Copy the IDE instruction file for your editor from `developer-agent/`:
+1. Copy the IDE instruction file for your editor from `python-developer-agent/`:
    - **Windsurf:** `.windsurfrules` → repo root
    - **VS Code + Copilot:** `.github/copilot-instructions.md` → `.github/` at repo root
 2. Fill out `config.md` with your project-specific details — commands, environments, CI/CD config, services.
 3. Fill in the placeholder sections in `skill.md` (project name, architecture, development environment, logging/tracing setup).
-4. Copy both files into `developer-agent/` in your project repo.
+4. Copy both files into `python-developer-agent/` in your project repo.
 5. Open the project in your IDE — the instruction file will tell the AI assistant to read both files before any work.

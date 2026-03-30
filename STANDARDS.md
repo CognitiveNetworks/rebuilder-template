@@ -276,6 +276,166 @@
 - The rule of thumb: if you can stub it behind an interface and the rebuild still works end-to-end, it stays outside the boundary. If you cannot, escalate the scope decision — do not silently absorb another repo into the rebuild.
 - Each repo gets rebuilt on its own timeline, with its own scope.md, its own PRD, and its own cutover plan. Compartmentalized rebuilds ship. Monolithic rewrites stall.
 
+## Modernization Best Practices
+
+> Every modernized and containerized service — regardless of language — must
+> implement these practices. Each language-specific developer agent
+> (`python-developer-agent`, `c-developer-agent`, `go-developer-agent`) references
+> this section as the authoritative cross-cutting standard.
+
+### 1. Static Analysis
+
+Examine code structure and logic for security vulnerabilities, logical errors, and runtime failures — without executing the program.
+
+| Language | Tool |
+|----------|------|
+| Python | mypy |
+| C | cppcheck, clang-tidy |
+| Go | go vet, staticcheck, gosec, govulncheck |
+
+### 2. Code Linting
+
+Enforce consistency in coding style, formatting, and adherence to established standards.
+
+| Language | Tool |
+|----------|------|
+| Python | pylint |
+| C | clang-tidy |
+| Go | golangci-lint |
+
+### 3. Code Style Enforcement
+
+Ensure source code adheres to a predefined set of formatting and stylistic rules.
+
+| Language | Tool |
+|----------|------|
+| Python | black |
+| C | clang-format |
+| Go | gofmt, goimports |
+
+### 4. Cyclomatic Complexity Checks
+
+Measure the number of linearly independent paths through the code. Keep complexity low for maintainability.
+
+| Language | Tool |
+|----------|------|
+| Python | complexipy |
+| C | lizard, pmccabe |
+| Go | gocyclo (via golangci-lint) |
+
+### 5. Unit Testing to a Defined Coverage Percentage
+
+Code coverage is valuable as a concept — it reveals untested paths and potential bugs. Do not chase percentage for its own sake; write meaningful tests that address functionality and edge cases.
+
+| Language | Tool | Minimum Coverage |
+|----------|------|-----------------|
+| Python | pytest + pytest-cov | ≥80% (≥90% for template repos) |
+| C | Unity or CMocka + gcov/lcov | ≥80% |
+| Go | go test -cover | ≥80% |
+
+### 6. GitHub Workflows for Release Process Enforcement
+
+The `main` branch is updated only via PRs from `prerelease`. Direct commits to `prerelease` are prohibited. Workflow: feature branch → PR to prerelease → merge → PR from prerelease to main → merge.
+
+### 7. CI Checks for Docker Image Build and Start
+
+Every CI workflow for container artifacts must verify the container builds and the application functions, typically via a `/status` or `/monitoring` endpoint:
+
+```bash
+docker build -t <service>:latest . --pull --no-cache
+docker run -d -p 8000:8000 \
+  -e TEST_CONTAINER=true \
+  -e ENV=dev \
+  -e LOG_LEVEL=DEBUG \
+  --name <service>-container \
+  <service>:latest
+sleep 3
+response=$(curl --silent --fail http://localhost:8000/status)
+if [[ "$response" != "OK" ]]; then
+  echo "Container /status endpoint did not return OK"
+  exit 1
+fi
+docker stop <service>-container && docker rm <service>-container
+```
+
+### 8. GitHub CODEOWNERS
+
+Specify individuals or teams as owners of specific files, directories, or the entire repository. Subject matter experts are automatically requested for reviews on pull requests.
+
+### 9. GitHub Pull Request Templates
+
+Provide a predefined structure for contributors — purpose of changes, related issues, testing steps, and potential impacts. Reduces back-and-forth communication and streamlines the review process.
+
+### 10. GitHub Actions Local Runner with ACT
+
+When feasible, all GitHub Actions should be set up to run locally with [ACT](https://github.com/nektos/act) for faster feedback.
+
+### 11. README Documentation for Local Development
+
+A README dictating important details about the repo and how to set it up for local testing / development must be included.
+
+### 12. Reproducible Build Architecture with Lock Files
+
+All applications must implement dependency locking for fully reproducible builds.
+
+| Language | Lock Mechanism |
+|----------|---------------|
+| Python | `pip-tools` with `pip-compile --generate-hashes` → `requirements.txt` |
+| C | `CMakeLists.txt` with pinned versions or vendored dependencies |
+| Go | `go.mod` + `go.sum` (built-in) |
+
+### 13. Git Hooks for Local CI Enforcement
+
+All CI tests must be integrated into a git hook, enabling developers to verify changes do not break the build before pushing.
+
+### 14. Coverage Reports for Code Coverage
+
+All coverage reports must be posted to pull requests as comments for immediate visibility into test coverage changes.
+
+### 15. IaC Misconfiguration Reporting via WIZ and CodeQL
+
+WIZ must scan Infrastructure-as-Code (IaC) files — Terraform, CloudFormation, Kubernetes manifests — to detect misconfigurations and insecure permissions before deployment.
+
+### 16. Log All Logs to stdout/stderr
+
+In a Docker container, all logs must be directed to `stdout` and `stderr`. This eliminates in-container log file management and ensures logs are captured by the Docker logging driver.
+
+### 17. Entrypoint Environment Variable Validation
+
+If an entrypoint script or application requires environment variables, check for their existence in the entrypoint script:
+
+```bash
+if [ -z "$AWS_REGION" ]; then
+  printf "Error: AWS_REGION environment variable is not set.\n"
+  exit 1
+fi
+```
+
+### 18. Scripts Exit on Missing Variables or Errors
+
+Using `set -eu` ensures scripts fail fast and clearly when errors or misconfigurations occur.
+
+### 19. Entrypoint Scripts for Build/Runtime Separation
+
+An `entrypoint.sh` file establishes a clear separation between build and runtime. Entrypoint scripts configure environment variables, execute pre-start initialization, and conduct system checks before launching the main application.
+
+### 20. Use `exec` for Main Container Command
+
+Using `exec` replaces the shell process with the application process, ensuring the application becomes PID 1. This enables proper signal handling (`SIGTERM`, `SIGKILL`) for graceful shutdowns.
+
+### 21. Docker Build Best Practices
+
+1. **Multi-stage builds** — separate build and runtime stages to reduce image size
+2. **Pin base image versions** — use specific tags or digests for consistency
+3. **Leverage `.dockerignore`** — exclude unnecessary files from build context
+4. **Minimize installed packages** — reduce image size, dependencies, and vulnerabilities
+5. **Create ephemeral containers** — stateless, stoppable, destroyable, recreatable
+6. **Decouple applications** — one primary concern per container
+7. **Use build cache efficiently** — understand cache mechanics, order layers by change frequency
+8. **Sort multi-line arguments alphanumerically** — simplify updates and reviews
+9. **Run builds in CI pipelines** — every change automatically built and tested
+10. **Adopt trusted base images** — official or verified base images
+
 ## Task Scope Rules
 
 - Do not modify files outside the scope of your assigned task.

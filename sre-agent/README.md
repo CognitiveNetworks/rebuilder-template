@@ -188,7 +188,7 @@ These are separate concerns:
 | OTEL from monitored services | Services push to APM | Continuous telemetry for dashboards and alerting |
 | OTEL from the SRE agent runtime | Agent pushes to APM | Continuous telemetry for the agent's own operational visibility |
 
-The developer-agent defines OTEL as a standard that developers implement in every service they build. The SRE agent follows that same standard for itself — it does not consume OTEL data from other services. See `runtime/README.md` for the agent's OTEL configuration and exported instruments.
+The python-developer-agent defines OTEL as a standard that developers implement in every service they build. The SRE agent follows that same standard for itself — it does not consume OTEL data from other services. See `runtime/README.md` for the agent's OTEL configuration and exported instruments.
 
 ## Design Principles
 

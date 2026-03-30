@@ -96,14 +96,23 @@
 
 ### Template Repository (Required)
 
-> Every rebuilt service must conform to the patterns defined in the template repo. Clone it into `template/` — not `adjacent/`. The template repo is the build standard, not a production dependency. The rebuild process will not proceed without it.
+> Every rebuilt service must conform to the patterns defined in the template repo for the target language. Clone it into `template/` — not `adjacent/`. The template repo is the build standard, not a production dependency. The rebuild process will not proceed without it.
 
 | Field | Value |
 |---|---|
-| Repo | [`rebuilder-evergreen-template-repo-python`](https://github.com/CognitiveNetworks/rebuilder-evergreen-template-repo-python) |
+| Target Language | *[`python`, `c`, or `go`]* |
+| Repo | *[See table below based on target language]* |
 | Clone Location | `template/` |
 | Authoritative Checklist | `template/skill.md` — every checkbox must be completed during the Build phase |
-| What it defines | Dockerfile, entrypoint.sh, environment-check.sh, Helm charts, CI workflows, pip-compile, OTEL auto-instrumentation, quality gate tooling, coding practices |
+| What it defines | Dockerfile, entrypoint.sh, environment-check.sh, Helm charts, CI workflows, quality gate tooling, coding practices |
+
+**Template repos by language:**
+
+| Language | Repo |
+|---|---|
+| Python | [`rebuilder-evergreen-template-repo-python`](https://github.com/CognitiveNetworks/rebuilder-evergreen-template-repo-python) |
+| C | [`rebuilder-evergreen-template-repo-c`](https://github.com/CognitiveNetworks/rebuilder-evergreen-template-repo-c) |
+| Go | [`rebuilder-evergreen-template-repo-go`](https://github.com/CognitiveNetworks/rebuilder-evergreen-template-repo-go) |
 
 > **This is not optional.** The developer agent's `config.md` references this repo. The QA agent validates every checkbox in `template/skill.md` during verification. `template/skill.md` is copied into the built repo and stays there permanently. Do not deviate from these patterns.
 

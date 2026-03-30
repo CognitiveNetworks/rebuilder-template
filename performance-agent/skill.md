@@ -5,8 +5,8 @@
 > or validating latency/memory requirements.
 > The performance agent does **not** replace the developer agent — it provides specialized
 > profiling and optimization capabilities that complement daily development work.
-> For development standards, see `developer-agent/skill.md`.
-> For quality verification, see `qa-agent/skill.md`.
+> For development standards, see `python-developer-agent/skill.md`.
+> For quality verification, see `python-qa-agent/skill.md`.
 > For SRE agent configuration, see `sre-agent/skill.md`.
 
 ## Agent Role

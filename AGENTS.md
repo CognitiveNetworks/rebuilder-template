@@ -2,30 +2,33 @@
 
 This is the rebuilder template repository. It contains agent configurations,
 development standards, and the ideation process for rebuilding legacy Evergreen
-services as modern Python applications.
+services as modern applications in Python, C, or Go.
 
 ## Required Context
 
 Before writing any code, making any changes, or answering any questions about
-this project, read these four files in full:
+this project, read the agent files for the **target language**. The target
+language is determined by the PRD or `scope.md`.
 
-### Developer Agent (development standards)
+### Developer Agents (development standards)
 
-1. `developer-agent/skill.md` — development standards, coding practices,
-   testing expectations, CI/CD pipeline structure, service bootstrap checklist,
-   and observability requirements.
-2. `developer-agent/config.md` — project-specific configuration: commands,
-   environments, services, secrets references, and SRE agent integration.
+| Language | skill.md | config.md |
+|---|---|---|
+| Python | `python-developer-agent/skill.md` | `python-developer-agent/config.md` |
+| C | `c-developer-agent/skill.md` | `c-developer-agent/config.md` |
+| Go | `go-developer-agent/skill.md` | `go-developer-agent/config.md` |
 
-### QA Agent (quality verification)
+### QA Agents (quality verification)
 
-3. `qa-agent/skill.md` — QA standards, quality gates, test strategy,
-   acceptance criteria, and verification procedures. The QA agent verifies
-   the developer agent's output — it does not replace it.
-4. `qa-agent/config.md` — project-specific QA configuration: test commands,
-   thresholds, env var mapping, mock strategy, and acceptance criteria.
+| Language | skill.md | config.md |
+|---|---|---|
+| Python | `python-qa-agent/skill.md` | `python-qa-agent/config.md` |
+| C | `c-qa-agent/skill.md` | `c-qa-agent/config.md` |
+| Go | `go-qa-agent/skill.md` | `go-qa-agent/config.md` |
 
-Do not proceed with any task until all four files have been read.
+The QA agent verifies the developer agent's output — it does not replace it.
+
+Do not proceed with any task until the relevant agent files have been read.
 
 ## Performance Agent
 

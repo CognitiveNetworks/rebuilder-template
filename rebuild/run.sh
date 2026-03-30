@@ -51,10 +51,22 @@ fi
 # Create output directories inside the input directory
 mkdir -p "$INPUT_DIR/output"
 mkdir -p "$INPUT_DIR/sre-agent"
-mkdir -p "$INPUT_DIR/developer-agent"
-mkdir -p "$INPUT_DIR/qa-agent"
 mkdir -p "$INPUT_DIR/docs/adr"
 mkdir -p "$INPUT_DIR/docs/postmortems"
+
+# Detect target language from scope.md (default: python)
+TARGET_LANG="python"
+SCOPE_LANG=$(grep -i 'Target Language' "$SCOPE_FILE" | head -1 | sed 's/.*|\s*`\?\([a-zA-Z]*\)`\?.*/\1/' | tr '[:upper:]' '[:lower:]')
+if [ -n "$SCOPE_LANG" ] && [[ "$SCOPE_LANG" =~ ^(python|c|go)$ ]]; then
+    TARGET_LANG="$SCOPE_LANG"
+fi
+echo "Target language: $TARGET_LANG"
+
+DEV_AGENT="${TARGET_LANG}-developer-agent"
+QA_AGENT="${TARGET_LANG}-qa-agent"
+
+mkdir -p "$INPUT_DIR/$DEV_AGENT"
+mkdir -p "$INPUT_DIR/$QA_AGENT"
 
 # Copy template agent configs into the project directory (skip if already present)
 for file in skill.md config.md; do
@@ -63,27 +75,29 @@ for file in skill.md config.md; do
     fi
 done
 for file in skill.md config.md; do
-    if [ ! -f "$INPUT_DIR/developer-agent/$file" ]; then
-        cp "$REPO_DIR/developer-agent/$file" "$INPUT_DIR/developer-agent/$file"
+    if [ ! -f "$INPUT_DIR/$DEV_AGENT/$file" ]; then
+        cp "$REPO_DIR/$DEV_AGENT/$file" "$INPUT_DIR/$DEV_AGENT/$file"
     fi
 done
 # Copy .windsurfrules template (goes into the built repo root at deploy time)
-if [ ! -f "$INPUT_DIR/developer-agent/.windsurfrules" ]; then
-    cp "$REPO_DIR/developer-agent/.windsurfrules" "$INPUT_DIR/developer-agent/.windsurfrules"
+if [ -f "$REPO_DIR/$DEV_AGENT/.windsurfrules" ] && [ ! -f "$INPUT_DIR/$DEV_AGENT/.windsurfrules" ]; then
+    cp "$REPO_DIR/$DEV_AGENT/.windsurfrules" "$INPUT_DIR/$DEV_AGENT/.windsurfrules"
 fi
 # Copy .github/copilot-instructions.md template (for VS Code + GitHub Copilot users)
-mkdir -p "$INPUT_DIR/developer-agent/.github"
-if [ ! -f "$INPUT_DIR/developer-agent/.github/copilot-instructions.md" ]; then
-    cp "$REPO_DIR/developer-agent/.github/copilot-instructions.md" "$INPUT_DIR/developer-agent/.github/copilot-instructions.md"
+if [ -d "$REPO_DIR/$DEV_AGENT/.github" ]; then
+    mkdir -p "$INPUT_DIR/$DEV_AGENT/.github"
+    if [ ! -f "$INPUT_DIR/$DEV_AGENT/.github/copilot-instructions.md" ]; then
+        cp "$REPO_DIR/$DEV_AGENT/.github/copilot-instructions.md" "$INPUT_DIR/$DEV_AGENT/.github/copilot-instructions.md"
+    fi
 fi
-# Copy QA agent templates (skill.md, config.md, TEST_RESULTS_TEMPLATE.md, examples)
+# Copy QA agent templates (skill.md, config.md, and any additional files)
 for file in skill.md config.md TEST_RESULTS_TEMPLATE.md; do
-    if [ ! -f "$INPUT_DIR/qa-agent/$file" ]; then
-        cp "$REPO_DIR/qa-agent/$file" "$INPUT_DIR/qa-agent/$file"
+    if [ -f "$REPO_DIR/$QA_AGENT/$file" ] && [ ! -f "$INPUT_DIR/$QA_AGENT/$file" ]; then
+        cp "$REPO_DIR/$QA_AGENT/$file" "$INPUT_DIR/$QA_AGENT/$file"
     fi
 done
-if [ -d "$REPO_DIR/qa-agent/examples" ] && [ ! -d "$INPUT_DIR/qa-agent/examples" ]; then
-    cp -r "$REPO_DIR/qa-agent/examples" "$INPUT_DIR/qa-agent/examples"
+if [ -d "$REPO_DIR/$QA_AGENT/examples" ] && [ ! -d "$INPUT_DIR/$QA_AGENT/examples" ]; then
+    cp -r "$REPO_DIR/$QA_AGENT/examples" "$INPUT_DIR/$QA_AGENT/examples"
 fi
 
 # Copy doc templates that are filled out later (skip if already present)
@@ -133,8 +147,8 @@ echo ""
 echo "Writing outputs to:"
 echo "  $INPUT_DIR/output/"
 echo "  $INPUT_DIR/sre-agent/"
-echo "  $INPUT_DIR/developer-agent/"
-echo "  $INPUT_DIR/qa-agent/"
+echo "  $INPUT_DIR/$DEV_AGENT/"
+echo "  $INPUT_DIR/$QA_AGENT/"
 echo "  $INPUT_DIR/docs/"
 echo ""
 
@@ -146,5 +160,5 @@ echo ""
   cd "$REPO_DIR" || exit 1
   unset WINDSURF_SESSION
   windsurf -p --dangerously-skip-permissions \
-    "Read $SCRIPT_DIR/IDEATION_PROCESS.md, $INPUT_FILE, and $SCOPE_FILE. Execute the process.$ADJACENT_PROMPT Write Steps 1-5 outputs to $INPUT_DIR/output/. After generating the PRD (Step 6): update the SRE agent config at $INPUT_DIR/sre-agent/skill.md and $INPUT_DIR/sre-agent/config.md as described in Step 7, populate the developer agent config at $INPUT_DIR/developer-agent/skill.md and $INPUT_DIR/developer-agent/config.md as described in Step 8 (Steps 8a and 8b), then per Step 8c place the IDE instruction files (.windsurfrules and .github/copilot-instructions.md) AND the populated developer-agent/skill.md and developer-agent/config.md inside the built repository directory so developers get auto-loaded configs when they clone and open the repo in any IDE. Populate the QA agent config at $INPUT_DIR/qa-agent/config.md as described in Step 8d — fill in project-specific test commands, env vars, event types, and acceptance criteria, then copy the populated qa-agent/ directory into the built repo. Generate ADRs in $INPUT_DIR/docs/adr/ as described in Step 9, generate the feature parity matrix at $INPUT_DIR/docs/feature-parity.md as described in Step 10, and generate the data migration mapping at $INPUT_DIR/docs/data-migration-mapping.md as described in Step 11."
+    "Read $SCRIPT_DIR/IDEATION_PROCESS.md, $INPUT_FILE, and $SCOPE_FILE. Execute the process.$ADJACENT_PROMPT Write Steps 1-5 outputs to $INPUT_DIR/output/. After generating the PRD (Step 6): update the SRE agent config at $INPUT_DIR/sre-agent/skill.md and $INPUT_DIR/sre-agent/config.md as described in Step 7, populate the developer agent config at $INPUT_DIR/$DEV_AGENT/skill.md and $INPUT_DIR/$DEV_AGENT/config.md as described in Step 8 (Steps 8a and 8b), then per Step 8c place the IDE instruction files (.windsurfrules and .github/copilot-instructions.md) AND the populated $DEV_AGENT/skill.md and $DEV_AGENT/config.md inside the built repository directory so developers get auto-loaded configs when they clone and open the repo in any IDE. Populate the QA agent config at $INPUT_DIR/$QA_AGENT/config.md as described in Step 8d — fill in project-specific test commands, env vars, event types, and acceptance criteria, then copy the populated $QA_AGENT/ directory into the built repo. Generate ADRs in $INPUT_DIR/docs/adr/ as described in Step 9, generate the feature parity matrix at $INPUT_DIR/docs/feature-parity.md as described in Step 10, and generate the data migration mapping at $INPUT_DIR/docs/data-migration-mapping.md as described in Step 11."
 )

@@ -22,7 +22,7 @@ The same IDE instruction files that load the developer agent also load the QA ag
 | **VS Code + GitHub Copilot** | `.github/copilot-instructions.md` | `.github/` at repo root | Included in every Copilot Chat interaction |
 | **Other tools** | `AGENTS.md` | repo root | Cross-tool standard; depends on tool support |
 
-All IDE instruction files load four files: `developer-agent/skill.md`, `developer-agent/config.md`, `qa-agent/skill.md`, and `qa-agent/config.md`. This gives the AI assistant awareness of both what to build (developer) and how compliance is verified (QA).
+All IDE instruction files load four files: `python-developer-agent/skill.md`, `python-developer-agent/config.md`, `python-qa-agent/skill.md`, and `python-qa-agent/config.md`. This gives the AI assistant awareness of both what to build (developer) and how compliance is verified (QA).
 
 ### On-Demand (Windsurf workflow)
 
@@ -93,16 +93,16 @@ The QA agent is designed to be tuned per project. After the replicator populates
 
 | Document | Scope | Relationship to QA Agent |
 |---|---|---|
-| `developer-agent/skill.md` | Development standards | **What the QA agent verifies.** The developer agent defines the rules; the QA agent checks they were followed. |
-| `developer-agent/config.md` | Project-specific dev config | Read by the QA agent for project context (commands, services, environments). |
-| `qa-agent/skill.md` | QA verification procedures | **How verification is performed.** Quality gates, test strategy, acceptance criteria framework. |
-| `qa-agent/config.md` | Project-specific QA config | **What is verified.** Endpoint list, env var mapping, thresholds, mock strategy — customized per project. |
+| `python-developer-agent/skill.md` | Development standards | **What the QA agent verifies.** The developer agent defines the rules; the QA agent checks they were followed. |
+| `python-developer-agent/config.md` | Project-specific dev config | Read by the QA agent for project context (commands, services, environments). |
+| `python-qa-agent/skill.md` | QA verification procedures | **How verification is performed.** Quality gates, test strategy, acceptance criteria framework. |
+| `python-qa-agent/config.md` | Project-specific QA config | **What is verified.** Endpoint list, env var mapping, thresholds, mock strategy — customized per project. |
 | `sre-agent/skill.md` | Incident response | The SRE agent defines the `/ops/*` contract that the QA agent verifies. |
 | `STANDARDS.md` | Migration planning | Referenced during comparison workflow (original vs. rebuilt). |
 
 ## Setup
 
-If you ran `rebuild/run.sh`, Step 8d of the ideation process has already populated `config.md` with project-specific values and copied `qa-agent/` into the built repo.
+If you ran `rebuild/run.sh`, Step 8d of the ideation process has already populated `config.md` with project-specific values and copied `python-qa-agent/` into the built repo.
 
 1. Review the auto-populated content in `config.md` for accuracy.
 2. Add app-specific endpoints and event types to the acceptance criteria tables.
@@ -111,7 +111,7 @@ If you ran `rebuild/run.sh`, Step 8d of the ideation process has already populat
 
 If you did **not** run the rebuild process, set up manually:
 
-1. Copy `qa-agent/` into your project repo.
+1. Copy `python-qa-agent/` into your project repo.
 2. Fill out `config.md` with your project-specific details — test commands, env var mapping, endpoints, mock strategy.
 3. Copy example tests from `examples/` to your `tests/` directory and customize for your service.
 4. Run `/qa` in Windsurf or manually run each quality gate command from the table in `skill.md`.

@@ -97,6 +97,18 @@ validate_analyze() {
     printf "${BOLD}Phase 1: Analyze (Steps 1–11)${NC}\n"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
+    # Detect target language (same logic as run.sh)
+    local target_lang="python"
+    if [ -f "$INPUT_DIR/scope.md" ]; then
+        local scope_lang
+        scope_lang=$(grep -i 'Target Language' "$INPUT_DIR/scope.md" 2>/dev/null | head -1 | sed 's/.*|\s*`\?\([a-zA-Z]*\)`\?.*/\1/' | tr '[:upper:]' '[:lower:]')
+        if [ -n "$scope_lang" ] && echo "$scope_lang" | grep -qE '^(python|c|go)$'; then
+            target_lang="$scope_lang"
+        fi
+    fi
+    local dev_agent="${target_lang}-developer-agent"
+    local qa_agent="${target_lang}-qa-agent"
+
     # Step 1: Legacy Assessment
     if check_file_exists "1" "output/legacy_assessment.md" "Legacy Assessment"; then
         check_section_exists "output/legacy_assessment.md" "## Application Overview" "Application Overview section"
@@ -161,11 +173,13 @@ validate_analyze() {
     check_file_exists "7" "sre-agent/config.md" "SRE agent config.md"
 
     # Step 8: Developer + QA Agent Config
-    check_file_exists "8" "developer-agent/skill.md" "Developer agent skill.md"
-    check_file_exists "8" "developer-agent/config.md" "Developer agent config.md"
-    check_file_exists "8" "qa-agent/skill.md" "QA agent skill.md"
-    check_file_exists "8" "qa-agent/config.md" "QA agent config.md"
-    check_file_exists "8" "qa-agent/TEST_RESULTS_TEMPLATE.md" "QA TEST_RESULTS_TEMPLATE.md"
+    check_file_exists "8" "$dev_agent/skill.md" "Developer agent skill.md"
+    check_file_exists "8" "$dev_agent/config.md" "Developer agent config.md"
+    check_file_exists "8" "$qa_agent/skill.md" "QA agent skill.md"
+    check_file_exists "8" "$qa_agent/config.md" "QA agent config.md"
+    if [ -f "$INPUT_DIR/$qa_agent/TEST_RESULTS_TEMPLATE.md" ]; then
+        check_file_exists "8" "$qa_agent/TEST_RESULTS_TEMPLATE.md" "QA TEST_RESULTS_TEMPLATE.md"
+    fi
 
     # Step 9: ADRs
     local adr_count=0

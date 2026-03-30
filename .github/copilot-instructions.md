@@ -14,23 +14,32 @@ this project, you MUST read these four files in full:
 
 ### Developer Agent (development standards)
 
-1. `developer-agent/skill.md` — development standards, coding practices,
+1. `python-developer-agent/skill.md` — development standards, coding practices,
    testing expectations, CI/CD pipeline structure, service bootstrap checklist,
    and observability requirements.
-2. `developer-agent/config.md` — project-specific configuration: commands,
+2. `python-developer-agent/config.md` — project-specific configuration: commands,
    environments, services, secrets references, and SRE agent integration.
 
 ### QA Agent (quality verification)
 
-3. `qa-agent/skill.md` — QA standards, quality gates, test strategy,
+3. `python-qa-agent/skill.md` — QA standards, quality gates, test strategy,
    acceptance criteria, and verification procedures. The QA agent verifies
    the developer agent's output — it does not replace it.
-4. `qa-agent/config.md` — project-specific QA configuration: test commands,
+4. `python-qa-agent/config.md` — project-specific QA configuration: test commands,
    thresholds, env var mapping, mock strategy, and acceptance criteria.
 
 Do not proceed with any task until all four files have been read. The developer
 agent files define the standards every change must conform to. The QA agent
 files define how compliance is verified.
+
+### Additional Language Agents
+
+For C or Go rebuilds, read the corresponding agent files instead:
+
+| Language | Developer Agent | QA Agent |
+|---|---|---|
+| C | `c-developer-agent/skill.md` + `config.md` | `c-qa-agent/skill.md` + `config.md` |
+| Go | `go-developer-agent/skill.md` + `config.md` | `go-qa-agent/skill.md` + `config.md` |
 
 ## Session Greeting
 
@@ -41,9 +50,9 @@ explicitly instead of proceeding silently.
 
 ## Quick Reference
 
-- Run tests: see developer-agent/config.md Development Commands table
-- Run locally: see developer-agent/config.md Development Commands table
-- Service bootstrap checklist: developer-agent/skill.md → Service Bootstrap section
-- Observability contract: developer-agent/skill.md → Observability section
-- CI/CD pipeline: developer-agent/skill.md → CI/CD section + config.md CI/CD section
-- Quality gates: qa-agent/skill.md → Quality Gates section
+- Run tests: see {lang}-developer-agent/config.md Development Commands table
+- Run locally: see {lang}-developer-agent/config.md Development Commands table
+- Service bootstrap checklist: {lang}-developer-agent/skill.md → Service Bootstrap section
+- Observability contract: {lang}-developer-agent/skill.md → Observability section
+- CI/CD pipeline: {lang}-developer-agent/skill.md → CI/CD section + config.md CI/CD section
+- Quality gates: {lang}-qa-agent/skill.md → Quality Gates section

@@ -33,22 +33,24 @@ The project directory must exist under `rebuild-inputs/` with:
    ```
    mkdir -p <project-dir>/output
    mkdir -p <project-dir>/sre-agent
-   mkdir -p <project-dir>/developer-agent
-   mkdir -p <project-dir>/qa-agent
+   mkdir -p <project-dir>/{lang}-developer-agent
+   mkdir -p <project-dir>/{lang}-qa-agent
    mkdir -p <project-dir>/docs/adr
    mkdir -p <project-dir>/docs/postmortems
    ```
 
+   > **Language detection:** Read `<project-dir>/scope.md` → Target Language field to determine `{lang}` (python, c, or go).
+
 3. **Copy template files** into the project directory (skip if already present):
    - `sre-agent/skill.md` → `<project-dir>/sre-agent/skill.md`
    - `sre-agent/config.md` → `<project-dir>/sre-agent/config.md`
-   - `developer-agent/skill.md` → `<project-dir>/developer-agent/skill.md`
-   - `developer-agent/config.md` → `<project-dir>/developer-agent/config.md`
-   - `developer-agent/.windsurfrules` → `<project-dir>/developer-agent/.windsurfrules`
-   - `developer-agent/.github/copilot-instructions.md` → `<project-dir>/developer-agent/.github/copilot-instructions.md`
-   - `qa-agent/skill.md` → `<project-dir>/qa-agent/skill.md`
-   - `qa-agent/config.md` → `<project-dir>/qa-agent/config.md`
-   - `qa-agent/TEST_RESULTS_TEMPLATE.md` → `<project-dir>/qa-agent/TEST_RESULTS_TEMPLATE.md`
+   - `{lang}-developer-agent/skill.md` → `<project-dir>/{lang}-developer-agent/skill.md`
+   - `{lang}-developer-agent/config.md` → `<project-dir>/{lang}-developer-agent/config.md`
+   - `{lang}-developer-agent/.windsurfrules` → `<project-dir>/{lang}-developer-agent/.windsurfrules`
+   - `{lang}-developer-agent/.github/copilot-instructions.md` → `<project-dir>/{lang}-developer-agent/.github/copilot-instructions.md`
+   - `{lang}-qa-agent/skill.md` → `<project-dir>/{lang}-qa-agent/skill.md`
+   - `{lang}-qa-agent/config.md` → `<project-dir>/{lang}-qa-agent/config.md`
+   - `{lang}-qa-agent/TEST_RESULTS_TEMPLATE.md` → `<project-dir>/{lang}-qa-agent/TEST_RESULTS_TEMPLATE.md`
    - `docs/cutover-report.md` → `<project-dir>/docs/cutover-report.md`
    - `docs/disaster-recovery.md` → `<project-dir>/docs/disaster-recovery.md`
 

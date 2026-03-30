@@ -1,0 +1,38 @@
+# Project Rules — Auto-loaded by Windsurf on every session
+
+## Required Context
+
+Before writing any code, making any changes, or answering any questions about
+this project, you MUST read these four files in full:
+
+### Developer Agent (development standards)
+
+1. `c-developer-agent/skill.md` — C development standards, Inscape C coding
+   style, testing expectations, CI/CD pipeline structure, service bootstrap
+   checklist, and observability requirements.
+2. `c-developer-agent/config.md` — project-specific configuration: commands,
+   environments, services, secrets references, and SRE agent integration.
+
+### QA Agent (quality verification)
+
+3. `c-qa-agent/skill.md` — QA standards, quality gates, test strategy,
+   acceptance criteria, and verification procedures.
+4. `c-qa-agent/config.md` — project-specific QA configuration: test commands,
+   thresholds, and acceptance criteria.
+
+Do not proceed with any task until all four files have been read.
+
+## Session Greeting
+
+At the start of every new conversation, after reading all four files, confirm by
+stating: **"Loaded [project-name] C developer and QA standards from skill.md
+and config.md."** If you cannot find or read any file, say so explicitly.
+
+## Quick Reference
+
+- Build: see c-developer-agent/config.md Development Commands table
+- Run tests: see c-developer-agent/config.md Development Commands table
+- Service bootstrap checklist: c-developer-agent/skill.md → Service Bootstrap section
+- Observability contract: c-developer-agent/skill.md → Observability section
+- CI/CD pipeline: c-developer-agent/skill.md → CI/CD section + config.md CI/CD section
+- Quality gates: c-qa-agent/skill.md → Quality Gates section
