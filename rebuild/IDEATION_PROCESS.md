@@ -653,6 +653,23 @@ Throughout Steps 8a–8d below, `{lang}` refers to the target language prefix
 (e.g., `python`, `c`, `go`). Replace `{lang}` with the actual value in all
 file paths and references.
 
+**Three skill.md Files — Distinct Roles:**
+
+Every rebuilt service uses three `skill.md` files. They serve different purposes, are loaded at different times, and come from different sources. All three must be explicitly followed.
+
+|  | `template/skill.md` | `{lang}-developer-agent/skill.md` | `{lang}-qa-agent/skill.md` |
+|---|---|---|---|
+| **Purpose** | Universal build standard — HOW TO BUILD | Project-specific coding rules — HOW TO WRITE CODE | Verification procedures — HOW TO CHECK |
+| **Scope** | Same for every Evergreen Python rebuild | Populated per project | Populated per project |
+| **Loaded** | Auto-loaded every IDE session via `.windsurfrules` + explicitly before Build phase and QA audit | Auto-loaded every IDE session via `.windsurfrules` | On demand via `/qa` workflow or Step 12 |
+| **Format** | Checkboxes (auditable punch list) | Prose rules (behavioral instructions) | Verification procedures + acceptance criteria |
+| **Mutability** | Immutable — org-wide standard | Customized per project | Customized per project |
+| **Source** | `rebuilder-evergreen-template-repo-{lang}` | Built on demand from `rebuilder-template` (Step 8a) | Built on demand from `rebuilder-template` (Step 8d) |
+
+> **Key distinction:** `template/skill.md` defines the structural requirements every service must meet (Dockerfile pattern, entrypoint pattern, Helm charts, CI pipeline, required files, tooling). `{lang}-developer-agent/skill.md` defines how to write code for a specific project (architecture, coding practices, testing, observability). `{lang}-qa-agent/skill.md` defines how to verify the developer agent's output meets quality standards.
+>
+> All three files must exist in the built repo. `template/skill.md` and `{lang}-developer-agent/skill.md` are auto-loaded via `.windsurfrules` every session. `{lang}-qa-agent/skill.md` is loaded on demand when quality verification is needed.
+
 #### 8a: Populate skill.md
 
 Read the PRD generated in Step 6 and update the developer agent's `skill.md` (path provided by the runner):
