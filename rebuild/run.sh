@@ -74,6 +74,11 @@ for file in skill.md config.md; do
         cp "$REPO_DIR/sre-agent/$file" "$INPUT_DIR/sre-agent/$file"
     fi
 done
+# Copy SRE agent runtime code (critical for functionality)
+if [ -d "$REPO_DIR/sre-agent/runtime" ] && [ ! -d "$INPUT_DIR/sre-agent/runtime" ]; then
+    cp -r "$REPO_DIR/sre-agent/runtime" "$INPUT_DIR/sre-agent/"
+    echo "✅ Copied SRE agent runtime code"
+fi
 for file in skill.md config.md; do
     if [ ! -f "$INPUT_DIR/$DEV_AGENT/$file" ]; then
         cp "$REPO_DIR/$DEV_AGENT/$file" "$INPUT_DIR/$DEV_AGENT/$file"
