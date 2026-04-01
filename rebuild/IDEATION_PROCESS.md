@@ -718,7 +718,9 @@ The developer agent only works if the IDE can find the instruction files **at th
 | **Windsurf** | `.windsurfrules` | repo root | Read on every Cascade session start |
 | **VS Code + GitHub Copilot** | `.github/copilot-instructions.md` | `.github/` at repo root | Included in every Copilot Chat interaction |
 
-Both files contain the same instruction: read `{lang}-developer-agent/skill.md` and `{lang}-developer-agent/config.md` before doing any work. Copy the content from the templates in the project's `{lang}-developer-agent/` directory.
+Both files contain the same instruction: read `{lang}-developer-agent/skill.md`, `{lang}-developer-agent/config.md`, and `template/skill.md` before doing any work. Copy the content from the templates in the project's `{lang}-developer-agent/` directory.
+
+> **Critical:** `template/skill.md` **must** be in the `.windsurfrules` required reading list — not just the developer agent files. This is the only mechanism that guarantees the template compliance checklist is read in every session. Without it, agents will follow the developer agent's coding standards but skip the template's structural requirements (Dockerfile pattern, entrypoint pattern, environment-check, Helm charts, CI pipeline jobs, required files, etc.). This was the root cause of missed compliance in the evergreen-tvevents rebuild.
 
 **You must also copy the populated `{lang}-developer-agent/` configs and the template repo's `skill.md` into the built repo:**
 
@@ -730,7 +732,7 @@ Both files contain the same instruction: read `{lang}-developer-agent/skill.md` 
 
 **Checklist — all five files must exist in the built repo root:**
 
-- [ ] `<repo>/.windsurfrules` — points to `{lang}-developer-agent/skill.md` and `{lang}-developer-agent/config.md`
+- [ ] `<repo>/.windsurfrules` — points to `{lang}-developer-agent/skill.md`, `{lang}-developer-agent/config.md`, and `template/skill.md`
 - [ ] `<repo>/.github/copilot-instructions.md` — same content as `.windsurfrules`
 - [ ] `<repo>/{lang}-developer-agent/skill.md` — populated with project-specific values (from Step 8a)
 - [ ] `<repo>/{lang}-developer-agent/config.md` — populated with project-specific values (from Step 8b)
@@ -1082,6 +1084,13 @@ sessions with the developer agent.
 > not invent your own tooling, configs, or patterns — match what the template repo
 > specifies. If an item does not apply to the target service, mark it N/A with a
 > justification.
+>
+> **Ongoing enforcement:** Step 8c copies `template/skill.md` into the built repo
+> and adds it to `.windsurfrules`. This means every subsequent development session
+> — not just the initial build — will read the template checklist. This prevents
+> drift: if a developer modifies the Dockerfile, entrypoint, CI pipeline, or any
+> structural component, the agent will validate it against the template checklist
+> automatically.
 >
 > The template repo is **not** an adjacent repo. Adjacent repos (`adjacent/`) are
 > production code dependencies analyzed for integration points. The template repo
