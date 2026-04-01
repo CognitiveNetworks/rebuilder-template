@@ -67,13 +67,15 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 
 **Dependency locking verification**: Confirm `scripts/lock.sh` is executable and has been run after any dependency changes. Verify by: (1) Checking the script has execute permissions (`ls -la scripts/lock.sh`), (2) Comparing timestamps of `requirements.txt` and `requirements-dev.txt` with `pyproject.toml` to ensure they're newer, (3) Running `scripts/lock.sh` twice and confirming the second run produces no changes (idempotent behavior). If the script exists but hasn't been run, flag this as critical.
 
+**Pylint CI verification**: Confirm pylint is configured for CI environments. Verify: (1) `pyproject.toml` contains pylint configuration with `--disable=import-error` for un-installable local modules, (2) `--fail-under=10.0` is set to require a perfect score, (3) CI pipeline installs both production and dev requirements before running pylint, (4) PYTHONPATH includes source directory before pylint execution. If pylint fails in CI due to missing dependencies or import errors, flag this as critical.
+
 ### Core Gates (Required — Block Merge)
 
 | # | Gate | Tool | Threshold | Command |
 |---|------|------|-----------|---------|
 | 1 | Unit + API tests | pytest | 0 failures | `pytest tests/ --cov=src/app --cov-fail-under=80` |
 | 2 | Test coverage | pytest-cov | ≥ 80% line coverage | (included in above) |
-| 3 | Lint | pylint | 0 errors | `pylint src tests` |
+| 3 | Lint | pylint | 10.0/10.0 score | `pylint --disable=import-error --fail-under=10.0 src tests` |
 | 4 | Format | black | All formatted | `black --check src/ tests/` |
 | 5 | Type check | mypy | 0 errors | `mypy src/app/` |
 

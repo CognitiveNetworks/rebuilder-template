@@ -204,6 +204,7 @@
 - Design APIs for optimal Swagger UI interaction. Use JSON request bodies with Pydantic models instead of query parameters for enum fields to enable proper dropdown menus. For editable fields, use Pydantic models with proper enum definitions, examples, and descriptions so Swagger UI renders interactive controls that users can edit directly. Avoid query parameters for complex operations - reserve them for simple filtering, pagination, or optional flags. POST/PUT endpoints should use request bodies; GET endpoints should use query parameters only for idempotent operations.
 - Integration tests validate the API contract on every build. If a response shape changes, the test fails before a consumer discovers it in production.
 - All FastAPI services must support dual-stack IPv4/IPv6 networking. Configure uvicorn to listen on both address families (`host="::"` binds to all interfaces on both IPv4 and IPv6). Validate connectivity in CI/CD with tests that exercise both IPv4 and IPv6 endpoints when the environment supports dual-stack networking.
+- CI/CD pipelines must install both production and development dependencies before running static analysis tools. Use `pip install -r requirements.txt -r requirements-dev.txt` to ensure pylint, mypy, and other tools can resolve all imports. Configure PYTHONPATH to include source directories (`export PYTHONPATH=$PWD/src:$PYTHONPATH`) so tools can find local modules.
 
 ## Data Migration & Validation
 
