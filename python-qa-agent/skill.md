@@ -63,7 +63,7 @@ Every rebuilt service requires tests at five levels. Each level gates a differen
 
 Run every gate before considering a change complete. Generate a `TEST_RESULTS.md` report (see template in `python-qa-agent/TEST_RESULTS_TEMPLATE.md`) summarizing all results.
 
-**Critical verification**: Confirm all tools run against both `src/` and `tests/` directories. The developer agent must not limit static analysis, linting, or formatting to only application code. Verify commands include both directories (e.g., `pylint src tests`, `black --check src tests`). If tools are configured to exclude `tests/`, flag this as a critical deviation from standards.
+**Critical verification**: Confirm all tools run against both `src/app/` and `tests/` directories. The developer agent must not limit static analysis, linting, or formatting to only application code. Verify commands include both directories (e.g., `pylint src/app tests`, `black --check src/app tests`). If tools are configured to exclude `tests/`, flag this as a critical deviation from standards.
 
 **Dependency locking verification**: Confirm `scripts/lock.sh` is executable and has been run after any dependency changes. Verify by: (1) Checking the script has execute permissions (`ls -la scripts/lock.sh`), (2) Comparing timestamps of `requirements.txt` and `requirements-dev.txt` with `pyproject.toml` to ensure they're newer, (3) Running `scripts/lock.sh` twice and confirming the second run produces no changes (idempotent behavior). If the script exists but hasn't been run, flag this as critical.
 
@@ -75,21 +75,21 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 |---|------|------|-----------|---------|
 | 1 | Unit + API tests | pytest | 0 failures | `pytest tests/ --cov=src/app --cov-fail-under=80` |
 | 2 | Test coverage | pytest-cov | ≥ 80% line coverage | (included in above) |
-| 3 | Lint | pylint | 10.0/10.0 score | `pylint --disable=import-error --fail-under=10.0 src tests` |
-| 4 | Format | black | All formatted | `black --check src/ tests/` |
+| 3 | Lint | pylint | 10.0/10.0 score | `pylint --disable=import-error --fail-under=10.0 src/app tests` |
+| 4 | Format | black | All formatted | `black --check src/app tests` |
 | 5 | Type check | mypy | 0 errors | `mypy src/app/` |
 
 ### Extended Gates (Required — Block Release)
 
 | # | Gate | Tool | Threshold | Command |
 |---|------|------|-----------|---------|
-| 6 | Cyclomatic complexity | radon cc | Average A or B, no function ≥ C | `radon cc src/ -a -nc` |
-| 7 | Maintainability index | radon mi | All files A or B | `radon mi src/` |
-| 8 | Dead code | vulture | 0 findings at 80% confidence | `vulture src/ --min-confidence 80` |
+| 6 | Cyclomatic complexity | radon cc | Average A or B, no function ≥ C | `radon cc src/app -a -nc` |
+| 7 | Maintainability index | radon mi | All files A or B | `radon mi src/app` |
+| 8 | Dead code | vulture | 0 findings at 80% confidence | `vulture src/app --min-confidence 80` |
 | 9 | Dependency vulns | pip-audit | 0 runtime CVEs | `pip-audit` |
-| 10 | Docstring coverage | interrogate | ≥ 80% | `interrogate src/ -v` |
-| 11 | Duplicate code | pylint | < 3% duplication | `pylint --disable=all --enable=duplicate-code src/` |
-| 12 | Cognitive complexity | complexipy | 0 issues | `complexipy src -mx 15 -d low` |
+| 10 | Docstring coverage | interrogate | ≥ 80% | `interrogate src/app -v` |
+| 11 | Duplicate code | pylint | < 3% duplication | `pylint --disable=all --enable=duplicate-code src/app` |
+| 12 | Cognitive complexity | complexipy | 0 issues | `complexipy src/app -mx 15 -d low` |
 
 ### Helm Gate (Required for deployable services)
 
