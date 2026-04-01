@@ -28,6 +28,9 @@ os.environ.setdefault("OTEL_PYTHON_AUTO_INSTRUMENTATION_ENABLED", "false")
 # os.environ.setdefault("SEND_EVERGREEN", "true")
 
 # ─── 3. Mock external modules BEFORE app imports ──────────────────────
+# Use MagicMock() — not types.ModuleType(). MagicMock returns Any for attribute
+# access, so mypy allows dynamic attribute assignment. types.ModuleType triggers
+# attr-defined errors unless every variable is annotated as Any.
 # RDS standalone module
 mock_rds = MagicMock()
 mock_rds.execute_query = MagicMock(return_value=[])

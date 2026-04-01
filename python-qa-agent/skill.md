@@ -149,7 +149,7 @@ Every rebuilt service's `conftest.py` must:
 
 1. **Disable OTEL in tests** — Set `OTEL_SDK_DISABLED=true` before any app imports.
 2. **Set all required env vars** — Every variable from `environment-check.sh` `always_required_vars` must have a test default.
-3. **Mock external modules** — `sys.modules` mocks for standalone modules (rds_module, kafka_module, etc.) before app imports.
+3. **Mock external modules** — `sys.modules` mocks for standalone modules (rds_module, kafka_module, etc.) before app imports. Use `MagicMock()` — not `types.ModuleType()`. MagicMock returns `Any` for attribute access, so mypy allows dynamic attribute assignment. `types.ModuleType` triggers `attr-defined` errors unless every variable is annotated as `Any`.
 4. **Mock cnlib** — `sys.modules` mocks for `cnlib`, `cnlib.cnlib`, `cnlib.cnlib.token_hash`, `cnlib.log`.
 5. **Provide reset fixtures** — Each mock gets a fixture that resets `.return_value` and `.side_effect` between tests.
 6. **Provide domain-realistic payload fixtures** — One fixture per event type / request shape.
