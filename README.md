@@ -152,7 +152,7 @@ flowchart LR
     subgraph P2 ["Phase 2 — Build"]
         direction TB
         COPY["Copy configs →<br/>new target repo"]
-        SHIM["IDE shim auto-loads<br/>{lang}-developer-agent/skill.md<br/>+ config.md"]
+        SHIM["IDE shim auto-loads<br/>{lang}-developer-agent/skill.md<br/>+ config.md + template/skill.md"]
         BUILD["AI agent builds service<br/>from PRD + standards"]
         COPY --> SHIM --> BUILD
     end
@@ -172,6 +172,21 @@ flowchart LR
     style P2 fill:#e8f0e4,stroke:#4daf4a
     style P3 fill:#fef3e0,stroke:#ff7f00
 ```
+
+---
+
+#### Three skill.md Files — Distinct Roles
+
+Every rebuilt service uses three `skill.md` files. They serve different purposes, are loaded at different times, and come from different sources. All three must be explicitly followed.
+
+|  | `template/skill.md` | `{lang}-developer-agent/skill.md` | `{lang}-qa-agent/skill.md` |
+|---|---|---|---|
+| **Purpose** | Universal build standard — HOW TO BUILD | Project-specific coding rules — HOW TO WRITE CODE | Verification procedures — HOW TO CHECK |
+| **Scope** | Same for every Evergreen rebuild (per language) | Populated per project | Populated per project |
+| **Loaded** | Auto-loaded every IDE session via `.windsurfrules` + explicitly before Build phase and QA audit | Auto-loaded every IDE session via `.windsurfrules` | On demand via `/qa` workflow or Step 12 |
+| **Format** | Checkboxes (auditable punch list) | Prose rules (behavioral instructions) | Verification procedures + acceptance criteria |
+| **Mutability** | Immutable — org-wide standard | Customized per project | Customized per project |
+| **Source** | `rebuilder-evergreen-template-repo-{lang}` | Built on demand from `rebuilder-template` (Step 8a) | Built on demand from `rebuilder-template` (Step 8d) |
 
 ---
 
@@ -251,9 +266,10 @@ flowchart TB
 
     subgraph IDE_LOAD ["IDE auto-loading  (happens on every session)"]
         SHIM[".windsurfrules<br/>.github/copilot-instructions.md<br/>AGENTS.md"]
-        DEV_AGENT["Developer agent reads<br/>{lang}-developer-agent/skill.md + config.md"]
-        QA_AGENT["QA agent reads<br/>{lang}-qa-agent/skill.md + config.md"]
-        SHIM -->|"IDE auto-reads<br/>on session start"| DEV_AGENT & QA_AGENT
+        TMPL_LOAD["template/skill.md<br/>(HOW TO BUILD — universal checklist)"]
+        DEV_AGENT["Developer agent reads<br/>{lang}-developer-agent/skill.md + config.md<br/>(HOW TO WRITE CODE)"]
+        QA_AGENT["QA agent reads<br/>{lang}-qa-agent/skill.md + config.md<br/>(HOW TO CHECK)"]
+        SHIM -->|"IDE auto-reads<br/>on session start"| TMPL_LOAD & DEV_AGENT & QA_AGENT
     end
 
     CODE["Built codebase<br/>API-first service, /ops/* endpoints,<br/>tests, Terraform, CI/CD, OTEL"]
@@ -305,8 +321,8 @@ The rebuilder is a fully automated process — the AI agent reads the legacy cod
 | `rebuild/IDEATION_PROCESS.md` | 18-step prescribed analysis + build process | AI agent follows during Phases 1 & 2 |
 | `STANDARDS.md` | Architecture, scaling, security, testing standards | Referenced throughout all phases |
 | `AGENTS.md` | Cross-tool agent bootstrap — points all AI tools to agent files | Always-on in Windsurf; depends on tool support elsewhere |
-| `.windsurfrules` | IDE shim — tells Windsurf to read `{lang}-developer-agent` + `{lang}-qa-agent` skill.md and config.md | Auto-read by Windsurf on every session start |
-| `.github/copilot-instructions.md` | IDE shim — tells VS Code Copilot to read `{lang}-developer-agent` + `{lang}-qa-agent` skill.md and config.md | Auto-included in every Copilot Chat interaction |
+| `.windsurfrules` | IDE shim — tells Windsurf to read `template/skill.md`, `{lang}-developer-agent/skill.md + config.md`, and `{lang}-qa-agent/skill.md + config.md` | Auto-read by Windsurf on every session start |
+| `.github/copilot-instructions.md` | IDE shim — tells VS Code Copilot to read `template/skill.md`, `{lang}-developer-agent/skill.md + config.md`, and `{lang}-qa-agent/skill.md + config.md` | Auto-included in every Copilot Chat interaction |
 | `.windsurf/skills/legacy-rebuild/` | Windsurf Skill — progressive disclosure entry point for the rebuild process | Invoked on demand when user says "rebuild" or "replicator" |
 | `{lang}-developer-agent/skill.md` | Dev coding standards (template → populated) | Template in Phase 1; auto-loaded by IDE shims in Phase 2 |
 | `{lang}-developer-agent/config.md` | Project-specific dev config (template → populated) | Template in Phase 1; auto-loaded by IDE shims in Phase 2 |
@@ -318,7 +334,7 @@ The rebuilder is a fully automated process — the AI agent reads the legacy cod
 | `sre-agent/config.md` | Service registry, SLOs, PagerDuty config | Template in Phase 1; runtime config in Phase 3 |
 | `sre-agent/playbooks/*.md` | Remediation runbooks by incident type | Phase 3 — agent follows during incidents |
 | `sre-agent/runtime/` | Deployable FastAPI service for alert handling | Phase 3 — receives webhooks, runs agentic loop |
-| `template/skill.md` | Build standard checklist from template repo — tooling, CI, Dockerfile, Helm, coding practices | Cloned in Phase 1; read before Build phase; QA validates in Phase 2; stays in built repo |
+| `template/skill.md` | Build standard checklist from template repo — HOW TO BUILD (tooling, CI, Dockerfile, Helm, coding practices) | Auto-loaded every IDE session via `.windsurfrules`; QA validates every checkbox in Phase 2; stays in built repo |
 | `docs/*.md` | Migration planning templates (feature parity, data mapping, DR, cutover) | Templates copied in Phase 1; filled during Phases 1–2 |
 | `output/*.md` | Analysis artifacts + PRD | Written by AI agent in Phase 1 |
 
@@ -486,7 +502,7 @@ The `{lang}-developer-agent/` directories contain the daily development instruct
 - **Observability** — Golden Signals, RED method, SLOs, `/ops/*` endpoints as definition of done
 
 **Components:**
-- **`skill.md`** — the development instructions. Loaded automatically via IDE instruction files (`.windsurfrules`, `.github/copilot-instructions.md`).
+- **`skill.md`** — project-specific coding rules (HOW TO WRITE CODE). Loaded automatically via IDE instruction files (`.windsurfrules`, `.github/copilot-instructions.md`) alongside `template/skill.md` (HOW TO BUILD) and QA agent files (HOW TO CHECK).
 - **`config.md`** — per-project configuration: dev commands, CI/CD pipeline, environments, services, secrets references, monitoring links.
 
 > [!TIP]
@@ -516,7 +532,7 @@ The `{lang}-qa-agent/` directories contain quality verification procedures for r
 - **`examples/`** — example test patterns including `conftest.py` (fixtures), `test_routes.py` (API tests), `test_ops_endpoints.py` (`/ops/*` contract tests), and E2E shell scripts for live instance verification.
 
 **How it's activated:**
-- **Always-on** — IDE instruction files (`.windsurfrules`, `.github/copilot-instructions.md`) load both developer and QA agent files on every session, giving the AI assistant awareness of both development standards and verification criteria.
+- **Always-on** — IDE instruction files (`.windsurfrules`, `.github/copilot-instructions.md`) load `template/skill.md` (HOW TO BUILD), developer agent files (HOW TO WRITE CODE), and QA agent files (HOW TO CHECK) on every session, giving the AI assistant awareness of build standards, development standards, and verification criteria.
 - **On-demand** — Type `/qa` in Windsurf to run the full QA verification workflow. Type `/developer` to reload all agent files mid-session.
 
 > [!TIP]
