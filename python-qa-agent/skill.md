@@ -88,6 +88,7 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 | 8 | Docstring coverage | interrogate | ≥ 80% | `interrogate src/app tests -v` |
 | 9 | Duplicate code | pylint | < 3% duplication | `pylint --disable=all --enable=duplicate-code src/app tests` |
 | 10 | Cognitive complexity | complexipy | No function ≥ 15 | `complexipy src/app tests -mx 15` |
+| 11 | Dependency pinning | scripts/lock.sh | Lock file up-to-date | `scripts/lock.sh --check` |
 
 ### Helm Gate (Required for deployable services)
 

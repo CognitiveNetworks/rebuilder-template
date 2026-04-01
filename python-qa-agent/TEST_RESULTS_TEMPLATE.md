@@ -113,6 +113,15 @@ $ complexipy src/app tests -mx 15
 [paste summary line]
 ```
 
+### 11. Dependency Pinning (scripts/lock.sh) — [PASS ✅ / FAIL ❌]
+
+```
+$ scripts/lock.sh --check
+[paste output or "(lock file up-to-date)"]
+```
+
+**Assessment:** [Lock file current with pyproject.toml? Any version ranges detected?]
+
 ---
 
 ## Helm Gates
@@ -187,10 +196,11 @@ $ tests/test-helm-template.sh -all
 | Dependency vulns | 0 runtime CVEs | X runtime, X dev-only | [✅/❌/⚠️] |
 | Docstring coverage | ≥ 80% | X% | [✅/❌] |
 | Duplicate code | < 3% | X% | [✅/❌] |
+| Dependency pinning | Lock file current | [Up-to-date/stale] | [✅/❌] |
 | Helm lint | 0 errors | X errors | [✅/❌/⚠️] |
 | Helm template render | dev/qa/prod | [renders / fails] | [✅/❌/⚠️] |
 
-**Overall: X/12 gates PASS**
+**Overall: X/13 gates PASS**
 
 ---
 
