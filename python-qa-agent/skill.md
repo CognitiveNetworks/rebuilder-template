@@ -106,6 +106,21 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 | 17 | Container isolation smoke test | curl | `/status` returns `OK` | `docker run -d -p 8000:8000 -e TEST_CONTAINER=true -e ENV=dev -e AWS_REGION=us-east-1 -e SERVICE_NAME=local-testing -e LOG_LEVEL=DEBUG -e OTEL_PYTHON_AUTO_INSTRUMENTATION_ENABLED=false --name {service}-ci {service}:ci && sleep 10 && curl --silent --fail http://localhost:8000/status` |
 | 18 | Docker Compose full-stack smoke test | docker compose + curl | `/status`, `/health`, `/ops/status` all return 200 | See procedure below |
 
+### CI Pipeline Gate (Required — Verifies workflow YAML correctness)
+
+| # | Gate | Tool | Threshold | Command |
+|---|------|------|-----------|---------|
+| 19 | CI black job | act | Exit 0 | `act -j black --env-file env.list` |
+| 20 | CI pytest job | act | Exit 0 | `act -j pytest --env-file env.list` |
+| 21 | CI pylint job | act | Exit 0 | `act -j pylint --env-file env.list` |
+| 22 | CI complexipy job | act | Exit 0 | `act -j complexipy --env-file env.list` |
+| 23 | CI mypy job | act | Exit 0 | `act -j mypy --env-file env.list` |
+| 24 | CI helm_lint job | act | Exit 0 | `act -j helm_lint` |
+
+`act` runs each GitHub Actions CI job inside a Docker container locally, using the `.actrc` configuration (`--container-architecture linux/amd64`) and `env.list` for environment variables. This verifies the CI workflow YAML is correct — not just the individual tools. If a job fails via `act` but the standalone command passed, the CI workflow definition has a bug.
+
+If `act` is not installed or Docker is unavailable, mark CI pipeline gates as `NOT RUN — act/Docker unavailable` (advisory, not blocking).
+
 **TEST_CONTAINER mode** (gate 17): The application must support a `TEST_CONTAINER` environment variable. When `true`, the app skips external dependency connections (RDS, Kafka, etc.) at startup so the container can start in isolation for smoke testing. The `/status` endpoint must return `OK` unconditionally. The `/health` endpoint should report dependencies as `skipped` rather than erroring.
 
 **Docker Compose full-stack test** (gate 18): When a `docker-compose.yml` exists, the QA agent must build and start the full stack with real dependencies (Postgres, Kafka, etc.) and validate that the application connects, starts, and serves traffic. This tests what gate 17 cannot — real dependency wiring, environment-check.sh correctness, and entrypoint.sh behavior under non-TEST_CONTAINER conditions.

@@ -28,6 +28,12 @@
 | `complexipy app -mx 15` | Cognitive complexity (no -d low, removed in v3.x) |
 | `helm lint charts/` | Helm chart lint |
 | `tests/test-helm-template.sh -all` | Helm template rendering |
+| `act -j black --env-file env.list` | CI pipeline: black job (requires Docker + act) |
+| `act -j pytest --env-file env.list` | CI pipeline: pytest job (requires Docker + act) |
+| `act -j pylint --env-file env.list` | CI pipeline: pylint job (requires Docker + act) |
+| `act -j complexipy --env-file env.list` | CI pipeline: complexipy job (requires Docker + act) |
+| `act -j mypy --env-file env.list` | CI pipeline: mypy job (requires Docker + act) |
+| `act -j helm_lint` | CI pipeline: helm lint job (requires Docker + act) |
 
 ## Quality Gate Thresholds
 
@@ -44,6 +50,7 @@
 | Duplicate code | < 3% | Release |
 | Cognitive complexity | No function ≥ 15 (complexipy -mx 15) | Release |
 | Helm lint | 0 errors | Release |
+| CI pipeline jobs (act) | All exit 0 | Advisory (requires Docker + act) |
 
 ## Extended Tool Versions
 

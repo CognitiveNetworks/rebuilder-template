@@ -99,6 +99,51 @@ This workflow activates the QA agent to independently verify that the developer 
 
    If Docker is unavailable, mark container gates as `NOT RUN — Docker unavailable` (advisory).
 
+   d. CI pipeline verification via `act` (requires Docker):
+
+   Run each CI job locally using `act` to verify the GitHub Actions workflow executes
+   correctly — not just the individual tools, but the full pipeline definition. This
+   catches wrong paths in workflow YAML, missing env vars in CI context, and job
+   configuration errors that individual tool runs cannot detect.
+
+   `.actrc` must exist with `--container-architecture linux/amd64`.
+
+// turbo
+   ```
+   act -j black --env-file env.list
+   ```
+
+// turbo
+   ```
+   act -j pytest --env-file env.list
+   ```
+
+// turbo
+   ```
+   act -j pylint --env-file env.list
+   ```
+
+// turbo
+   ```
+   act -j complexipy --env-file env.list
+   ```
+
+// turbo
+   ```
+   act -j mypy --env-file env.list
+   ```
+
+// turbo
+   ```
+   act -j helm_lint
+   ```
+
+   Each `act -j <job>` must exit 0. If a job fails via `act` but the equivalent
+   standalone command passed (e.g., `pylint` passed in step 3 but `act -j pylint`
+   fails), the CI workflow definition has a bug — fix the workflow YAML, not the tool.
+
+   If `act` is not installed, mark CI pipeline gates as `NOT RUN — act not installed` (advisory).
+
 6. Verify `/ops/*` endpoint contract per `{lang}-qa-agent/skill.md` — check that every required diagnostic and remediation endpoint exists and returns the required fields. Use the API Endpoints to Verify table in `{lang}-qa-agent/config.md`.
 
 7. Verify template conformance:
