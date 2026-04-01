@@ -300,9 +300,11 @@ When creating a new service or component, it ships with these from day one — n
 - [ ] Terraform module — infrastructure definition for all three environments
 - [ ] `/health` endpoint — verifies dependencies, returns 503 if unhealthy
 - [ ] `/ops/*` endpoints — full diagnostic and remediation contract (see Observability below)
+- [ ] `/ops/health/<component>` endpoints — individual health check per external dependency (see Observability → Individual component health endpoints)
+- [ ] Component data viewer endpoints — diagnostic read endpoints for every data-bearing component (see Observability → Component data viewer endpoints)
 - [ ] OpenAPI spec — API contract checked into the repo
-- [ ] OpenAPI response models — every endpoint (GET, POST, PUT, DELETE) must declare a typed Pydantic `response_model`. No bare `dict` returns.
-- [ ] OpenAPI examples — every request body model and response model must include `json_schema_extra` with realistic `examples` so Swagger UI shows typed schemas and pre-filled "Try it out" payloads
+- [ ] OpenAPI response models — every endpoint (GET, POST, PUT, DELETE) must declare a typed Pydantic `response_model`. No bare `dict` returns. This includes all `/ops/*` endpoints.
+- [ ] OpenAPI examples — every request body model and response model must include `json_schema_extra` with realistic `examples` so Swagger UI shows typed schemas and pre-filled "Try it out" payloads. Request body examples must use valid test data (e.g., correct HMAC hashes for the local dev salt) so "Try it out" works without manual editing.
 - [ ] Unit and API test scaffolding — tests run from day one, not added later
 - [ ] `.env.example` — documented environment variables for local development
 - [ ] OTEL instrumentation — metrics (Golden Signals), traces (request spans), and log bridge configured with OTLP exporter
@@ -338,6 +340,13 @@ When creating a new service or component, it ships with these from day one — n
   - **Remediation** (build with every service): `/ops/cache/flush`, `/ops/cache/refresh`, `/ops/circuits`, `/ops/loglevel`, `/ops/log-level`
   - All remediation endpoints must be idempotent and non-destructive. See `STANDARDS.md` for full spec.
   - **These endpoints are the contract with the SRE agent.** The SRE agent calls them to diagnose and remediate incidents. If `/ops/*` endpoints are down, the agent cannot operate. Treat `/ops/*` availability with the same priority as the main API — they should not be behind feature flags, separate deployments, or optional middleware that could fail independently.
+  - **Individual component health endpoints** (build one per external dependency): every external component the service depends on (database, message queue, cache, object store, external API) must have its own health check endpoint at `/ops/health/<component>`. Each endpoint returns a typed `ComponentHealthResponse` with `component`, `status`, `latency_ms`, `error`, and `details` (connection info, config). Tag these endpoints with `tags=["components"]` so Swagger groups them visibly. Examples: `/ops/health/rds`, `/ops/health/kafka`, `/ops/health/redis`, `/ops/health/s3`.
+  - **Component data viewer endpoints** (build one per data-bearing component): every component that stores, caches, or transports data the service writes must have a diagnostic read endpoint so developers and SRE can verify data flow end-to-end from Swagger. Examples:
+    - Message queues: `/ops/kafka/messages?topic=<alias>&count=10` — read recent messages from a topic using a short-lived consumer. Use a unique ephemeral `group.id` per request to avoid interfering with production consumers.
+    - Caches: `/ops/blacklist`, `/ops/cache/entries` — view the actual cached data (IDs, keys, values), not just cache metadata.
+    - Databases: `/ops/rds/query` or similar read-only diagnostic queries if appropriate for the service.
+    - These are diagnostic-only endpoints. They must not modify state. Imports for consumer libraries (e.g., `confluent_kafka.Consumer`) should be lazy (inside the endpoint function) if the library is not otherwise needed at module scope — this avoids import failures in test environments that mock the producer but don't install the full client library.
+  - **Typed response models on all `/ops/*` endpoints.** Every ops endpoint must declare a Pydantic `response_model` so Swagger renders the full response schema with field descriptions. Do not return bare `JSONResponse` without a model — Swagger will show an empty `200: Successful Response` with no schema, making the endpoint invisible for validation.
 - **Logging:** *[Logging framework and format — e.g., "Structured JSON to stdout via Python `logging`"]*
 - **Metrics and tracing:** *[Metrics and tracing setup — e.g., "OpenTelemetry SDK with OTLP exporter to Cloud Trace"]*
 
