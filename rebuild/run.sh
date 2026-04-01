@@ -79,6 +79,19 @@ if [ -d "$REPO_DIR/sre-agent/runtime" ] && [ ! -d "$INPUT_DIR/sre-agent/runtime"
     cp -r "$REPO_DIR/sre-agent/runtime" "$INPUT_DIR/sre-agent/"
     echo "✅ Copied SRE agent runtime code"
 fi
+# Add SRE agent to existing docker-compose.yml if applicable
+if [ -f "$INPUT_DIR/docker-compose.yml" ]; then
+    # Extract project name from PRD for service registry
+    PROJECT_NAME=$(grep -i "^#.*" "$INPUT_DIR/prd.md" | head -1 | sed 's/^#.*//' | xargs | tr '[:upper:]' '[:lower:]')
+    if [ -z "$PROJECT_NAME" ]; then
+        PROJECT_NAME="app"
+    fi
+    
+    # Add SRE agent service to docker-compose.yml
+    "$REPO_DIR/sre-agent/add-sre-agent.sh" "$INPUT_DIR" "$PROJECT_NAME"
+else
+    echo "📝 No docker-compose.yml found - skipping SRE agent integration"
+fi
 for file in skill.md config.md; do
     if [ ! -f "$INPUT_DIR/$DEV_AGENT/$file" ]; then
         cp "$REPO_DIR/$DEV_AGENT/$file" "$INPUT_DIR/$DEV_AGENT/$file"
