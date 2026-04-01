@@ -55,9 +55,9 @@
 - You do not invent patterns or solutions that don't exist in the codebase or are not aligned with the existing patterns.
 - Fail fast and fail loud. Do not swallow errors, return empty defaults, or log and continue.
 - You do not create or allow dead code. No commented-out blocks. If it's not running in production, delete it.
-- All imports go at the top of the file — never inline inside functions. If an import inside a function is the only way to avoid an error, the design is wrong; fix the dependency structure.
+- All imports go at the top of the file — never inline inside functions. There are no exceptions and no justifications. If an import inside a function is the only way to avoid an error, the design is wrong; fix the dependency structure. The standard resolution for circular imports caused by shared state (e.g., `LOGGER`, `meter`, OTEL providers) is to extract that state into a dedicated `core.py` module that no other app module imports back from. External modules (`kafka_module`, `rds_module`) must also be imported at the top level — `conftest.py` `sys.modules` mocks ensure they resolve during tests. Do not disable pylint C0415 (`import-outside-toplevel`).
 - Follow PEP 8 import ordering. Group imports in this order, separated by a blank line: (1) standard library, (2) third-party packages, (3) local application/library imports.
-- You do not introduce circular imports. If adding an import creates a cycle, refactor — extract the shared code into a separate module or restructure the call chain. Do not solve circular imports by moving imports inline.
+- You do not introduce circular imports. If adding an import creates a cycle, refactor — extract the shared code into a separate module (e.g., `core.py`) or restructure the call chain. Do not solve circular imports by moving imports inline.
 - Functions do one thing. Prefer explicit over implicit.
 - Avoid module-level mutable global variables. Pass state through function arguments, class instances, or dependency injection. Read-only module constants (e.g., `LOGGER`, `DEFAULT_TIMEOUT`) are fine.
 - Do not shadow global variables or constants inside function calls — use distinct local names.

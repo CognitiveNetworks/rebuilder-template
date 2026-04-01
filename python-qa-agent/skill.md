@@ -313,7 +313,7 @@ For audit tables (external module call sites, Any usage), use a dedicated table 
 
 | Standard | How to Verify |
 |----------|---------------|
-| All imports top-level | `grep -rn "^    import \|^        import \|^    from " src/app/*.py` — flag all inline imports. Each must have documented justification (lazy external module loading). |
+| All imports top-level | `grep -rn -E "^[[:space:]]{4,}(import \|from )" src/app/*.py` — **must be zero.** Any inline import is a FAIL — there are no justifications. If the result is non-zero, the fix is to extract shared state into `core.py` and move external module imports to the top level. Also verify: `grep -n "C0415" .pylintrc` — C0415 must NOT be in the disable list. |
 | PEP 8 import ordering | pylint checks import ordering (C0411). Verify pylint 10.00/10 passes. Additionally: for each `.py` file in `src/app/`, verify imports are grouped: (1) stdlib, (2) third-party, (3) local, separated by blank lines. |
 | No circular imports | `python -c "import src.app; print('OK')"` — must succeed without `ImportError`. For each module: `python -c "from src.app.<module> import *; print('OK')"`. Any `ImportError: cannot import name` indicates a cycle. Also: `grep -rn "# avoid circular" src/` — flag any workaround comments. |
 | Pin dependency versions | `grep -c "==" requirements.txt` — every line must have `==` pinning. `grep -v "==" requirements.txt \| grep -v "^#\|^$\|^-"` — must be empty (no unpinned deps). |
