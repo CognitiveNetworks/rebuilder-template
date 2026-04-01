@@ -54,7 +54,7 @@ No module with testable logic is below 50%.
 ### 2. Linter (pylint) — [PASS ✅ / FAIL ❌]
 
 ```
-$ pylint src tests --disable=import-error --fail-under=9.0
+$ pylint src tests --disable=import-error --fail-under=10.0
 [paste score line]
 ```
 
@@ -192,7 +192,7 @@ $ tests/test-helm-template.sh -all
 |------|-----------|--------|--------|
 | pytest | 0 failures | X passed, 0 failed | [✅/❌] |
 | Test coverage | ≥ 80% | X% | [✅/❌] |
-| pylint (lint) | score ≥ 9.0 | X/10 | [✅/❌] |
+| pylint (lint) | score ≥ 10.0 | X/10 | [✅/❌] |
 | black (format) | All formatted | X/X unchanged | [✅/❌] |
 | mypy (types) | 0 errors | X errors in X files | [✅/❌] |
 | Cyclomatic complexity | No function ≥ C | [All A/B or list] | [✅/❌] |

@@ -90,6 +90,7 @@ All outputs land in `rebuild-inputs/<project>/`.
 - **[Full How-to Guide](docs/readme-details/how-to-use.md)** — Phase-by-phase instructions, quick reference
 - **[Architecture & File Map](docs/readme-details/architecture.md)** — Detailed diagrams, which file does what
 - **[Agents Reference](docs/readme-details/agents.md)** — Developer, QA, SRE, Performance agents
+- **[Standards Loading & Verification](docs/readme-details/standards-loading-and-verification.md)** — WHERE and WHEN each standard is loaded and enforced
 - **[Repository Structure](docs/readme-details/repository-structure.md)** — Complete directory tree
 - **[IDE Compatibility](docs/readme-details/ide-compatibility.md)** — Windsurf, VS Code, Enterprise, Cursor
 
