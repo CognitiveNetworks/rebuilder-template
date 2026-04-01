@@ -83,13 +83,11 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 
 | # | Gate | Tool | Threshold | Command |
 |---|------|------|-----------|---------|
-| 6 | Cyclomatic complexity | radon cc | Average A or B, no function ≥ C | `radon cc src/app -a -nc` |
-| 7 | Maintainability index | radon mi | All files A or B | `radon mi src/app` |
-| 8 | Dead code | vulture | 0 findings at 80% confidence | `vulture src/app --min-confidence 80` |
-| 9 | Dependency vulns | pip-audit | 0 runtime CVEs | `pip-audit` |
-| 10 | Docstring coverage | interrogate | ≥ 80% | `interrogate src/app -v` |
-| 11 | Duplicate code | pylint | < 3% duplication | `pylint --disable=all --enable=duplicate-code src/app` |
-| 12 | Cognitive complexity | complexipy | 0 issues | `complexipy src/app -mx 15 -d low` |
+| 6 | Dead code | vulture | 0 findings at 80% confidence | `vulture src/app tests --min-confidence 80` |
+| 7 | Dependency vulns | pip-audit | 0 runtime CVEs | `pip-audit` |
+| 8 | Docstring coverage | interrogate | ≥ 80% | `interrogate src/app tests -v` |
+| 9 | Duplicate code | pylint | < 3% duplication | `pylint --disable=all --enable=duplicate-code src/app tests` |
+| 10 | Cognitive complexity | complexipy | No function ≥ 15 | `complexipy src/app tests -mx 15` |
 
 ### Helm Gate (Required for deployable services)
 

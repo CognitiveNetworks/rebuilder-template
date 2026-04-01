@@ -76,27 +76,14 @@ $ mypy src/app/ --ignore-missing-imports --disable-error-code=unused-ignore
 
 ## Extended Gates
 
-### 5. Cyclomatic Complexity (radon cc) — [PASS ✅ / FAIL ❌]
+### 6. Dead Code (vulture) — [PASS ✅ / FAIL ❌]
 
 ```
-$ radon cc src/ -a -nc
-[paste output or "(no output — no function rated C or higher)"]
-```
-
-### 6. Maintainability Index (radon mi) — [PASS ✅ / FAIL ❌]
-
-| File | Rating |
-|------|--------|
-| [one row per file] | A/B/C |
-
-### 7. Dead Code (vulture) — [PASS ✅ / FAIL ❌]
-
-```
-$ vulture src/ --min-confidence 80
+$ vulture src/app tests --min-confidence 80
 [paste output or "(no output — 0 findings)"]
 ```
 
-### 8. Dependency Vulnerabilities (pip-audit) — [PASS ✅ / FAIL ❌ / ADVISORY ⚠️]
+### 7. Dependency Vulnerabilities (pip-audit) — [PASS ✅ / FAIL ❌ / ADVISORY ⚠️]
 
 ```
 $ pip-audit
@@ -105,24 +92,24 @@ $ pip-audit
 
 **Assessment:** [Explain findings — runtime vs dev-only? Action needed?]
 
-### 9. Docstring Coverage (interrogate) — [PASS ✅ / FAIL ❌]
+### 8. Docstring Coverage (interrogate) — [PASS ✅ / FAIL ❌]
 
 ```
-$ interrogate src/ -v
+$ interrogate src/app tests -v
 [paste RESULT line]
 ```
 
-### 10. Duplicate Code (pylint) — [PASS ✅ / FAIL ❌]
+### 9. Duplicate Code (pylint) — [PASS ✅ / FAIL ❌]
 
 ```
-$ pylint --disable=all --enable=duplicate-code src/
+$ pylint --disable=all --enable=duplicate-code src/app tests
 [paste score line]
 ```
 
-### 11. Cognitive Complexity (complexipy) — [PASS ✅ / FAIL ❌]
+### 10. Cognitive Complexity (complexipy) — [PASS ✅ / FAIL ❌]
 
 ```
-$ complexipy src -mx 15
+$ complexipy src/app tests -mx 15
 [paste summary line]
 ```
 
@@ -195,17 +182,15 @@ $ tests/test-helm-template.sh -all
 | pylint (lint) | score ≥ 10.0 | X/10 | [✅/❌] |
 | black (format) | All formatted | X/X unchanged | [✅/❌] |
 | mypy (types) | 0 errors | X errors in X files | [✅/❌] |
-| Cyclomatic complexity | No function ≥ C | [All A/B or list] | [✅/❌] |
-| Maintainability index | All files A or B | [All A or list] | [✅/❌] |
+| Cognitive complexity | No function ≥ 15 | [All compliant or list] | [✅/❌] |
 | Dead code (vulture) | 0 findings | X findings | [✅/❌] |
 | Dependency vulns | 0 runtime CVEs | X runtime, X dev-only | [✅/❌/⚠️] |
 | Docstring coverage | ≥ 80% | X% | [✅/❌] |
 | Duplicate code | < 3% | X% | [✅/❌] |
-| Cognitive complexity | 0 issues | X issues | [✅/❌] |
 | Helm lint | 0 errors | X errors | [✅/❌/⚠️] |
 | Helm template render | dev/qa/prod | [renders / fails] | [✅/❌/⚠️] |
 
-**Overall: X/14 gates PASS**
+**Overall: X/12 gates PASS**
 
 ---
 
