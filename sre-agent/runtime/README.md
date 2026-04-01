@@ -148,7 +148,7 @@ export OPS_AUTH_TOKEN="your-ops-token"
 export SERVICE_REGISTRY="api|http://localhost:8000|true"
 
 # Run the service
-uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+uvicorn main:app --host :: --port 8080 --reload
 ```
 
 ### Authentication Options

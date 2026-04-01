@@ -1226,6 +1226,10 @@ After the compliance audit passes, verify that **every structural component** fr
 - [ ] `.pylintrc` — Pylint configuration file.
 - [ ] `.python-version` — Python version pinning file.
 - [ ] `catalog-info.yaml` — Backstage service catalog descriptor.
+- [ ] `docker-compose.yml` — Full local development stack with all infrastructure dependencies (PostgreSQL, Kafka, Redis, etc.), adjacent module mounts, healthchecks, and `depends_on` with `condition: service_healthy`. Must allow `docker compose up --build` to start a working environment.
+- [ ] `template/skill.md` — Copied from the cloned template repo (Step 8c). The QA agent validates every checkbox in this file. Must be referenced in `.windsurfrules`.
+- [ ] `.github/scripts/pod-identity-generator/` — Pod identity management scripts (create, delete, find).
+- [ ] `.github/scripts/workflow-runner.sh` — Dynamic workflow execution helper.
 
 **Required development tooling checklist:**
 

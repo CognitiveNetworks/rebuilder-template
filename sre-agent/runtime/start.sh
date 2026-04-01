@@ -74,4 +74,4 @@ echo "📚 Docs: http://localhost:8080/docs"
 echo ""
 
 # Start the service
-exec python -m uvicorn main:app --host 0.0.0.0 --port 8080 --reload
+exec python -m uvicorn main:app --host :: --port 8080 --reload
