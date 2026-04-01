@@ -142,7 +142,8 @@ This workflow activates the QA agent to independently verify that the developer 
    standalone command passed (e.g., `pylint` passed in step 3 but `act -j pylint`
    fails), the CI workflow definition has a bug — fix the workflow YAML, not the tool.
 
-   If `act` is not installed, mark CI pipeline gates as `NOT RUN — act not installed` (advisory).
+   If `act` is not installed, install it (`brew install act` on macOS). Both `act` and Docker
+   are required — CI pipeline gates are merge-blocking, not advisory.
 
 6. Verify `/ops/*` endpoint contract per `{lang}-qa-agent/skill.md` — check that every required diagnostic and remediation endpoint exists and returns the required fields. Use the API Endpoints to Verify table in `{lang}-qa-agent/config.md`.
 

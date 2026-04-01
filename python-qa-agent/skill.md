@@ -106,7 +106,7 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 | 17 | Container isolation smoke test | curl | `/status` returns `OK` | `docker run -d -p 8000:8000 -e TEST_CONTAINER=true -e ENV=dev -e AWS_REGION=us-east-1 -e SERVICE_NAME=local-testing -e LOG_LEVEL=DEBUG -e OTEL_PYTHON_AUTO_INSTRUMENTATION_ENABLED=false --name {service}-ci {service}:ci && sleep 10 && curl --silent --fail http://localhost:8000/status` |
 | 18 | Docker Compose full-stack smoke test | docker compose + curl | `/status`, `/health`, `/ops/status` all return 200 | See procedure below |
 
-### CI Pipeline Gate (Required — Verifies workflow YAML correctness)
+### CI Pipeline Gate (Required — Block Merge)
 
 | # | Gate | Tool | Threshold | Command |
 |---|------|------|-----------|---------|
@@ -119,7 +119,7 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 
 `act` runs each GitHub Actions CI job inside a Docker container locally, using the `.actrc` configuration (`--container-architecture linux/amd64`) and `env.list` for environment variables. This verifies the CI workflow YAML is correct — not just the individual tools. If a job fails via `act` but the standalone command passed, the CI workflow definition has a bug.
 
-If `act` is not installed or Docker is unavailable, mark CI pipeline gates as `NOT RUN — act/Docker unavailable` (advisory, not blocking).
+If `act` is not installed, install it (`brew install act` on macOS, or see https://github.com/nektos/act). If Docker is unavailable, the CI pipeline gates cannot run — this is a blocking failure, not an advisory skip. Both `act` and Docker are required development tools.
 
 **TEST_CONTAINER mode** (gate 17): The application must support a `TEST_CONTAINER` environment variable. When `true`, the app skips external dependency connections (RDS, Kafka, etc.) at startup so the container can start in isolation for smoke testing. The `/status` endpoint must return `OK` unconditionally. The `/health` endpoint should report dependencies as `skipped` rather than erroring.
 

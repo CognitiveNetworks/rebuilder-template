@@ -50,7 +50,7 @@
 | Duplicate code | < 3% | Release |
 | Cognitive complexity | No function ≥ 15 (complexipy -mx 15) | Release |
 | Helm lint | 0 errors | Release |
-| CI pipeline jobs (act) | All exit 0 | Advisory (requires Docker + act) |
+| CI pipeline jobs (act) | All exit 0 | Merge |
 
 ## Extended Tool Versions
 
