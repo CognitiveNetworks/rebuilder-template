@@ -65,7 +65,7 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 
 **Critical verification**: Confirm all tools run against both `src/app/` and `tests/` directories. The developer agent must not limit static analysis, linting, or formatting to only application code. Verify commands include both directories (e.g., `pylint src/app tests`, `black --check src/app tests`). If tools are configured to exclude `tests/`, flag this as a critical deviation from standards.
 
-**Dependency locking verification**: Confirm `scripts/lock.sh` is executable and has been run after any dependency changes. Verify by: (1) Checking the script has execute permissions (`ls -la scripts/lock.sh`), (2) Comparing timestamps of `requirements.txt` and `requirements-dev.txt` with `pyproject.toml` to ensure they're newer, (3) Running `scripts/lock.sh` twice and confirming the second run produces no changes (idempotent behavior). If the script exists but hasn't been run, flag this as critical.
+**Dependency locking verification**: You must actually run `scripts/lock.sh` and show the output — do not infer it was run from the presence of pip-compile headers. Verify by: (1) `ls -la scripts/lock.sh` — must be executable. (2) Run `bash scripts/lock.sh` — show the full output. (3) `md5 requirements.txt requirements-dev.txt` (or `md5sum`) — record hashes. (4) Run `bash scripts/lock.sh` a second time — show output. (5) `md5 requirements.txt requirements-dev.txt` again — hashes must match run 1 (idempotent). (6) `head -1 requirements.txt` and `head -1 requirements-dev.txt` — must show pip-compile auto-generated header. All six steps must appear in `TEST_RESULTS.md` with actual output. If the script exists but hasn't been run, or if hashes differ between runs, flag this as critical.
 
 **Pylint CI verification**: Confirm pylint is configured for CI environments. Verify: (1) `pyproject.toml` contains pylint configuration with `--disable=import-error` for un-installable local modules, (2) `--fail-under=10.0` is set to require a perfect score, (3) CI pipeline installs both production and dev requirements before running pylint, (4) PYTHONPATH includes source directory before pylint execution. If pylint fails in CI due to missing dependencies or import errors, flag this as critical.
 
@@ -88,7 +88,7 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 | 8 | Docstring coverage | interrogate | ≥ 80% | `interrogate src/app tests -v` |
 | 9 | Duplicate code | pylint | < 3% duplication | `pylint --disable=all --enable=duplicate-code src/app tests` |
 | 10 | Cognitive complexity | complexipy | No function ≥ 15 | `complexipy src/app tests -mx 15` |
-| 11 | Dependency pinning | scripts/lock.sh | Lock file up-to-date | `scripts/lock.sh --check` |
+| 11 | Dependency pinning | scripts/lock.sh | Lock file up-to-date, idempotent | `bash scripts/lock.sh` (run twice, compare MD5 hashes) |
 
 ### Helm Gate (Required for deployable services)
 
