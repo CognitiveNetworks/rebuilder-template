@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  sre-agent:
+    build:
+      context: ..
+      dockerfile: runtime/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      # Use GitHub Models for local container testing (no Google credentials in container)
+      - LLM_API_KEY=${LLM_API_KEY:-ghp_your-github-pat-here}
+      - LLM_MODEL=gpt-4o
+      - PAGERDUTY_API_TOKEN=${PAGERDUTY_API_TOKEN:-test-token}
+      - OPS_AUTH_TOKEN=${OPS_AUTH_TOKEN:-test-token}
+      - SERVICE_REGISTRY=${SERVICE_REGISTRY:-api|http://host.docker.internal:8000|true}
+      - PAGERDUTY_ROUTING_KEY=${PAGERDUTY_ROUTING_KEY:-test-key}
+      - SRE_PROMPT_PATH=/app/skill.md
+      - INCIDENTS_DIR=/app/incidents
+    volumes:
+      # Mount local skill.md for live editing
+      - ../skill.md:/app/skill.md:ro
+      # Mount incidents directory to persist reports
+      - ./incidents:/app/incidents
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Optional: Add a mock service for testing
+  mock-service:
+    image: nginx:alpine
+    ports:
+      - "8000:80"
+    profiles:
+      - testing
+    command: >
+      sh -c "echo 'Mock service for SRE agent testing' > /usr/share/nginx/html/index.html &&
+             echo 'ok' > /usr/share/nginx/html/health &&
+             nginx -g 'daemon off;'"

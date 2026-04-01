@@ -84,25 +84,85 @@ Monitoring Platform Alert (webhook)
 
 ## Local Development
 
+### Option 1: Quick Start (Recommended)
+
 ```bash
-# Install dependencies (includes test and lint tools)
+# Install dependencies
 pip install -r requirements-dev.txt
 
-# Copy and fill in environment variables
+# Copy environment template
 cp .env.example .env
-# Edit .env with your values
 
-# Set required environment variables (or source .env)
-export LLM_API_KEY="ghp_your-github-pat"  # or OpenAI key
+# Edit .env with your configuration
+# For Vertex AI (recommended - uses your Google credentials):
+#   LLM_MODEL=google/gemini-2.0-flash
+#   LLM_API_BASE_URL=https://us-central1-aiplatform.googleapis.com/v1beta1/projects/PROJECT/locations/us-central1/endpoints/openapi
+# For GitHub Models:
+#   LLM_API_KEY=ghp_your-github-pat
+
+# Start the service (auto-loads .env)
+./start.sh
+```
+
+### Option 2: Container Development
+
+```bash
+# Using Docker Compose (recommended for containers)
+docker-compose up -d
+
+# Or manual Docker build
+docker build -f runtime/Dockerfile -t sre-agent .
+docker run -p 8080:8080 --env-file .env sre-agent
+```
+
+### Option 3: Manual Python
+
+```bash
+# Install dependencies
+pip install -r requirements-dev.txt
+
+# Set environment variables manually or source .env
+export LLM_API_KEY="ghp_your-github-pat"  # or configure Vertex AI
 export PAGERDUTY_API_TOKEN="your-pd-token"
 export OPS_AUTH_TOKEN="your-ops-token"
-export SRE_PROMPT_PATH="../skill.md"
-export INCIDENTS_DIR="./incidents"
-export SERVICE_REGISTRY="api|http://localhost:8000|true,worker|http://localhost:8001|false"
+export SERVICE_REGISTRY="api|http://localhost:8000|true"
 
 # Run the service
 uvicorn main:app --host 0.0.0.0 --port 8080 --reload
 ```
+
+### Authentication Options
+
+#### Vertex AI (Recommended for GCP users)
+```bash
+# One-time setup
+gcloud auth application-default login
+gcloud config set project YOUR_PROJECT
+
+# .env configuration
+LLM_MODEL=google/gemini-2.0-flash
+LLM_API_BASE_URL=https://us-central1-aiplatform.googleapis.com/v1beta1/projects/YOUR_PROJECT/locations/us-central1/endpoints/openapi
+# No LLM_API_KEY needed - uses your Google credentials
+```
+
+#### GitHub Models
+```bash
+# .env configuration
+LLM_API_KEY=ghp_your-github-personal-access-token
+LLM_MODEL=gpt-4o
+# Works with any GitHub PAT with model access
+```
+
+### Health Check
+
+```bash
+curl http://localhost:8080/health
+```
+
+### Documentation
+
+- Swagger UI: http://localhost:8080/docs
+- ReDoc: http://localhost:8080/redoc
 
 ## Testing
 

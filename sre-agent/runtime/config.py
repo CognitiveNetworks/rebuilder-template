@@ -3,13 +3,30 @@
 All secrets are loaded from environment variables, which should be
 injected from your cloud provider's secrets manager at deploy time.
 Never hardcode secrets in this file.
+
+For local development, automatically loads .env file if it exists.
 """
 
 import logging
 import os
+from pathlib import Path
 from urllib.parse import urlparse
 
 from models import ServiceEndpoint
+
+# Auto-load .env file for local development (no-op in cloud)
+if Path(".env").exists():
+    try:
+        from dotenv import load_dotenv
+        load_dotenv()
+        logger = logging.getLogger(__name__)
+        logger.info("Loaded environment variables from .env file")
+    except ImportError:
+        # dotenv not available - .env must be sourced manually
+        pass
+    except Exception as e:
+        # Error loading .env - continue without it
+        pass
 
 logger = logging.getLogger(__name__)
 
