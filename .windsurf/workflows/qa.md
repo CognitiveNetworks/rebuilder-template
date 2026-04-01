@@ -22,29 +22,29 @@ This workflow activates the QA agent to independently verify that the developer 
 
 // turbo
    ```
-   pytest tests/ --cov=src/app --cov-fail-under=80 -v --tb=short
+   pytest tests/ --cov=app --cov-fail-under=80 -v --tb=short
    ```
 
 // turbo
    ```
-   pylint src tests
+   pylint --disable=import-error --fail-under=10.0 app tests
    ```
 
 // turbo
    ```
-   black --check src/ tests/
+   black --check app tests --skip-string-normalization
    ```
 
 // turbo
    ```
-   mypy src/app/
+   mypy app/ --ignore-missing-imports --disable-error-code=unused-ignore
    ```
 
 4. Run extended quality gates:
 
 // turbo
    ```
-   vulture src/ --min-confidence 80
+   vulture app/ --min-confidence 80
    ```
 
 // turbo
@@ -54,17 +54,17 @@ This workflow activates the QA agent to independently verify that the developer 
 
 // turbo
    ```
-   interrogate src/ -v
+   interrogate app/ -v
    ```
 
 // turbo
    ```
-   pylint --disable=all --enable=duplicate-code src/
+   pylint --disable=all --enable=duplicate-code app/
    ```
 
 // turbo
    ```
-   complexipy src -mx 15 -d low
+   complexipy app -mx 15
    ```
 
 5. Run container gates (for deployable services only):

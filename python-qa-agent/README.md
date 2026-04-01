@@ -59,7 +59,7 @@ Use `/qa` after the developer agent claims a feature is complete, during Step 12
 | # | Gate | Tool | What It Checks |
 |---|------|------|----------------|
 | 1 | Unit + API tests | pytest | All tests pass, 0 failures |
-| 2 | Test coverage | pytest-cov | ≥ 80% line coverage of `src/app/` |
+| 2 | Test coverage | pytest-cov | ≥ 80% line coverage of `app/` |
 | 3 | Lint | pylint | 0 errors |
 | 4 | Format | black | All files formatted |
 | 5 | Type check | mypy | 0 errors (strict mode) |

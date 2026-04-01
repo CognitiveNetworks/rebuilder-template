@@ -16,16 +16,16 @@
 |---|---|
 | `pip install -e ".[dev]"` | Install all dependencies including test tools |
 | `pytest tests/ -x` | Run tests, stop on first failure |
-| `pytest tests/ --cov=src/app --cov-fail-under=80` | Run tests with coverage enforcement |
+| `pytest tests/ --cov=app --cov-fail-under=80` | Run tests with coverage enforcement |
 | `pytest tests/test_routes.py tests/test_ops_endpoints.py` | Run API + /ops/* contract tests only |
-| `pylint src tests` | Lint check |
-| `black --check src/ tests/` | Format check |
-| `mypy src/app/` | Type check |
-| `vulture src/ --min-confidence 80` | Dead code detection |
+| `pylint --disable=import-error --fail-under=10.0 app tests` | Lint check (matches CI) |
+| `black --check app tests --skip-string-normalization` | Format check (matches CI) |
+| `mypy app/ --ignore-missing-imports --disable-error-code=unused-ignore` | Type check (matches CI) |
+| `vulture app/ --min-confidence 80` | Dead code detection |
 | `pip-audit` | Dependency vulnerability scan |
-| `interrogate src/ -v` | Docstring coverage |
-| `pylint --disable=all --enable=duplicate-code src/` | Duplicate code check |
-| `complexipy src -mx 15 -d low` | Cognitive complexity |
+| `interrogate app/ -v` | Docstring coverage |
+| `pylint --disable=all --enable=duplicate-code app/` | Duplicate code check |
+| `complexipy app -mx 15` | Cognitive complexity (no -d low, removed in v3.x) |
 | `helm lint charts/` | Helm chart lint |
 | `tests/test-helm-template.sh -all` | Helm template rendering |
 
@@ -42,7 +42,7 @@
 | Runtime CVEs | 0 | Release |
 | Docstring coverage | ≥ 80% | Release |
 | Duplicate code | < 3% | Release |
-| Cognitive complexity (C901) | 0 issues | Release |
+| Cognitive complexity | No function ≥ 15 (complexipy -mx 15) | Release |
 | Helm lint | 0 errors | Release |
 
 ## Extended Tool Versions

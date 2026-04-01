@@ -53,21 +53,21 @@ No module with testable logic is below 50%.
 ### 2. Linter (pylint) — [PASS ✅ / FAIL ❌]
 
 ```
-$ pylint src tests --disable=import-error --fail-under=10.0
+$ pylint --disable=import-error --fail-under=10.0 app tests
 [paste score line]
 ```
 
 ### 3. Formatter (black) — [PASS ✅ / FAIL ❌]
 
 ```
-$ black --check src/ tests/ --skip-string-normalization
+$ black --check app tests --skip-string-normalization
 [paste output]
 ```
 
 ### 4. Type Checker (mypy) — [PASS ✅ / FAIL ❌]
 
 ```
-$ mypy src/app/ --ignore-missing-imports --disable-error-code=unused-ignore
+$ mypy app/ --ignore-missing-imports --disable-error-code=unused-ignore
 [paste output]
 ```
 
@@ -78,7 +78,7 @@ $ mypy src/app/ --ignore-missing-imports --disable-error-code=unused-ignore
 ### 6. Dead Code (vulture) — [PASS ✅ / FAIL ❌]
 
 ```
-$ vulture src/app tests --min-confidence 80
+$ vulture app tests --min-confidence 80
 [paste output or "(no output — 0 findings)"]
 ```
 
@@ -94,21 +94,21 @@ $ pip-audit
 ### 8. Docstring Coverage (interrogate) — [PASS ✅ / FAIL ❌]
 
 ```
-$ interrogate src/app tests -v
+$ interrogate app tests -v
 [paste RESULT line]
 ```
 
 ### 9. Duplicate Code (pylint) — [PASS ✅ / FAIL ❌]
 
 ```
-$ pylint --disable=all --enable=duplicate-code src/app tests
+$ pylint --disable=all --enable=duplicate-code app tests
 [paste score line]
 ```
 
 ### 10. Cognitive Complexity (complexipy) — [PASS ✅ / FAIL ❌]
 
 ```
-$ complexipy src/app tests -mx 15
+$ complexipy app tests -mx 15
 [paste summary line]
 ```
 

@@ -14,8 +14,8 @@
 | Command | Purpose |
 |---|---|
 | `pip install -e ".[dev]"` | Install all dependencies including profiling tools |
-| `python -m cProfile -o output.prof src/app/main.py` | CPU profile the application |
-| `python -m memory_profiler src/app/main.py` | Memory profile the application |
+| `python -m cProfile -o output.prof app/main.py` | CPU profile the application |
+| `python -m memory_profiler app/main.py` | Memory profile the application |
 | `py-spy top --pid <PID>` | Live profile a running process |
 | `py-spy record -o profile.svg --pid <PID>` | Generate flamegraph for running process |
 | `pytest tests/ --benchmark-compare` | Run performance benchmarks |

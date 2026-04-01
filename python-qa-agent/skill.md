@@ -31,7 +31,7 @@ Every rebuilt service requires tests at five levels. Each level gates a differen
 - Mock all external dependencies (databases, message queues, HTTP services, cnlib).
 - Every public function has at least one positive-path and one negative-path test.
 - Test edge cases: empty inputs, None values, boundary values, type mismatches.
-- Target: **≥ 80% line coverage** of `src/app/` (or `app/`).
+- Target: **≥ 80% line coverage** of `app/`.
 
 ### Level 2: API Tests — Gate Every Commit
 
@@ -63,7 +63,7 @@ Every rebuilt service requires tests at five levels. Each level gates a differen
 
 Run every gate before considering a change complete. Generate a `TEST_RESULTS.md` report (see template in `python-qa-agent/TEST_RESULTS_TEMPLATE.md`) summarizing all results.
 
-**Critical verification**: Confirm all tools run against both `src/app/` and `tests/` directories. The developer agent must not limit static analysis, linting, or formatting to only application code. Verify commands include both directories (e.g., `pylint src/app tests`, `black --check src/app tests`). If tools are configured to exclude `tests/`, flag this as a critical deviation from standards.
+**Critical verification**: Confirm all tools run against both `app/` and `tests/` directories. The developer agent must not limit static analysis, linting, or formatting to only application code. Verify commands include both directories (e.g., `pylint app tests`, `black --check app tests`). If tools are configured to exclude `tests/`, flag this as a critical deviation from standards.
 
 **Dependency locking verification**: You must actually run `scripts/lock.sh` and show the output — do not infer it was run from the presence of pip-compile headers. Verify by: (1) `ls -la scripts/lock.sh` — must be executable. (2) Run `bash scripts/lock.sh` — show the full output. (3) `md5 requirements.txt requirements-dev.txt` (or `md5sum`) — record hashes. (4) Run `bash scripts/lock.sh` a second time — show output. (5) `md5 requirements.txt requirements-dev.txt` again — hashes must match run 1 (idempotent). (6) `head -1 requirements.txt` and `head -1 requirements-dev.txt` — must show pip-compile auto-generated header. All six steps must appear in `TEST_RESULTS.md` with actual output. If the script exists but hasn't been run, or if hashes differ between runs, flag this as critical.
 
@@ -73,21 +73,21 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 
 | # | Gate | Tool | Threshold | Command |
 |---|------|------|-----------|---------|
-| 1 | Unit + API tests | pytest | 0 failures | `pytest tests/ --cov=src/app --cov-fail-under=80` |
+| 1 | Unit + API tests | pytest | 0 failures | `pytest tests/ --cov=app --cov-fail-under=80` |
 | 2 | Test coverage | pytest-cov | ≥ 80% line coverage | (included in above) |
-| 3 | Lint | pylint | 10.0/10.0 score | `pylint --disable=import-error --fail-under=10.0 src/app tests` |
-| 4 | Format | black | All formatted | `black --check src/app tests` |
-| 5 | Type check | mypy | 0 errors | `mypy src/app/` |
+| 3 | Lint | pylint | 10.0/10.0 score | `pylint --disable=import-error --fail-under=10.0 app tests` |
+| 4 | Format | black | All formatted | `black --check app tests` |
+| 5 | Type check | mypy | 0 errors | `mypy app/` |
 
 ### Extended Gates (Required — Block Release)
 
 | # | Gate | Tool | Threshold | Command |
 |---|------|------|-----------|---------|
-| 6 | Dead code | vulture | 0 findings at 80% confidence | `vulture src/app tests --min-confidence 80` |
+| 6 | Dead code | vulture | 0 findings at 80% confidence | `vulture app tests --min-confidence 80` |
 | 7 | Dependency vulns | pip-audit | 0 runtime CVEs | `pip-audit` |
-| 8 | Docstring coverage | interrogate | ≥ 80% | `interrogate src/app tests -v` |
-| 9 | Duplicate code | pylint | < 3% duplication | `pylint --disable=all --enable=duplicate-code src/app tests` |
-| 10 | Cognitive complexity | complexipy | No function ≥ 15 | `complexipy src/app tests -mx 15` |
+| 8 | Docstring coverage | interrogate | ≥ 80% | `interrogate app tests -v` |
+| 9 | Duplicate code | pylint | < 3% duplication | `pylint --disable=all --enable=duplicate-code app tests` |
+| 10 | Cognitive complexity | complexipy | No function ≥ 15 | `complexipy app tests -mx 15` |
 | 11 | Dependency pinning | scripts/lock.sh | Lock file up-to-date, idempotent | `bash scripts/lock.sh` (run twice, compare MD5 hashes) |
 
 ### Helm Gate (Required for deployable services)
@@ -330,7 +330,7 @@ Use a numbered table format per category:
 ```
 | # | Standard | Command | Result |
 |---|----------|---------|--------|
-| 1 | Fail fast — no bare except-pass | `grep -rn "except.*pass$" src/` — 0 matches | ✅ PASS |
+| 1 | Fail fast — no bare except-pass | `grep -rn "except.*pass$" app/` — 0 matches | ✅ PASS |
 ```
 
 For audit tables (external module call sites, Any usage), use a dedicated table with one row per finding.
@@ -339,46 +339,46 @@ For audit tables (external module call sites, Any usage), use a dedicated table 
 
 | Standard | How to Verify |
 |----------|---------------|
-| Code is understandable without asking the author | Code review — flag functions > 30 lines, deeply nested logic (> 3 levels), or single-letter variable names outside loops. `grep -rn "def " src/ \| wc -l` to count functions; spot-check the largest. |
+| Code is understandable without asking the author | Code review — flag functions > 30 lines, deeply nested logic (> 3 levels), or single-letter variable names outside loops. `grep -rn "def " app/` \| wc -l` to count functions; spot-check the largest. |
 | No overengineering or over-abstraction | Code review — flag abstract base classes with a single implementation, factory patterns for one type, or wrapper classes that add no logic. |
 | No invented patterns | Code review — verify all patterns match existing codebase conventions (e.g., FastAPI routers, dependency injection via `deps.py`). |
-| Functions do one thing | `grep -c "def " src/app/*.py` per file — spot-check any function > 25 lines for multiple responsibilities. Verify with `complexipy src -mx 15`. |
-| Fail fast and fail loud | `grep -rn "except.*pass$\|except.*:$" src/` — must be zero bare except-pass. `grep -rn "except.*continue$" src/` — must be zero. `grep -rn "except.*return None$\|except.*return \[\]\|except.*return {}" src/` — flag empty-default returns in except blocks. |
-| No dead code or commented-out blocks | `grep -rn "^#.*def \|^#.*class \|^#.*import \|^#.*return " src/` — must be zero. `vulture src/ --min-confidence 80` — must be zero findings. |
+| Functions do one thing | `grep -c "def " app/*.py` per file — spot-check any function > 25 lines for multiple responsibilities. Verify with `complexipy app/ -mx 15`. |
+| Fail fast and fail loud | `grep -rn "except.*pass$\|except.*:$" app/` — must be zero bare except-pass. `grep -rn "except.*continue$" app/` — must be zero. `grep -rn "except.*return None$\|except.*return \[\]\|except.*return {}" app/` — flag empty-default returns in except blocks. |
+| No dead code or commented-out blocks | `grep -rn "^#.*def \|^#.*class \|^#.*import \|^#.*return " app/` — must be zero. `vulture app/ --min-confidence 80` — must be zero findings. |
 
 #### Imports and Dependencies
 
 | Standard | How to Verify |
 |----------|---------------|
-| All imports top-level | `grep -rn -E "^[[:space:]]{4,}(import \|from )" src/app/*.py` — **must be zero.** Any inline import is a FAIL — there are no justifications. If the result is non-zero, the fix is to extract shared state into `core.py` and move external module imports to the top level. Also verify: `grep -n "C0415" .pylintrc` — C0415 must NOT be in the disable list. |
-| No `src.app` in imports | `grep -rn "from src\.app\|import src\.app" src/ tests/` — **must be zero.** All Python imports must use `app.*`, never `src.app.*`. The `src/` prefix is a local filesystem layout convention and must not leak into import paths. If any `src.app` imports are found: (1) rename them to `app.*`, (2) add `pythonpath = src` to `pytest.ini`, (3) set `.pylintrc` init-hook to `sys.path.insert(0, "src")`, (4) verify `entrypoint.sh` uses `uvicorn app.main:app` not `uvicorn src.app.main:app`. This is a **Critical** finding — `src.app` imports will crash the container because the Dockerfile copies `src/app/` to `/app/`. |
-| PEP 8 import ordering | pylint checks import ordering (C0411). Verify pylint 10.00/10 passes. Additionally: for each `.py` file in `src/app/`, verify imports are grouped: (1) stdlib, (2) third-party, (3) local, separated by blank lines. |
-| No circular imports | `PYTHONPATH=src python -c "import app; print('OK')"` — must succeed without `ImportError`. For each module: `PYTHONPATH=src python -c "from app.<module> import *; print('OK')"`. Any `ImportError: cannot import name` indicates a cycle. Also: `grep -rn "# avoid circular" src/` — flag any workaround comments. |
+| All imports top-level | `grep -rn -E "^[[:space:]]{4,}(import \|from )" app/*.py` — **must be zero.** Any inline import is a FAIL — there are no justifications. If the result is non-zero, the fix is to extract shared state into `core.py` and move external module imports to the top level. Also verify: `grep -n "C0415" .pylintrc` — C0415 must NOT be in the disable list. |
+| No `src.` prefix in imports | `grep -rn "from src\.\.\|import src\." app/ tests/` — **must be zero.** All Python imports must use `app.*`, never `src.app.*`. The `app/` package lives at the repo root — there is no `src/` directory. If any `src.` prefixed imports are found, rename them to `app.*`. |
+| PEP 8 import ordering | pylint checks import ordering (C0411). Verify pylint 10.00/10 passes. Additionally: for each `.py` file in `app/`, verify imports are grouped: (1) stdlib, (2) third-party, (3) local, separated by blank lines. |
+| No circular imports | `python -c "import app; print('OK')"` — must succeed without `ImportError`. For each module: `python -c "from app.<module> import *; print('OK')"`. Any `ImportError: cannot import name` indicates a cycle. Also: `grep -rn "# avoid circular" app/` — flag any workaround comments. |
 | Pin dependency versions | `grep -c "==" requirements.txt` — every line must have `==` pinning. `grep -v "==" requirements.txt \| grep -v "^#\|^$\|^-"` — must be empty (no unpinned deps). |
-| Audit and remove unused deps | `pip-audit` — zero critical/high CVEs in runtime deps. Manual review: every package in `requirements.txt` must have at least one import in `src/`. |
+| Audit and remove unused deps | `pip-audit` — zero critical/high CVEs in runtime deps. Manual review: every package in `requirements.txt` must have at least one import in `app/`. |
 
 #### Naming and Style
 
 | Standard | How to Verify |
 |----------|---------------|
 | No shadowed globals | `grep` for function params that reuse module-level names — e.g., a function param named `LOGGER` or `app` that shadows a module-level name. |
-| Minimize mutable global variables | `grep -rn "^global \|^\s\+global " src/` — flag every `global` statement. Each must have documented justification. Recommend class instances or DI instead. |
-| Constants UPPER_CASE | `grep -rn "^[a-z_]\+\s*=" src/app/*.py` at module level — flag any lowercase module-level assignments that look like constants. `LOGGER`, `MAX_ERROR_LOG`, etc. must be UPPER_CASE. |
-| All docstrings present | `interrogate src/ -v` — check the MISS column. Must cover all functions, classes, and modules. Empty `__init__.py` files are common misses. |
-| f-strings over % / .format() | `grep -rn "\.format(\|% [sd\"'(]" src/` — logging `%s` lazy formatting is acceptable (deferred interpolation). All other string formatting must use f-strings. |
+| Minimize mutable global variables | `grep -rn "^global \|^\s\+global " app/` — flag every `global` statement. Each must have documented justification. Recommend class instances or DI instead. |
+| Constants UPPER_CASE | `grep -rn "^[a-z_]\+\s*=" app/*.py` at module level — flag any lowercase module-level assignments that look like constants. `LOGGER`, `MAX_ERROR_LOG`, etc. must be UPPER_CASE. |
+| All docstrings present | `interrogate app/ -v` — check the MISS column. Must cover all functions, classes, and modules. Empty `__init__.py` files are common misses. |
+| f-strings over % / .format() | `grep -rn "\.format(\|% [sd\"'(]" app/` — logging `%s` lazy formatting is acceptable (deferred interpolation). All other string formatting must use f-strings. |
 
 #### Type Safety
 
 | Standard | How to Verify |
 |----------|---------------|
-| Match expected types exactly | `mypy src/app/ tests/ --ignore-missing-imports` — must report 0 errors. mypy alone is necessary but not sufficient — it cannot see types across `sys.modules` mock boundaries. Proceed to external module audit below. |
-| Verify argument types against signatures (external module audit) | **Mechanical audit required.** (1) `grep -rn "from kafka_module\|from rds_module" src/` to list every import site. (2) For each call site, read the function signature from the actual module source (e.g., `kafka_module/producer.py`, `rds_module/client.py`). (3) Document each call in a table: `Call Site \| Function \| Expected Type \| Actual Type \| Match?`. (4) Verify `.encode("utf-8")` where `bytes` is expected, `str` literals where `str` is expected, correct tuple types for DB params. Every call site must be listed — not spot-checked. |
-| External module type hints | For each external module dependency listed in `config.md`, read its source and document the public API signatures. Verify: (1) `grep -rn "kafka_module\|rds_module" src/` — list every call. (2) Each call's argument types match the module's type hints. (3) No bare `str` passed where `bytes` is expected. (4) No `Any`-typed wrapper functions hiding type mismatches (e.g., `send_fn: Any` should be `Callable[[str, bytes, str], None]`). |
-| No impossible equality checks | `mypy` with `--strict-equality` or review mypy output for `comparison-overlap` errors. `grep -rn "== None\|!= None" src/` — must use `is None` / `is not None` instead. |
-| Match framework function signatures | Verify `lifespan` signature matches `Callable[[FastAPI], AsyncContextManager]`. Verify middleware signatures. `grep -rn "def lifespan\|def .*middleware" src/` and check signatures. |
-| Generic types parameterized, avoid Any | `grep -rn ": dict\b\|: list\b\|-> dict\b\|-> list\b\|: Dict\b\|: List\b" src/` — must be zero bare `dict`/`list` in annotations. All must use `dict[str, Any]`, `list[str]`, etc. `grep -rn ": Any\b\|-> Any\b" src/` — list every `Any` usage. **Acceptable:** function parameters receiving arbitrary JSON (`dict[str, Any]`), OTEL callback signatures imposed by framework, `**kwargs` forwarding. **Not acceptable:** lazy typing to avoid figuring out the real type, wrapper functions that hide type information (e.g., `send_fn: Any` instead of `Callable[[str, bytes, str], None]`). Each `Any` must be justified in the report. |
-| No `# type: ignore` | `grep -rn "# type: ignore" src/` — must be zero. |
-| No suppression comments | `grep -rn "# pylint: disable\|# noqa" src/` — must be zero. Each found must have documented justification. |
+| Match expected types exactly | `mypy app/ tests/ --ignore-missing-imports` — must report 0 errors. mypy alone is necessary but not sufficient — it cannot see types across `sys.modules` mock boundaries. Proceed to external module audit below. |
+| Verify argument types against signatures (external module audit) | **Mechanical audit required.** (1) `grep -rn "from kafka_module\|from rds_module" app/` to list every import site. (2) For each call site, read the function signature from the actual module source (e.g., `kafka_module/producer.py`, `rds_module/client.py`). (3) Document each call in a table: `Call Site \| Function \| Expected Type \| Actual Type \| Match?`. (4) Verify `.encode("utf-8")` where `bytes` is expected, `str` literals where `str` is expected, correct tuple types for DB params. Every call site must be listed — not spot-checked. |
+| External module type hints | For each external module dependency listed in `config.md`, read its source and document the public API signatures. Verify: (1) `grep -rn "kafka_module\|rds_module" app/` — list every call. (2) Each call's argument types match the module's type hints. (3) No bare `str` passed where `bytes` is expected. (4) No `Any`-typed wrapper functions hiding type mismatches (e.g., `send_fn: Any` should be `Callable[[str, bytes, str], None]`). |
+| No impossible equality checks | `mypy` with `--strict-equality` or review mypy output for `comparison-overlap` errors. `grep -rn "== None\|!= None" app/` — must use `is None` / `is not None` instead. |
+| Match framework function signatures | Verify `lifespan` signature matches `Callable[[FastAPI], AsyncContextManager]`. Verify middleware signatures. `grep -rn "def lifespan\|def .*middleware" app/` and check signatures. |
+| Generic types parameterized, avoid Any | `grep -rn ": dict\b\|: list\b\|-> dict\b\|-> list\b\|: Dict\b\|: List\b" app/` — must be zero bare `dict`/`list` in annotations. All must use `dict[str, Any]`, `list[str]`, etc. `grep -rn ": Any\b\|-> Any\b" app/` — list every `Any` usage. **Acceptable:** function parameters receiving arbitrary JSON (`dict[str, Any]`), OTEL callback signatures imposed by framework, `**kwargs` forwarding. **Not acceptable:** lazy typing to avoid figuring out the real type, wrapper functions that hide type information (e.g., `send_fn: Any` instead of `Callable[[str, bytes, str], None]`). Each `Any` must be justified in the report. |
+| No `# type: ignore` | `grep -rn "# type: ignore" app/` — must be zero. |
+| No suppression comments | `grep -rn "# pylint: disable\|# noqa" app/` — must be zero. Each found must have documented justification. |
 | Run mypy before every commit | Verified by CI pipeline (`mypy` job) and `hooks/pre-commit`. Confirm both exist and run mypy. |
 
 #### Error Handling and Security
@@ -386,21 +386,21 @@ For audit tables (external module call sites, Any usage), use a dedicated table 
 | Standard | How to Verify |
 |----------|---------------|
 | Handle errors at boundaries | Code review — verify `try/except` blocks are at API route handlers, middleware, and external call sites — not deep inside business logic. Error messages must answer: what happened, what was expected, what to do. |
-| Distinguish retryable from fatal errors | Code review — verify external call failures (DB, Kafka) are categorized. Check for retry logic with backoff on transient errors. `grep -rn "retry\|backoff\|Retry" src/` to find retry patterns. |
-| Never commit secrets | `grep -ri "password\|secret\|token\|api_key\|private_key" src/ --include="*.py"` — must show only `os.environ` / `os.getenv` references, never hardcoded values. `grep -ri "password\|secret\|token" .env* --include="*.example"` — `.env.example` must have placeholder values only. |
-| Validate all external input | Verify API endpoints validate: JSON schema, required fields, type coercion, length limits. `grep -rn "jsonschema\|validate\|ValidationError\|Depends(" src/` — confirm validation at every route boundary. |
+| Distinguish retryable from fatal errors | Code review — verify external call failures (DB, Kafka) are categorized. Check for retry logic with backoff on transient errors. `grep -rn "retry\|backoff\|Retry" app/` to find retry patterns. |
+| Never commit secrets | `grep -ri "password\|secret\|token\|api_key\|private_key" app/ --include="*.py"` — must show only `os.environ` / `os.getenv` references, never hardcoded values. `grep -ri "password\|secret\|token" .env* --include="*.example"` — `.env.example` must have placeholder values only. |
+| Validate all external input | Verify API endpoints validate: JSON schema, required fields, type coercion, length limits. `grep -rn "jsonschema\|validate\|ValidationError\|Depends(" app/` — confirm validation at every route boundary. |
 | Least privilege | Code review — DB users should have minimum required permissions. API keys scoped to specific services. IAM roles use least-privilege policies. |
-| Always specify encoding with open() | `grep -rn "open(" src/ --include="*.py"` — every `open()` call must include `encoding="utf-8"` (or appropriate encoding). Flag any without. |
-| Set timeouts on every external call | `grep -rn "requests\.\|httpx\.\|urlopen\|aiohttp" src/` — every HTTP client call must have `timeout=` parameter. `grep -rn "connect\|create_engine\|psycopg" src/` — DB connections must have `connect_timeout`. |
+| Always specify encoding with open() | `grep -rn "open(" app/ --include="*.py"` — every `open()` call must include `encoding="utf-8"` (or appropriate encoding). Flag any without. |
+| Set timeouts on every external call | `grep -rn "requests\.\|httpx\.\|urlopen\|aiohttp" app/` — every HTTP client call must have `timeout=` parameter. `grep -rn "connect\|create_engine\|psycopg" app/` — DB connections must have `connect_timeout`. |
 | Measure before optimize | Code review — no premature optimizations. Flag any caching, denormalization, or complexity added without a measured performance justification. |
 
 #### Standing Orders
 
 | Standard | How to Verify |
 |----------|---------------|
-| Remove DP2.5 / Stackdriver | `grep -ri "dp2.5\|stackdriver\|stack_driver\|google.cloud.monitoring\|google.cloud.logging" src/` — must be zero. |
+| Remove DP2.5 / Stackdriver | `grep -ri "dp2.5\|stackdriver\|stack_driver\|google.cloud.monitoring\|google.cloud.logging" app/` — must be zero. |
 | No SRE Agent for library repos | N/A for deployable services. For library repos: verify no `sre-agent/` directory exists. |
-| DAPR sidecar only | `grep -ri "dapr\|from dapr\|import dapr" src/ --include="*.py"` — must be zero (no DAPR client SDK). DAPR components documented in `components/` YAML only. |
+| DAPR sidecar only | `grep -ri "dapr\|from dapr\|import dapr" app/ --include="*.py"` — must be zero (no DAPR client SDK). DAPR components documented in `components/` YAML only. |
 
 Include the results of this audit in the `TEST_RESULTS.md` under a **"Coding Practices — Mechanical Audit"** heading within the template conformance section. Every row in these tables must have a result in the report showing the exact command and its output. A report that omits command output or uses hand-wavy summaries like "confirmed by X" is incomplete and must be rejected.
 
