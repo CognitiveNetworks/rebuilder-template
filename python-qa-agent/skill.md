@@ -278,7 +278,25 @@ When verifying a rebuilt service, check these categories:
 
 ### Coding Standards Verification
 
-Walk **every item** in the Coding Practices section of `developer-agent/skill.md` (including Standing Orders). These are non-negotiable standards. For each item, run the specified verification command and report violations with justifications. Every item in this table maps 1:1 to a rule in `developer-agent/skill.md`.
+Walk **every item** in the Coding Practices section of `developer-agent/skill.md` (including Standing Orders). These are non-negotiable standards. Every item in this table maps 1:1 to a rule in `developer-agent/skill.md`.
+
+**Report format requirement:** For every check that has a `grep`, `mypy`, `vulture`, `complexipy`, `interrogate`, `pip-audit`, `pylint`, `python -c`, or other command, the `TEST_RESULTS.md` report **must** include:
+
+1. The **exact command** that was run (copy-pastable).
+2. The **actual output** (or `0 matches` / `(no output)` if empty).
+3. A **PASS / FAIL / JUSTIFIED** verdict with evidence.
+
+Do not write `confirmed by mypy 0 errors` or `verified per file` without showing the command and output. Do not mark a check `[x]` without the mechanical evidence. "Code review" items still require a written finding (what was reviewed, what was found or not found) — not just a bare checkmark.
+
+Use a numbered table format per category:
+
+```
+| # | Standard | Command | Result |
+|---|----------|---------|--------|
+| 1 | Fail fast — no bare except-pass | `grep -rn "except.*pass$" src/` — 0 matches | ✅ PASS |
+```
+
+For audit tables (external module call sites, Any usage), use a dedicated table with one row per finding.
 
 #### Code Clarity and Design
 
@@ -296,7 +314,7 @@ Walk **every item** in the Coding Practices section of `developer-agent/skill.md
 | Standard | How to Verify |
 |----------|---------------|
 | All imports top-level | `grep -rn "^    import \|^        import \|^    from " src/app/*.py` — flag all inline imports. Each must have documented justification (lazy external module loading). |
-| PEP 8 import ordering | For each `.py` file in `src/app/`, verify imports are grouped: (1) stdlib, (2) third-party, (3) local, separated by blank lines. `isort --check-only --diff src/` or manual inspection. |
+| PEP 8 import ordering | pylint checks import ordering (C0411). Verify pylint 10.00/10 passes. Additionally: for each `.py` file in `src/app/`, verify imports are grouped: (1) stdlib, (2) third-party, (3) local, separated by blank lines. |
 | No circular imports | `python -c "import src.app; print('OK')"` — must succeed without `ImportError`. For each module: `python -c "from src.app.<module> import *; print('OK')"`. Any `ImportError: cannot import name` indicates a cycle. Also: `grep -rn "# avoid circular" src/` — flag any workaround comments. |
 | Pin dependency versions | `grep -c "==" requirements.txt` — every line must have `==` pinning. `grep -v "==" requirements.txt \| grep -v "^#\|^$\|^-"` — must be empty (no unpinned deps). |
 | Audit and remove unused deps | `pip-audit` — zero critical/high CVEs in runtime deps. Manual review: every package in `requirements.txt` must have at least one import in `src/`. |
@@ -315,12 +333,12 @@ Walk **every item** in the Coding Practices section of `developer-agent/skill.md
 
 | Standard | How to Verify |
 |----------|---------------|
-| Match expected types exactly | `mypy src/app/ --ignore-missing-imports` — must report 0 errors. This confirms no type mismatches at call sites. |
-| Verify argument types against signatures | Covered by mypy. Additionally: spot-check external module calls (kafka_module, rds_module) — verify `.encode("utf-8")` where `bytes` is expected, correct types for DB params. |
-| External module type hints | `grep -rn "kafka_module\|rds_module" src/` — for each call, verify the argument types match the module's type hints or docstrings. |
+| Match expected types exactly | `mypy src/app/ tests/ --ignore-missing-imports` — must report 0 errors. mypy alone is necessary but not sufficient — it cannot see types across `sys.modules` mock boundaries. Proceed to external module audit below. |
+| Verify argument types against signatures (external module audit) | **Mechanical audit required.** (1) `grep -rn "from kafka_module\|from rds_module" src/` to list every import site. (2) For each call site, read the function signature from the actual module source (e.g., `kafka_module/producer.py`, `rds_module/client.py`). (3) Document each call in a table: `Call Site \| Function \| Expected Type \| Actual Type \| Match?`. (4) Verify `.encode("utf-8")` where `bytes` is expected, `str` literals where `str` is expected, correct tuple types for DB params. Every call site must be listed — not spot-checked. |
+| External module type hints | For each external module dependency listed in `config.md`, read its source and document the public API signatures. Verify: (1) `grep -rn "kafka_module\|rds_module" src/` — list every call. (2) Each call's argument types match the module's type hints. (3) No bare `str` passed where `bytes` is expected. (4) No `Any`-typed wrapper functions hiding type mismatches (e.g., `send_fn: Any` should be `Callable[[str, bytes, str], None]`). |
 | No impossible equality checks | `mypy` with `--strict-equality` or review mypy output for `comparison-overlap` errors. `grep -rn "== None\|!= None" src/` — must use `is None` / `is not None` instead. |
 | Match framework function signatures | Verify `lifespan` signature matches `Callable[[FastAPI], AsyncContextManager]`. Verify middleware signatures. `grep -rn "def lifespan\|def .*middleware" src/` and check signatures. |
-| Generic types parameterized | `grep -rn ": dict\b\|: list\b\|-> dict\b\|-> list\b\|: Dict\b\|: List\b" src/` — must be zero bare `dict`/`list` in annotations. All must use `dict[str, Any]`, `list[str]`, etc. `grep -rn ": Any\b" src/` — flag each `Any` usage; must have justification. |
+| Generic types parameterized, avoid Any | `grep -rn ": dict\b\|: list\b\|-> dict\b\|-> list\b\|: Dict\b\|: List\b" src/` — must be zero bare `dict`/`list` in annotations. All must use `dict[str, Any]`, `list[str]`, etc. `grep -rn ": Any\b\|-> Any\b" src/` — list every `Any` usage. **Acceptable:** function parameters receiving arbitrary JSON (`dict[str, Any]`), OTEL callback signatures imposed by framework, `**kwargs` forwarding. **Not acceptable:** lazy typing to avoid figuring out the real type, wrapper functions that hide type information (e.g., `send_fn: Any` instead of `Callable[[str, bytes, str], None]`). Each `Any` must be justified in the report. |
 | No `# type: ignore` | `grep -rn "# type: ignore" src/` — must be zero. |
 | No suppression comments | `grep -rn "# pylint: disable\|# noqa" src/` — must be zero. Each found must have documented justification. |
 | Run mypy before every commit | Verified by CI pipeline (`mypy` job) and `hooks/pre-commit`. Confirm both exist and run mypy. |
@@ -346,7 +364,7 @@ Walk **every item** in the Coding Practices section of `developer-agent/skill.md
 | No SRE Agent for library repos | N/A for deployable services. For library repos: verify no `sre-agent/` directory exists. |
 | DAPR sidecar only | `grep -ri "dapr\|from dapr\|import dapr" src/ --include="*.py"` — must be zero (no DAPR client SDK). DAPR components documented in `components/` YAML only. |
 
-Include the results of this audit in the `TEST_RESULTS.md` under a **"Coding Practices"** heading within the template conformance section. Every row in these tables must have a result in the report.
+Include the results of this audit in the `TEST_RESULTS.md` under a **"Coding Practices — Mechanical Audit"** heading within the template conformance section. Every row in these tables must have a result in the report showing the exact command and its output. A report that omits command output or uses hand-wavy summaries like "confirmed by X" is incomplete and must be rejected.
 
 ### Template Conformance
 
