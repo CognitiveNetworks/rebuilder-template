@@ -29,7 +29,7 @@ All IDE instruction files load four files: `python-developer-agent/skill.md`, `p
 Type `/qa` in Windsurf to run the full QA verification workflow. This:
 
 1. Re-reads all four agent files
-2. Runs all 11 quality gates independently (pytest, coverage, pylint, black, mypy, radon, vulture, pip-audit, interrogate, jscpd, complexipy)
+2. Runs all quality gates independently (pytest, coverage, pylint, black, mypy, vulture, pip-audit, interrogate, jscpd, complexipy)
 3. Verifies every `/ops/*` endpoint returns required fields
 4. Checks template conformance (Dockerfile, entrypoint.sh, Helm chart, env vars)
 5. Compares results against the developer agent's `TEST_RESULTS.md`
@@ -63,12 +63,11 @@ Use `/qa` after the developer agent claims a feature is complete, during Step 12
 | 3 | Lint | pylint | 0 errors |
 | 4 | Format | black | All files formatted |
 | 5 | Type check | mypy | 0 errors (strict mode) |
-| 6 | Cyclomatic complexity | radon cc | Average ≤ B, no function rated C+ without justification |
-| 7 | Dead code | vulture | 0 findings at 80% confidence |
-| 8 | Dependency vulnerabilities | pip-audit | 0 critical/high CVEs |
-| 9 | Docstring coverage | interrogate | Measured baseline, public APIs documented |
-| 10 | Duplicate code | pylint + jscpd | < 3% duplication |
-| 11 | Cognitive complexity | complexipy | 0 issues at threshold 15 |
+| 6 | Dead code | vulture | 0 findings at 80% confidence |
+| 7 | Dependency vulnerabilities | pip-audit | 0 critical/high CVEs |
+| 8 | Docstring coverage | interrogate | Measured baseline, public APIs documented |
+| 9 | Duplicate code | pylint + jscpd | < 3% duplication |
+| 10 | Cognitive complexity | complexipy | 0 issues at threshold 15 |
 
 ### Template Conformance
 

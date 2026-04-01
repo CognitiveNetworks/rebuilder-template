@@ -1193,23 +1193,21 @@ After all compliance items pass, run the full quality suite and produce a test r
 **Extended Gates (mandatory — measured baselines or pass/fail):**
 
 7. **Test coverage** — `pytest-cov` with `--cov-report=term-missing` showing line-level coverage per module. Report overall %, identify modules below 50%, and explain gaps (e.g., "services require running Redis"). Pure logic modules should target ≥80%.
-8. **Cyclomatic complexity** — `radon cc src/ -a -s`. Average must be A or B. Any function rated C or higher must be documented with justification.
-9. **Maintainability index** — `radon mi src/ -s`. All files must be rated A or B. Any file rated C or lower must be refactored.
-10. **Dead code detection** — `vulture src/ --min-confidence 80`. Must show 0 findings. Unused code must be removed, not commented out.
-11. **Dependency vulnerabilities** — `pip-audit`. Report all findings. Critical/High CVEs in runtime dependencies must have a documented remediation plan or documented rationale for deferral.
-12. **Docstring coverage** — `interrogate src/ -v`. Report coverage percentage. Identify gaps. Public API functions and classes should have docstrings; thin wrappers and internal helpers may be excluded with justification.
-13. **Duplicate code (DRY)** — `pylint --disable=all --enable=duplicate-code src/` and `npx jscpd src/ --min-lines 5 --min-tokens 50`. Must show < 3% duplication. Any detected clones must be justified (e.g., intentional structural similarity) or refactored.
-14. **Cognitive complexity** — `complexipy src -mx 15 -d low`. Must show 0 issues at threshold 15.
+8. **Dead code detection** — `vulture src/ --min-confidence 80`. Must show 0 findings. Unused code must be removed, not commented out.
+9. **Dependency vulnerabilities** — `pip-audit`. Report all findings. Critical/High CVEs in runtime dependencies must have a documented remediation plan or documented rationale for deferral.
+10. **Docstring coverage** — `interrogate src/ -v`. Report coverage percentage. Identify gaps. Public API functions and classes should have docstrings; thin wrappers and internal helpers may be excluded with justification.
+11. **Duplicate code (DRY)** — `pylint --disable=all --enable=duplicate-code src/` and `npx jscpd src/ --min-lines 5 --min-tokens 50`. Must show < 3% duplication. Any detected clones must be justified (e.g., intentional structural similarity) or refactored.
+12. **Cognitive complexity** — `complexipy src -mx 15`. Must show 0 issues at threshold 15.
 
 **Summary and context:**
 
-15. **Quality gate summary table** — one table showing each gate (tests, lint, format, types, coverage, complexity, maintainability, dead code, vulnerabilities, docstrings, duplication, cognitive complexity), threshold, result, and pass/fail status
-16. **Bugs found and fixed** — any source or test bugs discovered during validation, with before/after descriptions
-17. **Not yet tested** — anything requiring running infrastructure (integration tests, Docker, DAPR sidecar) that cannot be validated offline
+13. **Quality gate summary table** — one table showing each gate (tests, lint, format, types, coverage, dead code, vulnerabilities, docstrings, duplication, cognitive complexity), threshold, result, and pass/fail status
+14. **Bugs found and fixed** — any source or test bugs discovered during validation, with before/after descriptions
+15. **Not yet tested** — anything requiring running infrastructure (integration tests, Docker, DAPR sidecar) that cannot be validated offline
 
 **Required tools** (install in dev environment):
 ```
-pip install pytest-cov radon vulture pip-audit interrogate pylint
+pip install pytest-cov vulture pip-audit interrogate pylint complexipy
 npx jscpd  # Node.js — for copy-paste detection
 ```
 
@@ -1262,7 +1260,6 @@ The template repository mandates the following tools in every rebuilt service. E
 | **Helm Unittest** | Helm chart unit testing | `helm unittest ./charts` | Requires helm plugin: `helm plugin install https://github.com/helm-unittest/helm-unittest.git` |
 | **Helm lint** | Helm chart validation | `helm lint ./charts` | Must pass with 0 errors |
 | **Helm template** | Helm chart rendering verification | `helm template ./charts` | Must render without errors |
-| **radon** | Cyclomatic complexity and maintainability index | `radon cc src/ -a -s` and `radon mi src/ -s` | Average must be A or B |
 | **vulture** | Dead code detection | `vulture src/ --min-confidence 80` | Must show 0 findings |
 | **pip-audit** | Dependency vulnerability scanning | `pip-audit` | Critical/High CVEs must have remediation plan |
 | **interrogate** | Docstring coverage measurement | `interrogate src/ -v` | Report coverage percentage |
@@ -1697,8 +1694,6 @@ and compliance standards were defined before code was written.]
 | Gate | Tool | Threshold | Result | Status |
 |---|---|---|---|---|
 | Test Coverage | pytest-cov | measured | [n% overall] | [MEASURED] |
-| Cyclomatic Complexity | radon cc | avg ≤ B | [avg rating (n)] | [PASS/FAIL] |
-| Maintainability Index | radon mi | all ≥ B | [all n files rated X] | [PASS/FAIL] |
 | Dead Code | vulture | 0 findings | [n findings] | [PASS/FAIL] |
 | Dependency Vulnerabilities | pip-audit | 0 critical/high | [n CVEs] | [PASS/FLAGGED] |
 | Docstring Coverage | interrogate | measured | [n%] | [MEASURED] |

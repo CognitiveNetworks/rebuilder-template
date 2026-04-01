@@ -4,11 +4,11 @@
 
 ## Project
 
-- **Project Name:** [TODO: e.g., evergreen-tvevents]
-- **Repository:** [TODO: e.g., CognitiveNetworks/evergreen-tvevents]
+- **Project Name:** rebuilder-evergreen-tvevents
+- **Repository:** CognitiveNetworks/rebuilder-evergreen-tvevents
 - **Primary Language:** Python 3.12
-- **Framework:** FastAPI ≥ 0.115.0
-- **Original Legacy Repo:** [TODO: e.g., CognitiveNetworks/tvevents-k8s]
+- **Framework:** FastAPI (latest)
+- **Original Legacy Repo:** CognitiveNetworks/evergreen-tvevents (tvevents-k8s)
 
 ## Test Commands
 
@@ -25,7 +25,7 @@
 | `pip-audit` | Dependency vulnerability scan |
 | `interrogate src/ -v` | Docstring coverage |
 | `pylint --disable=all --enable=duplicate-code src/` | Duplicate code check |
-| `complexipy src -mx 15 -d low` | Cognitive complexity |
+| `complexipy src -mx 15` | Cognitive complexity |
 | `helm lint charts/` | Helm chart lint |
 | `tests/test-helm-template.sh -all` | Helm template rendering |
 
@@ -38,6 +38,8 @@
 | Lint errors | 0 | Merge |
 | Format violations | 0 | Merge |
 | Type errors | 0 | Merge |
+| Cyclomatic complexity | Average A or B, no function ≥ C | Release |
+| Maintainability index | All files A or B | Release |
 | Dead code | 0 findings | Release |
 | Runtime CVEs | 0 | Release |
 | Docstring coverage | ≥ 80% | Release |
@@ -91,14 +93,25 @@
 | `OTEL_SDK_DISABLED` | `true` | Disables all OTEL in tests |
 | `ENV` | `dev` | |
 | `LOG_LEVEL` | `DEBUG` | |
-| `SERVICE_NAME` | `[TODO: service name]` | |
+| `SERVICE_NAME` | `tvevents-api` | |
 | `TEST_CONTAINER` | `true` | Triggers OTEL disable in env-check |
 
 > Add app-specific variables below:
 
 | Variable | Test Default | Notes |
 |---|---|---|
-| [TODO] | [TODO] | [TODO: describe] |
+| `T1_SALT` | `test-salt-value` | HMAC security hash validation |
+| `DB_HOST` | `localhost` | RDS host (mocked in unit tests) |
+| `DB_NAME` | `tvevents` | RDS database name |
+| `DB_USER` | `tvevents` | RDS user |
+| `DB_PASSWORD` | `testpass` | RDS password |
+| `DB_PORT` | `5432` | RDS port |
+| `KAFKA_BROKERS` | `localhost:9092` | Kafka brokers (mocked in unit tests) |
+| `BLACKLIST_CHANNEL_IDS_CACHE_FILEPATH` | `/tmp/.test_blacklisted_channel_ids_cache` | Blacklist file cache path |
+| `FLASK_ENV` | `dev` | Legacy env name (used in output JSON as zoo) |
+| `SEND_EVERGREEN` | `true` | Enable evergreen Kafka topic |
+| `SEND_LEGACY` | `false` | Disable legacy Kafka topic |
+| `TVEVENTS_DEBUG` | `false` | Debug mode for extra Kafka topics |
 
 ## Acceptance Criteria — App-Specific
 
@@ -121,7 +134,7 @@
 | POST | `/ops/cache/flush` | 200 or 500 | Flush and refresh cache |
 | POST | `/ops/cache/refresh` | 200 | Refresh cache from source |
 | POST | `/ops/circuits` | 200 | Circuit breaker state |
-| [TODO] | [TODO] | [TODO] | [TODO: app-specific endpoints] |
+| POST | `/` | 200 (body: `OK`) or 400 | Main TV event ingestion — requires tvid, event_type query params + JSON body |
 
 ### Event Types to Verify
 
@@ -129,7 +142,9 @@
 
 | Event Type | Class | Validation | Output |
 |---|---|---|---|
-| [TODO] | [TODO] | [TODO: describe validation rules] | [TODO: describe output shape] |
+| `NATIVEAPP_TELEMETRY` | `NativeAppTelemetryEventType` | Requires `Timestamp` in EventData; timestamp validation | Flattened EventData with `eventdata_timestamp` field added |
+| `ACR_TUNER_DATA` | `AcrTunerDataEventType` | Requires `channelData` or `programData` (or Heartbeat); validates majorId/minorId for channelData | Flattened EventData; `programdata_starttime` converted to ms; Heartbeat marked with `eventtype: Heartbeat` |
+| `PLATFORM_TELEMETRY` | `PlatformTelemetryEventType` | JSON Schema: PanelData with Timestamp (number), PanelState (ON/OFF), WakeupReason (0-128) | Flattened EventData; PanelState normalized to uppercase |
 
 ### Environment Variable Mapping (Original → Rebuilt)
 
@@ -137,7 +152,20 @@
 
 | Original | Rebuilt | Notes |
 |---|---|---|
-| [TODO] | [TODO] | [TODO: e.g., RDS_HOST → DB_HOST] |
+| `RDS_HOST` | `DB_HOST` | Database hostname |
+| `RDS_DB` | `DB_NAME` | Database name |
+| `RDS_USER` | `DB_USER` | Database username |
+| `RDS_PASS` | `DB_PASSWORD` | Database password |
+| `RDS_PORT` | `DB_PORT` | Database port |
+| `EVERGREEN_FIREHOSE_NAME` | `KAFKA_TOPIC_EVERGREEN` | Primary event topic (Firehose → Kafka) |
+| `LEGACY_FIREHOSE_NAME` | `KAFKA_TOPIC_LEGACY` | Legacy event topic (Firehose → Kafka) |
+| `DEBUG_EVERGREEN_FIREHOSE_NAME` | `KAFKA_TOPIC_DEBUG_EVERGREEN` | Debug event topic |
+| `DEBUG_LEGACY_FIREHOSE_NAME` | `KAFKA_TOPIC_DEBUG_LEGACY` | Debug legacy topic |
+| `ACR_DATA_MSK_USERNAME` | `KAFKA_SASL_USERNAME` | Kafka SASL auth username |
+| `ACR_DATA_MSK_PASSWORD` | `KAFKA_SASL_PASSWORD` | Kafka SASL auth password |
+| `FLASK_ENV` | `ENV` | Environment name (also used as `zoo` in output) |
+| `FLASK_APP` | N/A | Removed — FastAPI does not use FLASK_APP |
+| `OTEL_PYTHON_AUTO_INSTRUMENTATION_ENABLED` | N/A | Replaced by `opentelemetry-instrument` in entrypoint |
 
 ## Comparison Checklist
 

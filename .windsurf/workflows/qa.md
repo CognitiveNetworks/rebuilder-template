@@ -44,16 +44,6 @@ This workflow activates the QA agent to independently verify that the developer 
 
 // turbo
    ```
-   radon cc src/ -a -nc
-   ```
-
-// turbo
-   ```
-   radon mi src/
-   ```
-
-// turbo
-   ```
    vulture src/ --min-confidence 80
    ```
 

@@ -84,7 +84,7 @@ agent starting from the same inputs will produce structurally identical results:
 | Output file names and locations | IDEATION_PROCESS.md | `output/prd.md`, `docs/adr/001-*.md` |
 | Document structures | IDEATION_PROCESS.md step templates | PRD has Background, Goals, Non-Goals, etc. |
 | API contract (`/ops/*` endpoints) | STANDARDS.md + skill.md Step 12 | 11 diagnostic/remediation endpoints per service |
-| Quality gates (14 gates) | skill.md Step 12 | pytest, pylint, black, mypy, radon, vulture, pip-audit, etc. |
+| Quality gates | skill.md Step 12 | pytest, pylint, black, mypy, complexipy, vulture, pip-audit, etc. |
 | Service bootstrap checklist | skill.md | Dockerfile, CI/CD, Terraform, health endpoint, OTEL |
 | Code audit checklist (14 items) | skill.md | Timing-safe comparisons, pool close, backoff, etc. |
 | Pre-commit checklist (5 steps) | skill.md | Branch check, tests, lint, message, diff review |

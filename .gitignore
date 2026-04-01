@@ -36,5 +36,8 @@ htmlcov/
 
 # Rebuild inputs — cloned repos excluded (embedded git repos)
 rebuild-inputs/*/repo/
+rebuild-inputs/*/repo
+rebuild-inputs/*/template/
+rebuild-inputs/*/template
 rebuild-inputs/*/adjacent/
 sre-agent/runtime/terraform/deploy.auto.tfvars

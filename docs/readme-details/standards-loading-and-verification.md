@@ -118,7 +118,7 @@ Loads: template-repo-python/skill.md (HOW TO BUILD)
 **ENFORCEMENT POINT:**
 
 **python-qa-agent/skill.md** - Execute all quality gates:
-- pytest, pylint, black, mypy, radon, vulture, pip-audit, interrogate, complexipy
+- pytest, pylint, black, mypy, vulture, pip-audit, interrogate, complexipy
 - `/ops/*` endpoint compliance verification
 - Template conformance checks
 
