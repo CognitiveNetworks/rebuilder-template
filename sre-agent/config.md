@@ -119,10 +119,17 @@
 
 | Variable | Source | Description |
 |---|---|---|
-| `LLM_API_KEY` | Secrets manager | LLM API key (GitHub PAT for GitHub Models, OpenAI key, etc.). **Not needed for Vertex AI** — uses ADC. |
-| `PAGERDUTY_API_TOKEN` | Secrets manager | PagerDuty API token for creating incidents on escalation |
 | `OPS_AUTH_TOKEN` | Secrets manager | Bearer token the agent uses to authenticate against `/ops/*` endpoints |
 | `SERVICE_REGISTRY` | Config / env | Comma-separated service list: `name\|url\|critical` (e.g., `api\|https://api.example.com\|true`) |
+
+### Soft-Required Environment Variables (graceful degradation)
+
+These variables enable key capabilities. If missing, the container starts in **degraded mode** — health checks pass, but the affected capability is unavailable. See `skill.md` → Graceful Degradation.
+
+| Variable | Source | If Missing | Description |
+|---|---|---|---|
+| `LLM_API_KEY` | Secrets manager | Agentic loop unavailable | LLM API key (GitHub PAT, OpenAI key, etc.). **Not needed for Vertex AI** — uses ADC. |
+| `PAGERDUTY_API_TOKEN` | Secrets manager | Escalation unavailable | PagerDuty API token for creating incidents on escalation |
 
 ### Optional Environment Variables
 

@@ -158,31 +158,33 @@ async def health() -> dict[str, Any]:
         checks["system_prompt"] = f"missing or empty: {config.sre_prompt_path}"
         healthy = False
 
-    # Verify required config is present
-    if config.vertex_ai:
-        checks["llm_provider"] = "vertex_ai (ADC)"
-    elif config.llm_api_key:
-        checks["llm_provider"] = "api_key configured"
-    else:
-        checks["llm_provider"] = "missing"
-        healthy = False
+    # LLM provider status — degraded is not unhealthy.
+    # The container is healthy (can receive webhooks, serve /ops/*) even
+    # when the LLM is unavailable. Degraded LLM is reported in the
+    # response body but does NOT cause a 503.
+    if config.llm_available:
+        if config.vertex_ai:
+            checks["llm_provider"] = "vertex_ai (ADC)"
+        elif config.llm_api_key:
+            checks["llm_provider"] = "api_key configured"
+        else:
+            checks["llm_provider"] = "degraded — no key"
 
-    # LLM reachability — the agent is useless without its LLM
-    try:
-        llm_ok = await _check_llm_reachable()
-        checks["llm_api"] = "ok" if llm_ok else "unreachable"
-        if not llm_ok:
-            healthy = False
-    except Exception as e:
-        checks["llm_api"] = f"error: {e}"
-        healthy = False
+        # LLM reachability — only check if credentials are present
+        try:
+            llm_ok = await _check_llm_reachable()
+            checks["llm_api"] = "ok" if llm_ok else "unreachable"
+        except Exception as e:
+            checks["llm_api"] = f"error: {e}"
+    else:
+        checks["llm_provider"] = f"degraded — {config.llm_unavailable_reason}"
+        checks["llm_api"] = "skipped (no credentials)"
 
     pd_key = "pagerduty_api_token"
     if config.pagerduty_api_token:
         checks[pd_key] = "configured"
     else:
-        checks[pd_key] = "missing"
-        healthy = False
+        checks[pd_key] = "not configured (degraded)"
 
     if config.services:
         checks["service_registry"] = f"{len(config.services)} services"

@@ -54,20 +54,44 @@ class Config:
         # Detect Vertex AI from base URL — uses ADC instead of an API key
         self.vertex_ai: bool = "aiplatform.googleapis.com" in self.llm_api_base_url
 
+        # LLM availability — degrades gracefully if auth fails.
+        # The container stays running (health checks, /ops/* monitoring) but
+        # the agentic diagnostic loop is unavailable until credentials are
+        # provided. This allows deployment to environments where the LLM
+        # provider is not yet configured (e.g., deploying a GCP Vertex AI
+        # config to AWS before switching to Bedrock/OpenAI).
+        self.llm_available: bool = True
+        self.llm_unavailable_reason: str = ""
+
         if self.vertex_ai:
             # On Cloud Run, ADC is provided by the service account automatically.
             # LLM_API_KEY is ignored — we fetch a fresh token per agent run.
             self.llm_api_key: str = self._get_vertex_ai_token()
-            logger.info(
-                "Vertex AI mode: model=%s base_url=%s",
-                self.llm_model,
-                self.llm_api_base_url,
-            )
+            if self.llm_available:
+                logger.info(
+                    "Vertex AI mode: model=%s base_url=%s",
+                    self.llm_model,
+                    self.llm_api_base_url,
+                )
         else:
-            self.llm_api_key = _require("LLM_API_KEY")
+            self.llm_api_key = os.environ.get("LLM_API_KEY", "")
+            if not self.llm_api_key:
+                self.llm_available = False
+                self.llm_unavailable_reason = (
+                    "LLM_API_KEY is not set. The agent will start in "
+                    "degraded mode — health checks and /ops/* monitoring "
+                    "work, but the agentic diagnostic loop is unavailable."
+                )
+                logger.warning(self.llm_unavailable_reason)
 
-        # PagerDuty
-        self.pagerduty_api_token: str = _require("PAGERDUTY_API_TOKEN")
+        # PagerDuty — optional, degrades gracefully
+        self.pagerduty_api_token: str = os.environ.get("PAGERDUTY_API_TOKEN", "")
+        if not self.pagerduty_api_token:
+            logger.warning(
+                "PAGERDUTY_API_TOKEN is not set. PagerDuty integration "
+                "is disabled — webhooks will be accepted but escalation "
+                "and acknowledgement are unavailable."
+            )
         self.pagerduty_escalation_policy_id: str = os.environ.get(
             "PAGERDUTY_ESCALATION_POLICY_ID", ""
         )
@@ -177,6 +201,9 @@ class Config:
         On Cloud Run, the service account's token is provided by the
         metadata server. Locally, uses gcloud ADC. Tokens expire after
         ~1 hour — call refresh_llm_token() before each agent run.
+
+        On failure, sets llm_available=False and returns an empty string
+        so the container can start in degraded mode.
         """
         try:
             import google.auth
@@ -186,19 +213,31 @@ class Config:
                 scopes=["https://www.googleapis.com/auth/cloud-platform"]
             )
             credentials.refresh(google.auth.transport.requests.Request())
+            # Restore availability if a previous attempt failed
+            if not self.llm_available and not self.llm_unavailable_reason.startswith("LLM_API_KEY"):
+                self.llm_available = True
+                self.llm_unavailable_reason = ""
+                logger.info("Vertex AI credentials restored — LLM is now available.")
             return credentials.token
         except Exception as exc:
-            raise ValueError(
-                "Vertex AI mode requires Application Default Credentials. "
-                "On Cloud Run this is automatic. Locally, run: "
-                "gcloud auth application-default login"
-            ) from exc
+            self.llm_available = False
+            self.llm_unavailable_reason = (
+                f"Vertex AI ADC authentication failed: {exc}. "
+                f"The agent will start in degraded mode — health checks "
+                f"and /ops/* monitoring work, but the agentic diagnostic "
+                f"loop is unavailable. On Cloud Run this is automatic. "
+                f"Locally, run: gcloud auth application-default login"
+            )
+            logger.warning(self.llm_unavailable_reason)
+            return ""
 
     def refresh_llm_token(self) -> str:
         """Refresh the LLM API token if using Vertex AI (ADC tokens expire).
 
         Call this before each agent run. For non-Vertex providers, this
-        is a no-op and returns the existing key.
+        is a no-op and returns the existing key. On failure, logs a
+        warning and sets llm_available=False — the caller must check
+        llm_available before proceeding.
         """
         if self.vertex_ai:
             self.llm_api_key = self._get_vertex_ai_token()

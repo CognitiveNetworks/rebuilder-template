@@ -103,9 +103,46 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 | # | Gate | Tool | Threshold | Command |
 |---|------|------|-----------|---------|
 | 16 | Container build | docker build | Exit 0 | `docker build -t {service}:ci .` |
-| 17 | Container smoke test | curl | `/status` returns `OK` | `docker run -d -p 8000:8000 -e TEST_CONTAINER=true -e ENV=dev -e AWS_REGION=us-east-1 -e SERVICE_NAME=local-testing -e LOG_LEVEL=DEBUG -e OTEL_PYTHON_AUTO_INSTRUMENTATION_ENABLED=false --name {service}-ci {service}:ci && sleep 10 && curl --silent --fail http://localhost:8000/status` |
+| 17 | Container isolation smoke test | curl | `/status` returns `OK` | `docker run -d -p 8000:8000 -e TEST_CONTAINER=true -e ENV=dev -e AWS_REGION=us-east-1 -e SERVICE_NAME=local-testing -e LOG_LEVEL=DEBUG -e OTEL_PYTHON_AUTO_INSTRUMENTATION_ENABLED=false --name {service}-ci {service}:ci && sleep 10 && curl --silent --fail http://localhost:8000/status` |
+| 18 | Docker Compose full-stack smoke test | docker compose + curl | `/status`, `/health`, `/ops/status` all return 200 | See procedure below |
 
-**TEST_CONTAINER mode**: The application must support a `TEST_CONTAINER` environment variable. When `true`, the app skips external dependency connections (RDS, Kafka, etc.) at startup so the container can start in isolation for smoke testing. The `/status` endpoint must return `OK` unconditionally. The `/health` endpoint should report dependencies as `skipped` rather than erroring.
+**TEST_CONTAINER mode** (gate 17): The application must support a `TEST_CONTAINER` environment variable. When `true`, the app skips external dependency connections (RDS, Kafka, etc.) at startup so the container can start in isolation for smoke testing. The `/status` endpoint must return `OK` unconditionally. The `/health` endpoint should report dependencies as `skipped` rather than erroring.
+
+**Docker Compose full-stack test** (gate 18): When a `docker-compose.yml` exists, the QA agent must build and start the full stack with real dependencies (Postgres, Kafka, etc.) and validate that the application connects, starts, and serves traffic. This tests what gate 17 cannot — real dependency wiring, environment-check.sh correctness, and entrypoint.sh behavior under non-TEST_CONTAINER conditions.
+
+**Procedure for gate 18:**
+
+```bash
+# 1. Build and start the full stack (detached)
+docker compose up --build -d
+
+# 2. Wait for the app container to become healthy (up to 90s)
+#    The app's HEALTHCHECK polls /status — wait for it to pass.
+timeout 90 bash -c 'until docker compose ps app | grep -q "(healthy)"; do sleep 5; done'
+
+# 3. Smoke test — hit key endpoints via localhost
+curl --silent --fail http://localhost:8000/status          # Must return "OK"
+curl --silent --fail http://localhost:8000/health           # Must return 200 with dependency statuses
+curl --silent --fail http://localhost:8000/ops/status       # Must return 200 with composite health
+curl --silent --fail http://localhost:8000/ops/health       # Must return 200 with per-dependency checks
+curl --silent --fail http://localhost:8000/ops/config       # Must return 200 with service config
+curl --silent --fail http://localhost:8000/ops/metrics      # Must return 200 with golden signals
+
+# 4. Tear down — remove containers and volumes
+docker compose down -v
+```
+
+**Report requirements for gate 18:**
+- Show the exact `docker compose up --build -d` output (or summary).
+- Show `docker compose ps` output proving the app container reached `healthy` state.
+- Show each `curl` command and its HTTP status code + response body (or key fields).
+- Show `docker compose down -v` confirming clean teardown.
+- If the stack fails to start, capture `docker compose logs app` and report the failure as a **Critical** finding.
+
+**When to skip gate 18:**
+- No `docker-compose.yml` exists in the repo → mark as `NOT RUN — no compose file`.
+- Docker daemon is not available → mark as `NOT RUN — Docker unavailable` (advisory, not failure).
+- Gate 18 is **not** skippable merely because gate 17 passed. Gate 17 tests isolation; gate 18 tests real wiring.
 
 ## Test Fixture Standards
 
@@ -314,8 +351,9 @@ For audit tables (external module call sites, Any usage), use a dedicated table 
 | Standard | How to Verify |
 |----------|---------------|
 | All imports top-level | `grep -rn -E "^[[:space:]]{4,}(import \|from )" src/app/*.py` — **must be zero.** Any inline import is a FAIL — there are no justifications. If the result is non-zero, the fix is to extract shared state into `core.py` and move external module imports to the top level. Also verify: `grep -n "C0415" .pylintrc` — C0415 must NOT be in the disable list. |
+| No `src.app` in imports | `grep -rn "from src\.app\|import src\.app" src/ tests/` — **must be zero.** All Python imports must use `app.*`, never `src.app.*`. The `src/` prefix is a local filesystem layout convention and must not leak into import paths. If any `src.app` imports are found: (1) rename them to `app.*`, (2) add `pythonpath = src` to `pytest.ini`, (3) set `.pylintrc` init-hook to `sys.path.insert(0, "src")`, (4) verify `entrypoint.sh` uses `uvicorn app.main:app` not `uvicorn src.app.main:app`. This is a **Critical** finding — `src.app` imports will crash the container because the Dockerfile copies `src/app/` to `/app/`. |
 | PEP 8 import ordering | pylint checks import ordering (C0411). Verify pylint 10.00/10 passes. Additionally: for each `.py` file in `src/app/`, verify imports are grouped: (1) stdlib, (2) third-party, (3) local, separated by blank lines. |
-| No circular imports | `python -c "import src.app; print('OK')"` — must succeed without `ImportError`. For each module: `python -c "from src.app.<module> import *; print('OK')"`. Any `ImportError: cannot import name` indicates a cycle. Also: `grep -rn "# avoid circular" src/` — flag any workaround comments. |
+| No circular imports | `PYTHONPATH=src python -c "import app; print('OK')"` — must succeed without `ImportError`. For each module: `PYTHONPATH=src python -c "from app.<module> import *; print('OK')"`. Any `ImportError: cannot import name` indicates a cycle. Also: `grep -rn "# avoid circular" src/` — flag any workaround comments. |
 | Pin dependency versions | `grep -c "==" requirements.txt` — every line must have `==` pinning. `grep -v "==" requirements.txt \| grep -v "^#\|^$\|^-"` — must be empty (no unpinned deps). |
 | Audit and remove unused deps | `pip-audit` — zero critical/high CVEs in runtime deps. Manual review: every package in `requirements.txt` must have at least one import in `src/`. |
 

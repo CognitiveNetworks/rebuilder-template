@@ -98,6 +98,20 @@ async def run_agent(
     # For other providers this is a no-op.
     config.refresh_llm_token()
 
+    # Check LLM availability — graceful degradation if auth failed
+    if not config.llm_available:
+        result.summary = (
+            f"LLM unavailable — cannot run diagnostic loop. "
+            f"Reason: {config.llm_unavailable_reason}"
+        )
+        logger.warning(
+            "Agent skipped (LLM unavailable): incident_id=%s service=%s reason=%s",
+            alert.incident_id,
+            alert.service_name,
+            config.llm_unavailable_reason,
+        )
+        return result
+
     # Build the OpenAI client pointing at the configured provider
     client = AsyncOpenAI(
         api_key=config.llm_api_key,

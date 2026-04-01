@@ -141,6 +141,66 @@ $ tests/test-helm-template.sh -all
 
 ---
 
+## Container Gates
+
+### 14. Container Build — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
+
+```
+$ docker build -t {service}:ci .
+[paste final output line or "Exit 0"]
+```
+
+### 15. Container Isolation Smoke Test — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
+
+```
+$ docker run -d -p 8000:8000 -e TEST_CONTAINER=true -e ENV=dev -e AWS_REGION=us-east-1 \
+  -e SERVICE_NAME=local-testing -e LOG_LEVEL=DEBUG \
+  -e OTEL_PYTHON_AUTO_INSTRUMENTATION_ENABLED=false \
+  --name {service}-ci {service}:ci
+$ sleep 10
+$ curl --silent --fail http://localhost:8000/status
+[paste response — must return "OK"]
+$ docker stop {service}-ci && docker rm {service}-ci
+```
+
+### 16. Docker Compose Full-Stack Smoke Test — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
+
+> If no `docker-compose.yml` exists: mark `NOT RUN — no compose file`.
+> If Docker daemon unavailable: mark `NOT RUN — Docker unavailable`.
+
+**Stack startup:**
+```
+$ docker compose up --build -d
+[paste output summary or "started N services"]
+```
+
+**Health wait:**
+```
+$ docker compose ps
+[paste output showing app container health status — must show "(healthy)"]
+```
+
+**Endpoint smoke tests:**
+
+| Endpoint | Command | Status | Response |
+|----------|---------|--------|----------|
+| `/status` | `curl -sf http://localhost:8000/status` | [200/fail] | [body] |
+| `/health` | `curl -sf http://localhost:8000/health` | [200/fail] | [key fields] |
+| `/ops/status` | `curl -sf http://localhost:8000/ops/status` | [200/fail] | [key fields] |
+| `/ops/health` | `curl -sf http://localhost:8000/ops/health` | [200/fail] | [key fields] |
+| `/ops/config` | `curl -sf http://localhost:8000/ops/config` | [200/fail] | [key fields] |
+| `/ops/metrics` | `curl -sf http://localhost:8000/ops/metrics` | [200/fail] | [key fields] |
+
+**Teardown:**
+```
+$ docker compose down -v
+[paste output confirming teardown]
+```
+
+**Assessment:** [Did all endpoints respond? Any dependency connection failures? Any unexpected log output?]
+
+---
+
 ## /ops/* Endpoint Contract Verification
 
 > Independently test every endpoint using `TestClient` with lifespan (not by reading test files).
