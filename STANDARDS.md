@@ -32,7 +32,7 @@
 - Caching: Redis with persistence and clustering, not Memcached. Redis gives you data structures, pub/sub, and durability options that Memcached does not.
 - Container orchestration: Kubernetes. Not Docker Compose in production, not hand-rolled systemd units.
 - IaC: Terraform. No exceptions. Infrastructure is code, versioned and reviewed like application code.
-- Cloud provider: GCP or AWS. Either is acceptable — choose based on team expertise, existing infrastructure, and managed service availability for the workload. Document the cloud provider decision in an ADR. Do not split a single project across both providers without a documented justification.
+- Design for local portability with cloud providers either GCP or AWS. Either is acceptable — choose based on team expertise, existing infrastructure, and managed service availability for the workload. Document the cloud provider decision in an ADR. Do not split a single project across both providers without a documented justification.
 - The litmus test for any technology choice: Does it have enterprise support options? Is there a managed offering on your chosen cloud provider? Can you hire engineers who already know it? If the answer to any of these is no, justify the exception in writing or pick something else.
 
 ## Development Environment
@@ -168,9 +168,8 @@
 - **Safe remediation endpoints** (require SRE agent auth role, all actions are idempotent and non-destructive):
   - `/ops/cache/flush` — flush application-level caches. Safe to call at any time. The service rebuilds cache from source on next request.
   - `/ops/cache/refresh` — refresh application-level caches from the source of truth. Safe to call at any time.
-  - `/ops/circuits` — view and reset circuit breakers. Agents can identify tripped circuits and reset them after the downstream dependency recovers.
   - `/ops/loglevel` — temporarily adjust log verbosity for debugging without a redeploy. Reverts to default after a configurable TTL.
-  - `/ops/log-level` — canonical path alias for `/ops/loglevel`.
+
 - **Hard rules for SRE agent endpoints:**
   - No endpoint may delete data, drop connections to databases, restart processes, or modify persistent state. Agents diagnose and stabilize — they do not perform destructive operations.
   - All remediation endpoints are idempotent. Calling them twice produces the same result as calling them once.
@@ -202,7 +201,9 @@
 - API contracts are documented and treated as promises. Breaking changes require a version bump, a migration path for consumers, and a deprecation timeline. Do not break existing consumers silently.
 - During a legacy rebuild, the new system must support the legacy API surface as a compatibility layer until all consumers have migrated. Document which legacy endpoints are supported, which are deprecated, and the timeline for removal.
 - Use OpenAPI/Swagger specs checked into the repo. The spec is the contract. If the code and the spec disagree, the code is wrong.
+- Design APIs for optimal Swagger UI interaction. Use JSON request bodies with Pydantic models instead of query parameters for enum fields to enable proper dropdown menus. For editable fields, use Pydantic models with proper enum definitions, examples, and descriptions so Swagger UI renders interactive controls that users can edit directly. Avoid query parameters for complex operations - reserve them for simple filtering, pagination, or optional flags. POST/PUT endpoints should use request bodies; GET endpoints should use query parameters only for idempotent operations.
 - Integration tests validate the API contract on every build. If a response shape changes, the test fails before a consumer discovers it in production.
+- All FastAPI services must support dual-stack IPv4/IPv6 networking. Configure uvicorn to listen on both address families (`host="::"` binds to all interfaces on both IPv4 and IPv6). Validate connectivity in CI/CD with tests that exercise both IPv4 and IPv6 endpoints when the environment supports dual-stack networking.
 
 ## Data Migration & Validation
 

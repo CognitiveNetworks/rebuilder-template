@@ -63,6 +63,10 @@ Every rebuilt service requires tests at five levels. Each level gates a differen
 
 Run every gate before considering a change complete. Generate a `TEST_RESULTS.md` report (see template in `python-qa-agent/TEST_RESULTS_TEMPLATE.md`) summarizing all results.
 
+**Critical verification**: Confirm all tools run against both `src/` and `tests/` directories. The developer agent must not limit static analysis, linting, or formatting to only application code. Verify commands include both directories (e.g., `pylint src tests`, `black --check src tests`). If tools are configured to exclude `tests/`, flag this as a critical deviation from standards.
+
+**Dependency locking verification**: Confirm `scripts/lock.sh` is executable and has been run after any dependency changes. Verify by: (1) Checking the script has execute permissions (`ls -la scripts/lock.sh`), (2) Comparing timestamps of `requirements.txt` and `requirements-dev.txt` with `pyproject.toml` to ensure they're newer, (3) Running `scripts/lock.sh` twice and confirming the second run produces no changes (idempotent behavior). If the script exists but hasn't been run, flag this as critical.
+
 ### Core Gates (Required — Block Merge)
 
 | # | Gate | Tool | Threshold | Command |
