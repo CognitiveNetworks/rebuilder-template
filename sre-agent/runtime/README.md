@@ -104,16 +104,36 @@ cp .env.example .env
 ./start.sh
 ```
 
-### Option 2: Container Development
+### Option 2: Docker Compose (Recommended for Container Development)
+
+The SRE agent is included in the main project's docker-compose.yml alongside other services:
 
 ```bash
-# Using Docker Compose (recommended for containers)
+# Navigate to the rebuilt project directory (e.g., rebuilder-evergreen-tvevents)
+cd /path/to/rebuilt-project
+
+# Set up Google credentials first (one-time)
+gcloud auth application-default login
+gcloud config set project alloydb-scann-experiment
+
+# Set up environment variables in .env file
+# Required: PD_ACCESS_TOKEN (PagerDuty API token)
+# Optional: PD_ROUTING_KEY (PagerDuty routing key)
+
+# Start all services including SRE agent
 docker-compose up -d
 
-# Or manual Docker build
-docker build -f runtime/Dockerfile -t sre-agent .
-docker run -p 8080:8080 --env-file .env sre-agent
+# Check logs
+docker-compose logs -f sre-agent
+
+# Health check
+curl http://localhost:8080/health
 ```
+
+The Docker Compose setup automatically:
+- Mounts your Google credentials (`~/.config/gcloud`) for Vertex AI authentication
+- Connects to other services (app, postgres, kafka) in the same network
+- Persists incident reports to the container's `/app/incidents`
 
 ### Option 3: Manual Python
 
