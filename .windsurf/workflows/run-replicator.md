@@ -1,5 +1,5 @@
 ---
-description: Run the full replicator process on a legacy repo. Triggered by "run replicator on <repo>" or similar.
+description: "Run the full replicator process. Usage: /run-replicator <github-url> — e.g. /run-replicator https://github.com/CognitiveNetworks/automate"
 ---
 
 # Run Replicator
@@ -16,6 +16,12 @@ The user provides a **GitHub URL** for the legacy repo:
 ```
 /run-replicator https://github.com/CognitiveNetworks/automate
 ```
+
+**If the user did not provide a URL**, ask them:
+> "Please provide the GitHub URL for the legacy repo you want to rebuild.
+> Example: `/run-replicator https://github.com/CognitiveNetworks/automate`"
+>
+> Do not proceed until a valid GitHub URL is provided.
 
 Everything else is derived automatically:
 
