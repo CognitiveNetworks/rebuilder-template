@@ -49,24 +49,24 @@ This workflow activates the QA agent to independently verify that the developer 
 
 // turbo
    ```
-   interrogate app/ -v
+   interrogate app/ tests/ -v
    ```
 
 // turbo
    ```
-   pylint --disable=all --enable=duplicate-code app/
+   pylint --disable=all --enable=duplicate-code app tests
    ```
 
 // turbo
    ```
-   complexipy app -mx 15
+   complexipy app -mx 15 && complexipy tests -mx 15
    ```
 
 5. Run container gates (for deployable services only):
 
    a. Build the container image:
    ```
-   docker build -t {service}:ci .
+   docker build --platform linux/amd64 -t {service}:ci .
    ```
 
    b. Isolation smoke test (TEST_CONTAINER=true):

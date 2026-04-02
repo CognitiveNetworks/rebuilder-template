@@ -83,48 +83,60 @@ $ pip-audit
 
 **Assessment:** [Explain findings — runtime vs dev-only? Action needed?]
 
-### 8. Docstring Coverage (interrogate) — [PASS ✅ / FAIL ❌]
+### 7. Docstring Coverage (interrogate) — [PASS ✅ / FAIL ❌]
 
 ```
 $ interrogate app tests -v
 [paste RESULT line]
 ```
 
-### 9. Duplicate Code (pylint) — [PASS ✅ / FAIL ❌]
+### 8. Duplicate Code (pylint) — [PASS ✅ / FAIL ❌]
 
 ```
 $ pylint --disable=all --enable=duplicate-code app tests
 [paste score line]
 ```
 
-### 10. Cognitive Complexity (complexipy) — [PASS ✅ / FAIL ❌]
+### 9. Cognitive Complexity (complexipy) — [PASS ✅ / FAIL ❌]
 
 ```
-$ complexipy app tests -mx 15
+$ complexipy app -mx 15 && complexipy tests -mx 15
 [paste summary line]
 ```
 
-### 11. Dependency Pinning (scripts/lock.sh) — [PASS ✅ / FAIL ❌]
+### 10. Dependency Pinning (scripts/lock.sh) — [PASS ✅ / FAIL ❌]
 
 ```
-$ scripts/lock.sh --check
-[paste output or "(lock file up-to-date)"]
+$ ls -la scripts/lock.sh
+[paste output — must be executable]
+$ bash scripts/lock.sh
+[paste full output — run 1]
+$ md5 requirements.txt requirements-dev.txt
+[paste hashes — run 1]
+$ bash scripts/lock.sh
+[paste full output — run 2]
+$ md5 requirements.txt requirements-dev.txt
+[paste hashes — run 2 — must match run 1]
+$ head -1 requirements.txt
+[must show pip-compile auto-generated header]
+$ head -1 requirements-dev.txt
+[must show pip-compile auto-generated header]
 ```
 
-**Assessment:** [Lock file current with pyproject.toml? Any version ranges detected?]
+**Assessment:** [Lock file current with pyproject.toml? Hashes match between runs (idempotent)? Any version ranges detected?]
 
 ---
 
 ## Helm Gates
 
-### 12. Helm Lint — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
+### 11. Helm Lint — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
 
 ```
 $ helm lint charts/
 [paste output or note if Helm CLI unavailable]
 ```
 
-### 13. Helm Template Render — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
+### 12. Helm Template Render — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
 
 ```
 $ tests/test-helm-template.sh -all
@@ -135,14 +147,14 @@ $ tests/test-helm-template.sh -all
 
 ## Container Gates
 
-### 14. Container Build — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
+### 13. Container Build — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
 
 ```
-$ docker build -t {service}:ci .
+$ docker build --platform linux/amd64 -t {service}:ci .
 [paste final output line or "Exit 0"]
 ```
 
-### 15. Container Isolation Smoke Test — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
+### 14. Container Isolation Smoke Test — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
 
 ```
 $ docker run -d -p 8000:8000 -e TEST_CONTAINER=true -e ENV=dev -e AWS_REGION=us-east-1 \
@@ -155,7 +167,7 @@ $ curl --silent --fail http://localhost:8000/status
 $ docker stop {service}-ci && docker rm {service}-ci
 ```
 
-### 16. Docker Compose Full-Stack Smoke Test — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
+### 15. Docker Compose Full-Stack Smoke Test — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
 
 > If no `docker-compose.yml` exists: mark `NOT RUN — no compose file`.
 > If Docker daemon unavailable: mark `NOT RUN — Docker unavailable`.
@@ -266,8 +278,8 @@ $ docker compose down -v
 | TOTAL stmts | X | X | [✅/⚠️] |
 | pylint score | X | X | [✅/⚠️] |
 | Docstring coverage | X% | X% | [✅/⚠️] |
-| Inline imports (src/) | X | X | [✅/⚠️] |
-| `global` keyword (src/) | [present/0] | [present/0] | [✅/⚠️] |
+| Inline imports (app/) | X | X | [✅/⚠️] |
+| `global` keyword (app/) | [present/0] | [present/0] | [✅/⚠️] |
 | Suppression comments | X | X | [✅/⚠️] |
 
 **Assessment:** [Explain any discrepancies — code changes between reports, different tool flags, etc.]
@@ -311,8 +323,8 @@ The following require running infrastructure that cannot be validated offline:
 - [ ] No overengineering or over-abstraction — simplicity is key
 - [ ] No invented patterns — all patterns match existing codebase conventions
 - [ ] Functions do one thing — prefer explicit over implicit
-- [ ] Fail fast and fail loud — no swallowed errors, no empty defaults, no log-and-continue — `grep -rn "except.*pass$\|except.*continue$" src/`
-- [ ] No dead code or commented-out blocks — `grep -rn "^#.*def \|^#.*class \|^#.*import " src/`
+- [ ] Fail fast and fail loud — no swallowed errors, no empty defaults, no log-and-continue — `grep -rn "except.*pass$\|except.*continue$" app/`
+- [ ] No dead code or commented-out blocks — `grep -rn "^#.*def \|^#.*class \|^#.*import " app/`
 
 #### Imports and Dependencies
 
@@ -326,9 +338,9 @@ The following require running infrastructure that cannot be validated offline:
 
 - [ ] All constants UPPER_CASE (e.g., `MAX_RETRIES`, `DEFAULT_TIMEOUT`)
 - [ ] Do not shadow global variables or constants inside function calls
-- [ ] Minimize mutable global variables; pass state through function arguments, class instances, or DI — `grep -rn "^global \|^\s\+global " src/`
+- [ ] Minimize mutable global variables; pass state through function arguments, class instances, or DI — `grep -rn "^global \|^\s\+global " app/`
 - [ ] All functions, classes, and modules have docstrings — confirmed by `interrogate`
-- [ ] Use f-strings instead of `%` formatting or `.format()` — `grep "\.format(\|% [sd\"'(]" src/`
+- [ ] Use f-strings instead of `%` formatting or `.format()` — `grep "\.format(\|% [sd\"'(]" app/`
 
 #### Type Safety
 
@@ -337,13 +349,13 @@ The following require running infrastructure that cannot be validated offline:
 - [ ] When integrating with external modules (kafka_module, rds_module), read type hints
 - [ ] Do not write equality checks that can never be true
 - [ ] Match framework function signatures exactly (e.g., FastAPI `lifespan` signature)
-- [ ] Always parameterize generic types — `grep ": dict\b\|: list\b\|-> dict\b\|-> list\b" src/`
-- [ ] No `# type: ignore` comments anywhere — `grep "# type: ignore" src/`
+- [ ] Always parameterize generic types — `grep ": dict\b\|: list\b\|-> dict\b\|-> list\b" app/`
+- [ ] No `# type: ignore` comments anywhere — `grep "# type: ignore" app/`
 - [ ] Run `mypy` as type-mismatch safety net
 
 #### Linter Discipline
 
-- [ ] Resolve linter errors instead of ignoring them — `grep "# pylint: disable\|# type: ignore\|# noqa" src/`
+- [ ] Resolve linter errors instead of ignoring them — `grep "# pylint: disable\|# type: ignore\|# noqa" app/`
 - [ ] No suppression comments without justification — count and document each
 
 #### Error Handling and Security
@@ -351,16 +363,16 @@ The following require running infrastructure that cannot be validated offline:
 - [ ] Handle errors at the boundary where you can act on them
 - [ ] Distinguish retryable from fatal errors
 - [ ] Validate all external input — trust nothing that crosses a boundary
-- [ ] Never commit secrets, tokens, or credentials — `grep -ri "password\|secret\|token\|api_key" src/ --include="*.py"` (verify only env var refs, no hardcoded values)
+- [ ] Never commit secrets, tokens, or credentials — `grep -ri "password\|secret\|token\|api_key" app/ --include="*.py"` (verify only env var refs, no hardcoded values)
 - [ ] `.env.example` exists with documented variables; no `.env` files committed — verify `.gitignore` has `.env`
 - [ ] Least privilege everywhere — database users, API keys, IAM roles
-- [ ] Always specify encoding with `open()` — `grep "open(" src/ --include="*.py"` (verify `encoding=` present)
-- [ ] Set timeouts on every external call — `grep -rn "requests\.\|httpx\.\|urlopen" src/` (verify `timeout=` present)
+- [ ] Always specify encoding with `open()` — `grep "open(" app/ --include="*.py"` (verify `encoding=` present)
+- [ ] Set timeouts on every external call — `grep -rn "requests\.\|httpx\.\|urlopen" app/` (verify `timeout=` present)
 
 #### Standing Orders
 
-- [ ] No DP2.5 or Stackdriver references — `grep -ri "dp2.5\|stackdriver\|stack_driver" src/`
-- [ ] DAPR sidecar only — no DAPR client libraries in application code — `grep -ri "dapr" src/ --include="*.py"`
+- [ ] No DP2.5 or Stackdriver references — `grep -ri "dp2.5\|stackdriver\|stack_driver" app/`
+- [ ] DAPR sidecar only — no DAPR client libraries in application code — `grep -ri "dapr" app/ --include="*.py"`
 - [ ] No SRE Agent config for library repos (N/A for deployable services)
 
 ### Section 1: Dependency Management

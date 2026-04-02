@@ -76,55 +76,55 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 | 1 | Unit + API tests | pytest | 0 failures | `pytest tests/ --cov=app --cov-fail-under=80` |
 | 2 | Test coverage | pytest-cov | ≥ 80% line coverage | (included in above) |
 | 3 | Lint | pylint | 10.0/10.0 score | `pylint --disable=import-error --fail-under=10.0 app tests` |
-| 4 | Format | black | All formatted | `black --check app tests` |
-| 5 | Type check | mypy | 0 errors | `mypy app/` |
+| 4 | Format | black | All formatted | `black --check app tests --skip-string-normalization` |
+| 5 | Type check | mypy | 0 errors | `mypy app/ --ignore-missing-imports --disable-error-code=unused-ignore` |
 
 ### Extended Gates (Required — Block Release)
 
 | # | Gate | Tool | Threshold | Command |
 |---|------|------|-----------|---------|
 | 6 | Dependency vulns | pip-audit | 0 runtime CVEs | `pip-audit` |
-| 8 | Docstring coverage | interrogate | ≥ 80% | `interrogate app tests -v` |
-| 9 | Duplicate code | pylint | < 3% duplication | `pylint --disable=all --enable=duplicate-code app tests` |
-| 10 | Cognitive complexity | complexipy | No function ≥ 15 | `complexipy app -mx 15 && complexipy tests -mx 15` |
-| 11 | Dependency pinning | scripts/lock.sh | Lock file up-to-date, idempotent | `bash scripts/lock.sh` (run twice, compare MD5 hashes) |
+| 7 | Docstring coverage | interrogate | ≥ 80% | `interrogate app tests -v` |
+| 8 | Duplicate code | pylint | < 3% duplication | `pylint --disable=all --enable=duplicate-code app tests` |
+| 9 | Cognitive complexity | complexipy | No function ≥ 15 | `complexipy app -mx 15 && complexipy tests -mx 15` |
+| 10 | Dependency pinning | scripts/lock.sh | Lock file up-to-date, idempotent | `bash scripts/lock.sh` (run twice, compare MD5 hashes) |
 
 ### Helm Gate (Required for deployable services)
 
 | # | Gate | Tool | Threshold | Command |
 |---|------|------|-----------|---------|
-| 13 | Helm lint | helm | 0 errors | `helm lint charts/` |
-| 14 | Helm template render | helm template | Renders for dev, qa, prod | `tests/test-helm-template.sh -all` |
-| 15 | Helm unit tests | helm-unittest | 0 failures | `helm unittest ./charts` |
+| 11 | Helm lint | helm | 0 errors | `helm lint charts/` |
+| 12 | Helm template render | helm template | Renders for dev, qa, prod | `tests/test-helm-template.sh -all` |
+| 13 | Helm unit tests | helm-unittest | 0 failures | `helm unittest ./charts` |
 
 ### Container Gate (Required for deployable services)
 
 | # | Gate | Tool | Threshold | Command |
 |---|------|------|-----------|---------|
-| 16 | Container build | docker build | Exit 0 | `docker build -t {service}:ci .` |
-| 17 | Container isolation smoke test | curl | `/status` returns `OK` | `docker run -d -p 8000:8000 -e TEST_CONTAINER=true -e ENV=dev -e AWS_REGION=us-east-1 -e SERVICE_NAME=local-testing -e LOG_LEVEL=DEBUG -e OTEL_PYTHON_AUTO_INSTRUMENTATION_ENABLED=false --name {service}-ci {service}:ci && sleep 10 && curl --silent --fail http://localhost:8000/status` |
-| 18 | Docker Compose full-stack smoke test | docker compose + curl | `/status`, `/health`, `/ops/status` all return 200 | See procedure below |
+| 14 | Container build | docker build | Exit 0 | `docker build --platform linux/amd64 -t {service}:ci .` |
+| 15 | Container isolation smoke test | curl | `/status` returns `OK` | `docker run -d -p 8000:8000 -e TEST_CONTAINER=true -e ENV=dev -e AWS_REGION=us-east-1 -e SERVICE_NAME=local-testing -e LOG_LEVEL=DEBUG -e OTEL_PYTHON_AUTO_INSTRUMENTATION_ENABLED=false --name {service}-ci {service}:ci && sleep 10 && curl --silent --fail http://localhost:8000/status` |
+| 16 | Docker Compose full-stack smoke test | docker compose + curl | `/status`, `/health`, `/ops/status` all return 200 | See procedure below |
 
 ### CI Pipeline Gate (Required — Block Merge)
 
 | # | Gate | Tool | Threshold | Command |
 |---|------|------|-----------|---------|
-| 19 | CI black job | act | Exit 0 | `act -j black --env-file env.list` |
-| 20 | CI pytest job | act | Exit 0 | `act -j pytest --env-file env.list` |
-| 21 | CI pylint job | act | Exit 0 | `act -j pylint --env-file env.list` |
-| 22 | CI complexipy job | act | Exit 0 | `act -j complexipy --env-file env.list` |
-| 23 | CI mypy job | act | Exit 0 | `act -j mypy --env-file env.list` |
-| 24 | CI helm_lint job | act | Exit 0 | `act -j helm_lint` |
+| 17 | CI black job | act | Exit 0 | `act -j black --env-file env.list` |
+| 18 | CI pytest job | act | Exit 0 | `act -j pytest --env-file env.list` |
+| 19 | CI pylint job | act | Exit 0 | `act -j pylint --env-file env.list` |
+| 20 | CI complexipy job | act | Exit 0 | `act -j complexipy --env-file env.list` |
+| 21 | CI mypy job | act | Exit 0 | `act -j mypy --env-file env.list` |
+| 22 | CI helm_lint job | act | Exit 0 | `act -j helm_lint` |
 
 `act` runs each GitHub Actions CI job inside a Docker container locally, using the `.actrc` configuration (`--container-architecture linux/amd64`) and `env.list` for environment variables. This verifies the CI workflow YAML is correct — not just the individual tools. If a job fails via `act` but the standalone command passed, the CI workflow definition has a bug.
 
 If `act` is not installed, install it (`brew install act` on macOS, or see https://github.com/nektos/act). If Docker is unavailable, the CI pipeline gates cannot run — this is a blocking failure, not an advisory skip. Both `act` and Docker are required development tools.
 
-**TEST_CONTAINER mode** (gate 17): The application must support a `TEST_CONTAINER` environment variable. When `true`, the app skips external dependency connections (RDS, Kafka, etc.) at startup so the container can start in isolation for smoke testing. The `/status` endpoint must return `OK` unconditionally. The `/health` endpoint should report dependencies as `skipped` rather than erroring.
+**TEST_CONTAINER mode** (gate 15): The application must support a `TEST_CONTAINER` environment variable. When `true`, the app skips external dependency connections (RDS, Kafka, etc.) at startup so the container can start in isolation for smoke testing. The `/status` endpoint must return `OK` unconditionally. The `/health` endpoint should report dependencies as `skipped` rather than erroring.
 
-**Docker Compose full-stack test** (gate 18): When a `docker-compose.yml` exists, the QA agent must build and start the full stack with real dependencies (Postgres, Kafka, etc.) and validate that the application connects, starts, and serves traffic. This tests what gate 17 cannot — real dependency wiring, environment-check.sh correctness, and entrypoint.sh behavior under non-TEST_CONTAINER conditions.
+**Docker Compose full-stack test** (gate 16): When a `docker-compose.yml` exists, the QA agent must build and start the full stack with real dependencies (Postgres, Kafka, etc.) and validate that the application connects, starts, and serves traffic. This tests what gate 15 cannot — real dependency wiring, environment-check.sh correctness, and entrypoint.sh behavior under non-TEST_CONTAINER conditions.
 
-**Procedure for gate 18:**
+**Procedure for gate 16:**
 
 ```bash
 # 1. Build and start the full stack (detached)
@@ -146,17 +146,17 @@ curl --silent --fail http://localhost:8000/ops/metrics      # Must return 200 wi
 docker compose down -v
 ```
 
-**Report requirements for gate 18:**
+**Report requirements for gate 16:**
 - Show the exact `docker compose up --build -d` output (or summary).
 - Show `docker compose ps` output proving the app container reached `healthy` state.
 - Show each `curl` command and its HTTP status code + response body (or key fields).
 - Show `docker compose down -v` confirming clean teardown.
 - If the stack fails to start, capture `docker compose logs app` and report the failure as a **Critical** finding.
 
-**When to skip gate 18:**
+**When to skip gate 16:**
 - No `docker-compose.yml` exists in the repo → mark as `NOT RUN — no compose file`.
 - Docker daemon is not available → mark as `NOT RUN — Docker unavailable` (advisory, not failure).
-- Gate 18 is **not** skippable merely because gate 17 passed. Gate 17 tests isolation; gate 18 tests real wiring.
+- Gate 16 is **not** skippable merely because gate 15 passed. Gate 15 tests isolation; gate 16 tests real wiring.
 
 ## Test Fixture Standards
 

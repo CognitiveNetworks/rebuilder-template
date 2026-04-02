@@ -14,7 +14,7 @@
 
 | Command | Purpose |
 |---|---|
-| `pip install -e ".[dev]"` | Install all dependencies including test tools |
+| `pip install -r requirements.txt -r requirements-dev.txt` | Install all dependencies including test tools |
 | `pytest tests/ -x` | Run tests, stop on first failure |
 | `pytest tests/ --cov=app --cov-fail-under=80` | Run tests with coverage enforcement |
 | `pytest tests/test_routes.py tests/test_ops_endpoints.py` | Run API + /ops/* contract tests only |
@@ -43,7 +43,6 @@
 | Lint errors | 0 | Merge |
 | Format violations | 0 | Merge |
 | Type errors | 0 | Merge |
-| Dead code | 0 findings | Release |
 | Runtime CVEs | 0 | Release |
 | Docstring coverage | ≥ 80% | Release |
 | Duplicate code | < 3% | Release |
@@ -63,7 +62,6 @@
 | mypy | latest |
 | pip-audit | ≥ 2.9.0 |
 | interrogate | ≥ 1.7.0 |
-| pylint | ≥ 3.0.0 |
 | helm | ≥ 3.14.0 |
 
 ## Test Environments

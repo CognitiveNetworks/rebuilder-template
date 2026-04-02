@@ -115,7 +115,7 @@ Every tool specified by the template repo must pass cleanly before any commit is
 - **All static analysis, linting, and formatting tools must run against both `app/` and `tests/` directories.** Never limit tooling to only application code. Tests must meet the same quality standards as production code. Configure tools in `pyproject.toml` to include both directories: `pylint --disable=import-error --fail-under=10.0 app tests`, `black --check app tests --skip-string-normalization`, `mypy app/ --ignore-missing-imports`, etc.
 - **`pytest.ini` must exclude non-application test directories.** Every rebuilt repo contains `sre-agent/runtime/tests/` and `python-qa-agent/examples/` which have their own dependencies and are not part of the application test suite. Add them to `norecursedirs` so pytest does not collect them:
   ```ini
-  norecursedirs = .git .venv sre-agent python-qa-agent
+  norecursedirs = .git .venv sre-agent python-qa-agent python-developer-agent
   ```
 
 ## Code Audit Checklist
