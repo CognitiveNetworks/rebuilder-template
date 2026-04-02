@@ -17,15 +17,23 @@
 
 | Command | Purpose |
 |---|---|
-| *[install command]* | Install dependencies |
-| *[unit test command]* | Run unit tests |
-| *[api test command]* | Run API tests |
-| *[integration test command]* | Run integration tests |
-| *[full test command]* | Run all tests |
-| *[lint command]* | Run linter / formatter |
-| *[build command]* | Build container image |
-| *[run command]* | Run locally |
-| *[seed command]* | Seed local database |
+| *[install command — e.g., `pip install -r requirements.txt -r requirements-dev.txt`]* | Install dependencies |
+| *[unit test command — e.g., `pytest tests/ -m "not integration"`]* | Run unit tests |
+| *[api test command — e.g., `pytest tests/test_api.py`]* | Run API tests |
+| *[integration test command — e.g., `pytest tests/ -m integration`]* | Run integration tests |
+| *[full test command — e.g., `pytest tests/ --cov=app --cov-fail-under=80`]* | Run all tests with coverage |
+| `pylint --disable=import-error --fail-under=10.0 app tests` | Lint check (matches CI) |
+| `black --check app tests --skip-string-normalization` | Format check (matches CI) |
+| `mypy app/ --ignore-missing-imports --disable-error-code=unused-ignore` | Type check (matches CI) |
+| `vulture app/ tests/ --min-confidence 80` | Dead code detection |
+| `complexipy app -mx 15 && complexipy tests -mx 15` | Cognitive complexity (matches CI) |
+| `pylint --disable=all --enable=duplicate-code app tests` | Duplicate code check |
+| `pip-audit` | Dependency vulnerability scan |
+| `interrogate app/ tests/ -v` | Docstring coverage |
+| `helm lint charts/` | Helm chart lint |
+| *[build command — e.g., `docker build -t app:latest .`]* | Build container image |
+| *[run command — e.g., `uvicorn app.main:app --host :: --port 8000 --reload`]* | Run locally |
+| *[seed command — e.g., `python seed.py` or `N/A — no application database`]* | Seed local database |
 
 ## Required Development Tooling
 

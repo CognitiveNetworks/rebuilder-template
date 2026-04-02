@@ -75,6 +75,7 @@
 - Match framework function signatures exactly — e.g., FastAPI's `lifespan` parameter expects `Callable[[FastAPI], AsyncContextManager]`, not `Callable[[], AsyncContextManager]`. Check the framework type stubs when wiring callbacks.
 - Always parameterize generic types — use `dict[str, int]`, `list[EventRecord]`, `Optional[dict[str, bytes]]`, etc. with specific, meaningful types. Never use bare `dict` or `list` in type annotations. Avoid `Any` — use the actual expected type instead.
 - Run `mypy` as a type-mismatch safety net before every commit. Treat every mypy error as a real bug — not a false positive to suppress.
+- **Never access protected members (`_name`) from outside the owning class.** If a test or another class needs to read or call a private member, either make it public (remove the underscore) or add a public accessor method. Do not use `# pylint: disable=protected-access` — fix the design instead. When mocking external modules in tests, only mock the public API the app actually calls; do not create mock attributes for private members the app doesn't use.
 - Always specify encoding when calling `open()`: `open(path, encoding="utf-8")`. Never rely on the platform default.
 - Handle errors at the boundary where you can act on them. Every error message answers: what happened, what was expected, what to do about it.
 - Distinguish retryable from fatal errors.

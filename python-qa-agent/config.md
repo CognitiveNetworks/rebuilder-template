@@ -21,11 +21,11 @@
 | `pylint --disable=import-error --fail-under=10.0 app tests` | Lint check (matches CI) |
 | `black --check app tests --skip-string-normalization` | Format check (matches CI) |
 | `mypy app/ --ignore-missing-imports --disable-error-code=unused-ignore` | Type check (matches CI) |
-| `vulture app/ --min-confidence 80` | Dead code detection |
+| `vulture app/ tests/ --min-confidence 80` | Dead code detection |
 | `pip-audit` | Dependency vulnerability scan |
-| `interrogate app/ -v` | Docstring coverage |
-| `pylint --disable=all --enable=duplicate-code app/` | Duplicate code check |
-| `complexipy app -mx 15` | Cognitive complexity (no -d low, removed in v3.x) |
+| `interrogate app/ tests/ -v` | Docstring coverage |
+| `pylint --disable=all --enable=duplicate-code app tests` | Duplicate code check |
+| `complexipy app -mx 15 && complexipy tests -mx 15` | Cognitive complexity (matches CI) |
 | `helm lint charts/` | Helm chart lint |
 | `tests/test-helm-template.sh -all` | Helm template rendering |
 | `act -j black --env-file env.list` | CI pipeline: black job (requires Docker + act) |
