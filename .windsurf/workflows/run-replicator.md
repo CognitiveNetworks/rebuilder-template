@@ -11,11 +11,28 @@ never modified.
 
 ## Invocation
 
-The user provides a **GitHub URL** for the legacy repo:
+The user provides a **GitHub URL** for the legacy repo, plus optional context:
 
 ```
 /run-replicator https://github.com/CognitiveNetworks/automate
+Use the adjacent repo https://github.com/CognitiveNetworks/cntools.
+This will be containerized to run locally but also will need to run in GCP.
+Do not include cooker.
 ```
+
+**Required:** The first GitHub URL is the **legacy repo** to rebuild.
+
+**Optional inline context** (parsed from the user's message):
+
+| Pattern | What to do with it |
+|---|---|
+| `adjacent repo <url>` or `with <url>` | Clone to `<dest>/rebuild-inputs/adjacent/<name>/` during bootstrap |
+| Deployment/runtime constraints (e.g., "run in GCP", "containerized") | Pre-populate into `scope.md` Target State and `input.md` context |
+| Exclusions (e.g., "do not include cooker") | Record in `input.md` under exclusions/constraints; respect during analysis |
+
+The agent should extract all of these from the user's message and apply them
+during bootstrap. Any context provided here saves the user from manually editing
+`scope.md` and `input.md` later.
 
 **If the user did not provide a URL**, ask them:
 > "Please provide the GitHub URL for the legacy repo you want to rebuild.
@@ -64,20 +81,37 @@ Extract the repo name from the URL (e.g., `automate` from `https://github.com/Co
    git clone <legacy-url> <dest>/rebuild-inputs/repo
    ```
 
+// turbo
+0b-adj. **Clone adjacent repos** (if mentioned in the user's message):
+   ```
+   mkdir -p <dest>/rebuild-inputs/adjacent
+   git clone <adjacent-url> <dest>/rebuild-inputs/adjacent/<name>
+   ```
+
 0c. Copy the input templates from rebuilder-template:
    ```
    cp scope.md <dest>/rebuild-inputs/scope.md
    cp rebuild/input.md <dest>/rebuild-inputs/input.md
    ```
 
-0d. **STOP and ask the user to fill out `scope.md` and `input.md`.**
+0c-pre. **Pre-populate from inline context.** If the user's invocation message
+   included deployment constraints, exclusions, or other context, write them
+   into the appropriate sections of `scope.md` and `input.md` now:
+   - **Adjacent repos** → `scope.md` → Adjacent Repositories section
+   - **Deployment/runtime** (e.g., "containerized", "run in GCP") → `scope.md` → Target State
+   - **Exclusions** (e.g., "do not include cooker") → `input.md` → Exclusions/constraints
+   This pre-population saves the user time but does **not** skip the review step.
+
+0d. **STOP and ask the user to review `scope.md` and `input.md`.**
    Tell them:
-   - Open `<dest>/rebuild-inputs/scope.md` and fill out the Current State,
-     Target State, Target Language, and Template Repository fields.
-   - Open `<dest>/rebuild-inputs/input.md` and fill out pain points and context.
+   - Open `<dest>/rebuild-inputs/scope.md` — review pre-populated fields and
+     fill out any remaining blanks (Current State, Target Language, Template
+     Repository).
+   - Open `<dest>/rebuild-inputs/input.md` — review pre-populated context and
+     fill out pain points.
    - The **Target Language** field determines which template repo to clone
      and which agent templates to use (python, c, or go).
-   - Say "continue" when both files are filled out.
+   - Say "continue" when both files are ready.
 
    **Do not proceed until the user confirms.** The scope and input files
    drive every decision in the rebuild process.
