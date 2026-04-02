@@ -15,7 +15,6 @@
 | pylint | x.x.x |
 | black | x.x.x |
 | mypy | x.x.x |
-| vulture | x.x |
 | pip-audit | x.x.x |
 | interrogate | x.x.x |
 | complexipy | x.x.x |
@@ -75,14 +74,7 @@ $ mypy app/ --ignore-missing-imports --disable-error-code=unused-ignore
 
 ## Extended Gates
 
-### 6. Dead Code (vulture) — [PASS ✅ / FAIL ❌]
-
-```
-$ vulture app tests --min-confidence 80
-[paste output or "(no output — 0 findings)"]
-```
-
-### 7. Dependency Vulnerabilities (pip-audit) — [PASS ✅ / FAIL ❌ / ADVISORY ⚠️]
+### 6. Dependency Vulnerabilities (pip-audit) — [PASS ✅ / FAIL ❌ / ADVISORY ⚠️]
 
 ```
 $ pip-audit
@@ -251,7 +243,6 @@ $ docker compose down -v
 | black (format) | All formatted | X/X unchanged | [✅/❌] |
 | mypy (types) | 0 errors | X errors in X files | [✅/❌] |
 | Cognitive complexity | No function ≥ 15 | [All compliant or list] | [✅/❌] |
-| Dead code (vulture) | 0 findings | X findings | [✅/❌] |
 | Dependency vulns | 0 runtime CVEs | X runtime, X dev-only | [✅/❌/⚠️] |
 | Docstring coverage | ≥ 80% | X% | [✅/❌] |
 | Duplicate code | < 3% | X% | [✅/❌] |

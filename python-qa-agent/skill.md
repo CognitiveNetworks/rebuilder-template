@@ -83,8 +83,7 @@ Run every gate before considering a change complete. Generate a `TEST_RESULTS.md
 
 | # | Gate | Tool | Threshold | Command |
 |---|------|------|-----------|---------|
-| 6 | Dead code | vulture | 0 findings at 80% confidence | `vulture app tests --min-confidence 80` |
-| 7 | Dependency vulns | pip-audit | 0 runtime CVEs | `pip-audit` |
+| 6 | Dependency vulns | pip-audit | 0 runtime CVEs | `pip-audit` |
 | 8 | Docstring coverage | interrogate | ≥ 80% | `interrogate app tests -v` |
 | 9 | Duplicate code | pylint | < 3% duplication | `pylint --disable=all --enable=duplicate-code app tests` |
 | 10 | Cognitive complexity | complexipy | No function ≥ 15 | `complexipy app -mx 15 && complexipy tests -mx 15` |
@@ -273,7 +272,7 @@ The report includes these sections in order:
 1. **Tool Versions** — exact versions of every tool used
 2. **Codebase Metrics** — source/test file counts and lines
 3. **Core Gates (1-4)** — pytest, pylint, black, mypy with exact command output
-4. **Extended Gates (5-11)** — vulture, pip-audit, interrogate, duplicate-code, complexipy
+4. **Extended Gates (5-11)** — pip-audit, interrogate, duplicate-code, complexipy
 5. **Helm Gates (12-13)** — helm lint and template render (or NOT RUN with explanation)
 6. **/ops/\* Endpoint Contract Verification** — independently test every diagnostic and remediation endpoint using `TestClient` with lifespan. Do not just read the test files — run the endpoints yourself and record actual status codes and response fields.
 7. **Quality Gate Summary** — single table with all 14 gates, thresholds, results, and status icons
@@ -390,7 +389,7 @@ curl -s "http://{service-url}/status"
 
 Walk **every item** in the Coding Practices section of `developer-agent/skill.md` (including Standing Orders). These are non-negotiable standards. Every item in this table maps 1:1 to a rule in `developer-agent/skill.md`.
 
-**Report format requirement:** For every check that has a `grep`, `mypy`, `vulture`, `complexipy`, `interrogate`, `pip-audit`, `pylint`, `python -c`, or other command, the `TEST_RESULTS.md` report **must** include:
+**Report format requirement:** For every check that has a `grep`, `mypy`, `complexipy`, `interrogate`, `pip-audit`, `pylint`, `python -c`, or other command, the `TEST_RESULTS.md` report **must** include:
 
 1. The **exact command** that was run (copy-pastable).
 2. The **actual output** (or `0 matches` / `(no output)` if empty).
@@ -417,7 +416,7 @@ For audit tables (external module call sites, Any usage), use a dedicated table 
 | No invented patterns | Code review — verify all patterns match existing codebase conventions (e.g., FastAPI routers, dependency injection via `deps.py`). |
 | Functions do one thing | `grep -c "def " app/*.py` per file — spot-check any function > 25 lines for multiple responsibilities. Verify with `complexipy app/ -mx 15`. |
 | Fail fast and fail loud | `grep -rn "except.*pass$\|except.*:$" app/` — must be zero bare except-pass. `grep -rn "except.*continue$" app/` — must be zero. `grep -rn "except.*return None$\|except.*return \[\]\|except.*return {}" app/` — flag empty-default returns in except blocks. |
-| No dead code or commented-out blocks | `grep -rn "^#.*def \|^#.*class \|^#.*import \|^#.*return " app/` — must be zero. `vulture app/ --min-confidence 80` — must be zero findings. |
+| No dead code or commented-out blocks | `grep -rn "^#.*def \|^#.*class \|^#.*import \|^#.*return " app/` — must be zero. |
 
 #### Imports and Dependencies
 

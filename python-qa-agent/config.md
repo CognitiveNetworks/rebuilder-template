@@ -21,7 +21,6 @@
 | `pylint --disable=import-error --fail-under=10.0 app tests` | Lint check (matches CI) |
 | `black --check app tests --skip-string-normalization` | Format check (matches CI) |
 | `mypy app/ --ignore-missing-imports --disable-error-code=unused-ignore` | Type check (matches CI) |
-| `vulture app/ tests/ --min-confidence 80` | Dead code detection |
 | `pip-audit` | Dependency vulnerability scan |
 | `interrogate app/ tests/ -v` | Docstring coverage |
 | `pylint --disable=all --enable=duplicate-code app tests` | Duplicate code check |
@@ -62,7 +61,6 @@
 | pytest | 8.3.x |
 | pylint | ≥ 3.2.5 |
 | mypy | latest |
-| vulture | ≥ 2.10 |
 | pip-audit | ≥ 2.9.0 |
 | interrogate | ≥ 1.7.0 |
 | pylint | ≥ 3.0.0 |

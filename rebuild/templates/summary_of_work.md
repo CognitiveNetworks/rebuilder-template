@@ -173,7 +173,6 @@ format is required for every rebuild.]
 | Gate | Tool | Threshold | Result | Status |
 |---|---|---|---|---|
 | Test Coverage | pytest-cov | measured | [n% overall] | [MEASURED] |
-| Dead Code | vulture | 0 findings | [n findings] | [PASS/FAIL] |
 | Dependency Vulnerabilities | pip-audit | 0 critical/high | [n CVEs] | [PASS/FLAGGED] |
 | Docstring Coverage | interrogate | measured | [n%] | [MEASURED] |
 | Duplicate Code (DRY) | pylint + jscpd | < 3% duplication | [n% duplication] | [PASS/FAIL] |

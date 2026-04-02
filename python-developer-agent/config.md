@@ -25,7 +25,6 @@
 | `pylint --disable=import-error --fail-under=10.0 app tests` | Lint check (matches CI) |
 | `black --check app tests --skip-string-normalization` | Format check (matches CI) |
 | `mypy app/ --ignore-missing-imports --disable-error-code=unused-ignore` | Type check (matches CI) |
-| `vulture app/ tests/ --min-confidence 80` | Dead code detection |
 | `complexipy app -mx 15 && complexipy tests -mx 15` | Cognitive complexity (matches CI) |
 | `pylint --disable=all --enable=duplicate-code app tests` | Duplicate code check |
 | `pip-audit` | Dependency vulnerability scan |

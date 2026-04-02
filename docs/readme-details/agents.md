@@ -38,7 +38,7 @@ The `{lang}-qa-agent/` directories contain quality verification procedures for r
 
 | Language | Directory | Quality Gates |
 |---|---|---|
-| Python | `python-qa-agent/` | pytest, pylint, black, mypy, vulture, pip-audit, interrogate, complexipy |
+| Python | `python-qa-agent/` | pytest, pylint, black, mypy, pip-audit, interrogate, complexipy |
 | C | `c-qa-agent/` | clang-format, cppcheck, clang-tidy, Unity tests, gcov/lcov, lizard |
 | Go | `go-qa-agent/` | gofmt, go vet, golangci-lint, go test -race, gosec, govulncheck |
 

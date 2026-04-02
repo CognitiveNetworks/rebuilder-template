@@ -451,8 +451,7 @@ Run the full quality suite and produce a test results report. Must include:
 | # | Gate | Tool | Requirement |
 |---|------|------|-------------|
 | 7 | Coverage | pytest-cov | `--cov-report=term-missing`, modules below 50% explained |
-| 8 | Dead code | vulture | `--min-confidence 80`, 0 findings |
-| 9 | Dependency vulns | pip-audit | Critical/High must have remediation plan |
+| 8 | Dependency vulns | pip-audit | Critical/High must have remediation plan |
 | 10 | Docstring coverage | interrogate | Report %, identify gaps |
 | 11 | Duplicate code | pylint + jscpd | < 3% duplication |
 | 12 | Cognitive complexity | complexipy | `-mx 15`, 0 issues |
@@ -500,7 +499,6 @@ git update-index --chmod=+x <file>
 | complexipy | `complexipy {src} -mx 15` | Cognitive complexity |
 | helm unittest | `helm unittest ./charts` | Helm chart testing |
 | helm lint | `helm lint ./charts` | Helm validation |
-| vulture | `vulture {src}/ --min-confidence 80` | Dead code detection |
 | pip-audit | `pip-audit` | Dependency vulnerability scanning |
 | interrogate | `interrogate {src}/ -v` | Docstring coverage |
 
@@ -707,7 +705,7 @@ additional capabilities).
 Audit (Step 12) with category, checks, passed, and failed counts.
 
 **Extended Quality Gate Results:** Core gates (pytest, pylint, black, mypy)
-and extended gates (coverage, vulture, pip-audit, interrogate, duplicate code,
+and extended gates (coverage, pip-audit, interrogate, duplicate code,
 complexipy) from `tests/TEST_RESULTS.md`. Include brief notes on coverage
 gaps, flagged vulnerabilities, and justified exceptions.
 

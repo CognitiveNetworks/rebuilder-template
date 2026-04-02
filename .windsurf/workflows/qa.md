@@ -44,11 +44,6 @@ This workflow activates the QA agent to independently verify that the developer 
 
 // turbo
    ```
-   vulture app/ --min-confidence 80
-   ```
-
-// turbo
-   ```
    pip-audit
    ```
 

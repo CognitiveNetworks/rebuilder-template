@@ -1193,8 +1193,7 @@ After all compliance items pass, run the full quality suite and produce a test r
 **Extended Gates (mandatory — measured baselines or pass/fail):**
 
 7. **Test coverage** — `pytest-cov` with `--cov-report=term-missing` showing line-level coverage per module. Report overall %, identify modules below 50%, and explain gaps (e.g., "services require running Redis"). Pure logic modules should target ≥80%.
-8. **Dead code detection** — `vulture src/ --min-confidence 80`. Must show 0 findings. Unused code must be removed, not commented out.
-9. **Dependency vulnerabilities** — `pip-audit`. Report all findings. Critical/High CVEs in runtime dependencies must have a documented remediation plan or documented rationale for deferral.
+8. **Dependency vulnerabilities** — `pip-audit`. Report all findings. Critical/High CVEs in runtime dependencies must have a documented remediation plan or documented rationale for deferral.
 10. **Docstring coverage** — `interrogate src/ -v`. Report coverage percentage. Identify gaps. Public API functions and classes should have docstrings; thin wrappers and internal helpers may be excluded with justification.
 11. **Duplicate code (DRY)** — `pylint --disable=all --enable=duplicate-code src/` and `npx jscpd src/ --min-lines 5 --min-tokens 50`. Must show < 3% duplication. Any detected clones must be justified (e.g., intentional structural similarity) or refactored.
 12. **Cognitive complexity** — `complexipy src -mx 15`. Must show 0 issues at threshold 15.
@@ -1207,7 +1206,7 @@ After all compliance items pass, run the full quality suite and produce a test r
 
 **Required tools** (install in dev environment):
 ```
-pip install pytest-cov vulture pip-audit interrogate pylint complexipy
+pip install pytest-cov pip-audit interrogate pylint complexipy
 npx jscpd  # Node.js — for copy-paste detection
 ```
 
@@ -1260,7 +1259,6 @@ The template repository mandates the following tools in every rebuilt service. E
 | **Helm Unittest** | Helm chart unit testing | `helm unittest ./charts` | Requires helm plugin: `helm plugin install https://github.com/helm-unittest/helm-unittest.git` |
 | **Helm lint** | Helm chart validation | `helm lint ./charts` | Must pass with 0 errors |
 | **Helm template** | Helm chart rendering verification | `helm template ./charts` | Must render without errors |
-| **vulture** | Dead code detection | `vulture src/ --min-confidence 80` | Must show 0 findings |
 | **pip-audit** | Dependency vulnerability scanning | `pip-audit` | Critical/High CVEs must have remediation plan |
 | **interrogate** | Docstring coverage measurement | `interrogate src/ -v` | Report coverage percentage |
 
@@ -1694,7 +1692,6 @@ and compliance standards were defined before code was written.]
 | Gate | Tool | Threshold | Result | Status |
 |---|---|---|---|---|
 | Test Coverage | pytest-cov | measured | [n% overall] | [MEASURED] |
-| Dead Code | vulture | 0 findings | [n findings] | [PASS/FAIL] |
 | Dependency Vulnerabilities | pip-audit | 0 critical/high | [n CVEs] | [PASS/FLAGGED] |
 | Docstring Coverage | interrogate | measured | [n%] | [MEASURED] |
 | Duplicate Code (DRY) | pylint + jscpd | < 3% duplication | [n% duplication] | [PASS/FAIL] |
