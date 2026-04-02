@@ -46,7 +46,7 @@
 > The required tools, their configurations, CI pipeline definitions, Dockerfile pattern,
 > entrypoint/environment-check scripts, Helm chart templates, coding practices, and all
 > supporting files are defined in the **template repo**, cloned to `template/` during the
-> rebuild process (see `rebuild-inputs/<project>/template/`). The canonical source is
+> rebuild process (see `<dest>/template/`). The canonical source is
 > [`rebuilder-evergreen-template-repo-c`](https://github.com/CognitiveNetworks/rebuilder-evergreen-template-repo-c).
 >
 > **Read `template/skill.md` first.** It is the authoritative checklist — every item in it

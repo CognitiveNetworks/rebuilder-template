@@ -19,43 +19,7 @@ rebuilder-template/
 ├── rebuild/
 │   ├── IDEATION_PROCESS.md    # The rebuild analysis process definition (18 steps)
 │   ├── input.md               # Input template — copy to a working directory before filling out
-│   └── run.sh                 # Runner script — creates output structure in the input directory
-├── rebuild-inputs/            # Per-project working directories (gitignored)
-│   └── <project-name>/       # One directory per rebuild project
-│       ├── repo/                         # Cloned primary legacy codebase
-│       ├── template/                     # Cloned template repo (build standard — not an adjacent repo)
-│       │   └── skill.md                  # Authoritative checklist for built service structure
-│       ├── adjacent/                     # Optional: related repos included in rebuild scope
-│       │   └── <related-repo>/
-│       ├── scope.md                      # Filled-out scope
-│       ├── input.md                      # Filled-out input
-│       ├── output/                       # Steps 1-6: analysis artifacts and PRD
-│       │   ├── legacy_assessment.md
-│       │   ├── modernization_opportunities.md
-│       │   ├── feasibility.md
-│       │   ├── candidate_N.md
-│       │   ├── prd.md
-│       │   ├── summary-of-work.md         # Build summary — what was built, commits, quality gates
-│       │   ├── compliance-audit.md        # Compliance audit results
-│       │   └── process-feedback.md        # Process improvement notes
-│       ├── {lang}-developer-agent/               # Step 8: populated dev agent config
-│       │   ├── skill.md
-│       │   └── config.md
-│       ├── {lang}-qa-agent/                      # Step 8d: populated QA agent config
-│       │   ├── skill.md
-│       │   ├── config.md
-│       │   ├── TEST_RESULTS_TEMPLATE.md
-│       │   └── examples/
-│       ├── sre-agent/                    # Step 7: populated SRE agent config
-│       │   ├── skill.md
-│       │   └── config.md
-│       └── docs/
-│           ├── adr/                      # Step 9: architecture decision records
-│           │   └── *.md
-│           ├── feature-parity.md         # Step 10: feature parity matrix
-│           ├── data-migration-mapping.md  # Step 11: schema mapping
-│           ├── cutover-report.md         # Template — filled post-cutover
-│           └── disaster-recovery.md      # Template — filled during ops setup
+│   └── run.sh                 # Runner script — takes destination repo path as argument
 ├── docs/                      # Migration planning document templates
 │   ├── readme-refactor/       # Detailed docs extracted from README
 │   │   ├── how-to-use.md
@@ -148,4 +112,54 @@ rebuilder-template/
         ├── qa.md              # /qa — run all quality gates and generate verification report
         ├── populate-templates.md
         └── run-replicator.md  # /run-replicator — invokes @legacy-rebuild skill
+```
+
+### Destination Repo Structure (Working Area)
+
+All outputs are written to the **destination repo** — rebuilder-template is read-only.
+
+```
+rebuilder-<project>/               # The destination repo — all work happens here
+├── rebuild-inputs/                # User-provided inputs (preserved across runs)
+│   ├── scope.md                   # Filled-out scope
+│   ├── input.md                   # Filled-out input
+│   ├── repo/                      # Cloned primary legacy codebase
+│   └── adjacent/                  # Optional: related repos included in rebuild scope
+│       └── <related-repo>/
+├── template/                      # Cloned template repo (build standard, preserved across runs)
+│   └── skill.md                   # Authoritative checklist for built service structure
+├── output/                        # Steps 1-6: analysis artifacts and PRD
+│   ├── legacy_assessment.md
+│   ├── modernization_opportunities.md
+│   ├── feasibility.md
+│   ├── candidate_N.md
+│   ├── prd.md
+│   ├── summary-of-work.md
+│   ├── compliance-audit.md
+│   └── process-feedback.md
+├── {lang}-developer-agent/        # Step 8: populated dev agent config
+│   ├── skill.md
+│   └── config.md
+├── {lang}-qa-agent/               # Step 8d: populated QA agent config
+│   ├── skill.md
+│   ├── config.md
+│   ├── TEST_RESULTS_TEMPLATE.md
+│   └── examples/
+├── sre-agent/                     # Step 7: populated SRE agent config
+│   ├── skill.md
+│   └── config.md
+├── docs/
+│   ├── adr/                       # Step 9: architecture decision records
+│   │   └── *.md
+│   ├── feature-parity.md          # Step 10: feature parity matrix
+│   ├── data-migration-mapping.md  # Step 11: schema mapping
+│   ├── component-overview.md      # Step 2: component overview
+│   ├── cutover-report.md          # Template — filled post-cutover
+│   └── disaster-recovery.md       # Template — filled during ops setup
+├── src/                           # Phase 2: rebuilt application code
+├── tests/                         # Phase 2: tests
+├── Dockerfile                     # Phase 2: container image
+├── .windsurfrules                 # IDE instruction file (auto-loaded)
+└── .github/
+    └── copilot-instructions.md    # VS Code Copilot instruction file
 ```

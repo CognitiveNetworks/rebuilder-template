@@ -5,13 +5,20 @@
 
 ## How to Run
 
-1. Create a project working directory: `mkdir -p rebuild-inputs/my-project`
-2. Clone the primary legacy repo into it: `git clone <url> rebuild-inputs/my-project/repo`
-3. Copy `../scope.md` and `input.md` into the working directory (do not modify the templates).
-4. Fill out both copies with the current and target state of the application.
-5. Run `./run.sh ../rebuild-inputs/my-project`
-6. AI executes all steps and writes all results into the project directory.
-7. Read output files and decide which rebuild approach to pursue.
+The **destination repo** is the working area. rebuilder-template is read-only.
+
+1. Set up the destination repo:
+   ```
+   mkdir -p /path/to/rebuilder-my-project/rebuild-inputs
+   git clone <legacy-url> /path/to/rebuilder-my-project/rebuild-inputs/repo
+   git clone <template-url> /path/to/rebuilder-my-project/template
+   cp scope.md /path/to/rebuilder-my-project/rebuild-inputs/scope.md
+   cp rebuild/input.md /path/to/rebuilder-my-project/rebuild-inputs/input.md
+   ```
+2. Fill out both copies with the current and target state of the application.
+3. Run `./rebuild/run.sh /path/to/rebuilder-my-project`
+4. AI executes all steps and writes all results into the destination repo.
+5. Read output files and decide which rebuild approach to pursue.
 
 ## Input
 
@@ -372,7 +379,7 @@ After Steps 7–11 complete, verify cross-artifact coherence:
 ### Step 11b: Automated Output Validation (Phase 1)
 
 ```bash
-./rebuild/validate.sh rebuild-inputs/<project> analyze
+./rebuild/validate.sh <dest> analyze
 ```
 
 **Mandatory gate.** Do not proceed to Phase 2 until zero failures.
@@ -385,17 +392,17 @@ Steps 12–18 are executed **during the build phase** — after the developer ag
 
 ### Clean Start (required before writing any code)
 
-The destination directory (from `scope.md` → Destination Directory → Local Path) must be empty except for `.git/`. If running via `/run-replicator`, Step 1c already handled this. If running manually, clean it now:
+The destination repo must be empty except for `.git/`, `rebuild-inputs/` (user inputs + legacy repo), and `template/` (build standard). If running via `/run-replicator`, Step 1c already handled this. If running manually, clean it now:
 
 ```bash
-find <destination-dir> -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+find <dest> -mindepth 1 -maxdepth 1 ! -name '.git' ! -name 'rebuild-inputs' ! -name 'template' -exec rm -rf {} +
 ```
 
 **Do not skip this step.** Old code from a prior build will cause the agent to make incorrect assumptions about what already exists, leading to partial updates instead of clean implementations.
 
 ### Template Repo Checklist (required before writing code)
 
-> Read `template/skill.md` from `rebuild-inputs/<project>/template/`. Complete
+> Read `template/skill.md` from `<dest>/template/`. Complete
 > every checkbox during the Build phase. Do not invent your own tooling, configs,
 > or patterns — match the template. Mark N/A items with justification.
 >
@@ -728,7 +735,7 @@ Source, Tests, Infrastructure, Documentation.
 ### Step 18a: Automated Output Validation (Phase 2)
 
 ```bash
-./rebuild/validate.sh rebuild-inputs/<project> all
+./rebuild/validate.sh <dest> all
 ```
 
 **Final gate.** The rebuild is not complete until zero failures.
@@ -745,5 +752,5 @@ Source, Tests, Infrastructure, Documentation.
 - **Speed over perfection.** This process should take minutes, not days.
 - **Consistency after concurrency.** Parallel windows require subsequent consistency checks — not optional.
 - **Validate after each phase.** Run `rebuild/validate.sh` after Phase 1 (Step 11b) and Phase 2 (Step 18a). Do not proceed past a phase boundary with failures outstanding.
-- **Workspace isolation.** The replicator reads **only** from `rebuild-inputs/<project>/repo/` (legacy), `rebuild-inputs/<project>/template/` (build standard), and `rebuild-inputs/<project>/adjacent/` (if listed in scope.md). Never read from, reference, or import code from any other `rebuilder-*` repository in the workspace. Other rebuilder repos may be in any state — partially built, stale, or from a different project. Referencing them contaminates the build. The destination directory is wiped clean before every run; do not read from it expecting prior state.
-- **Clean destination.** Before Phase 2 writes any code, the destination directory (specified in `scope.md` → Destination Directory) must be wiped clean (preserving `.git/`). No file from a prior build may survive into the new build. The `/run-replicator` workflow handles this cleanup; if running manually, execute: `find <dest> -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +`
+- **Workspace isolation.** The replicator reads **only** from `<dest>/rebuild-inputs/repo/` (legacy), `<dest>/template/` (build standard), `<dest>/rebuild-inputs/adjacent/` (if listed in scope.md), and rebuilder-template (process definitions, read-only). Never read from, reference, or import code from any other `rebuilder-*` repository in the workspace. Other rebuilder repos may be in any state — partially built, stale, or from a different project. Referencing them contaminates the build.
+- **Clean destination.** Before the process writes any code, the destination repo must be wiped clean (preserving `.git/`, `rebuild-inputs/`, and `template/`). No file from a prior build may survive into the new build. The `/run-replicator` workflow handles this cleanup; if running manually, execute: `find <dest> -mindepth 1 -maxdepth 1 ! -name '.git' ! -name 'rebuild-inputs' ! -name 'template' -exec rm -rf {} +`

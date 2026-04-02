@@ -34,13 +34,13 @@ agent after the service code is written.
 
 ## Required Inputs
 
-Before starting, verify these exist in the project working directory:
+The **destination repo** is the working area. Before starting, verify these exist there:
 
-- `scope.md` — filled out with current and target state (includes Template Repository field)
-- `input.md` — filled out with pain points and context (includes Template Repository field)
-- `repo/` — the cloned legacy repository
+- `rebuild-inputs/scope.md` — filled out with current and target state (includes Template Repository field)
+- `rebuild-inputs/input.md` — filled out with pain points and context (includes Template Repository field)
+- `rebuild-inputs/repo/` — the cloned legacy repository
 - `template/` — the **required** template repo (`rebuilder-evergreen-template-repo-python`) that defines Dockerfile, entrypoint.sh, environment-check.sh, Helm charts, CI workflows, pip-compile, OTEL auto-instrumentation, quality gate tooling, and coding practices. **This is not optional.** The template repo is the build standard — not an adjacent repo. Its `skill.md` is the authoritative checklist for the Build phase.
-- (optional) `adjacent/` — cloned adjacent repos (production code dependencies)
+- (optional) `rebuild-inputs/adjacent/` — cloned adjacent repos (production code dependencies)
 
 ## Template Repository (Non-Negotiable)
 
@@ -67,11 +67,12 @@ proceed without it.
 ## Workspace Isolation
 
 The replicator reads **only** from these directories during a rebuild:
-- `rebuild-inputs/<project>/repo/` — the legacy codebase
-- `rebuild-inputs/<project>/template/` — the template repo (build standard)
-- `rebuild-inputs/<project>/adjacent/` — adjacent production dependencies (if listed in scope.md)
+- `<dest>/rebuild-inputs/repo/` — the legacy codebase
+- `<dest>/template/` — the template repo (build standard)
+- `<dest>/rebuild-inputs/adjacent/` — adjacent production dependencies (if listed in scope.md)
+- rebuilder-template — process definitions and agent templates (read-only)
 
-**Never read from, reference, or import code from any other `rebuilder-*` repository in the workspace.** Other rebuilder repos may be partially built, stale, or from a different project. The destination directory is wiped clean before every run (see `scope.md` → Destination Directory). Do not read from the destination expecting prior state — the build starts from zero.
+**Never read from, reference, or import code from any other `rebuilder-*` repository in the workspace.** Other rebuilder repos may be partially built, stale, or from a different project. The destination repo is wiped clean before every run (preserving `.git/`, `rebuild-inputs/`, and `template/`). Do not read from other repos expecting reusable state — each build starts from zero.
 
 ## Supporting Files
 
@@ -102,24 +103,24 @@ When populating agent templates (Steps 7–8), follow the strict rules in
 ## Quick Start
 
 ```bash
-# 1. Create project directory
-mkdir -p rebuild-inputs/my-project
+# 1. Create destination repo
+mkdir -p /path/to/rebuilder-my-project/rebuild-inputs
+cd /path/to/rebuilder-my-project && git init
 
-# 2. Clone legacy repo
-git clone <url> rebuild-inputs/my-project/repo
+# 2. Clone legacy repo into rebuild-inputs/
+git clone <url> rebuild-inputs/repo
 
 # 3. Clone the template repo (required — not optional)
-git clone git@github.com:CognitiveNetworks/rebuilder-evergreen-template-repo-python.git \
-  rebuild-inputs/my-project/template
+git clone git@github.com:CognitiveNetworks/rebuilder-evergreen-template-repo-python.git template
 
-# 4. Copy templates
-cp scope.md rebuild-inputs/my-project/scope.md
-cp rebuild/input.md rebuild-inputs/my-project/input.md
+# 4. Copy input templates from rebuilder-template
+cp /path/to/rebuilder-template/scope.md rebuild-inputs/scope.md
+cp /path/to/rebuilder-template/rebuild/input.md rebuild-inputs/input.md
 
 # 5. Fill out scope.md and input.md
 
-# 6. Run
-./rebuild/run.sh rebuild-inputs/my-project
+# 6. Run (from rebuilder-template)
+/path/to/rebuilder-template/rebuild/run.sh /path/to/rebuilder-my-project
 ```
 
 Or use the `/run-replicator` workflow for interactive execution.

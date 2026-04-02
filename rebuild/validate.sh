@@ -4,9 +4,9 @@
 # Checks that all expected output files exist and contain required sections.
 #
 # Usage:
-#   ./validate.sh /path/to/rebuild-inputs/my-project          # Validate all steps
-#   ./validate.sh /path/to/rebuild-inputs/my-project analyze   # Validate Steps 1-11 only
-#   ./validate.sh /path/to/rebuild-inputs/my-project build     # Validate Steps 12-18 only
+#   ./validate.sh /path/to/destination-repo          # Validate all steps
+#   ./validate.sh /path/to/destination-repo analyze   # Validate Steps 1-11 only
+#   ./validate.sh /path/to/destination-repo build     # Validate Steps 12-18 only
 #
 # Exit codes:
 #   0 — all checks pass
@@ -21,7 +21,7 @@ BOLD='\033[1m'
 NC='\033[0m'
 
 if [ -z "${1:-}" ]; then
-    echo "Usage: ./validate.sh /path/to/input-directory [analyze|build|all]"
+    echo "Usage: ./validate.sh /path/to/destination-repo [analyze|build|all]"
     exit 1
 fi
 
@@ -99,13 +99,19 @@ validate_analyze() {
 
     # Detect target language (same logic as run.sh)
     local target_lang="python"
-    if [ -f "$INPUT_DIR/scope.md" ]; then
+    local scope_file="$INPUT_DIR/rebuild-inputs/scope.md"
+    # Fall back to old location for backward compatibility
+    if [ ! -f "$scope_file" ] && [ -f "$INPUT_DIR/scope.md" ]; then
+        scope_file="$INPUT_DIR/scope.md"
+    fi
+    if [ -f "$scope_file" ]; then
         local scope_lang
-        scope_lang=$(grep -i 'Target Language' "$INPUT_DIR/scope.md" 2>/dev/null | head -1 | sed 's/.*|\s*`\?\([a-zA-Z]*\)`\?.*/\1/' | tr '[:upper:]' '[:lower:]')
+        scope_lang=$(grep -i 'Target Language' "$scope_file" 2>/dev/null | head -1 | sed 's/.*|\s*`\?\([a-zA-Z]*\)`\?.*/\1/' | tr '[:upper:]' '[:lower:]')
         if [ -n "$scope_lang" ] && echo "$scope_lang" | grep -qE '^(python|c|go)$'; then
             target_lang="$scope_lang"
         fi
     fi
+    echo "  scope.md: $scope_file"
     local dev_agent="${target_lang}-developer-agent"
     local qa_agent="${target_lang}-qa-agent"
 

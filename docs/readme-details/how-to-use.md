@@ -56,7 +56,7 @@ Tell the agent which legacy repo to rebuild. It clones the repo, creates the pro
 | Rebuild a single service | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service. The repo is at github.com/your-org/my-service."* |
 | Rebuild with related repos | *"Read rebuild/IDEATION_PROCESS.md and rebuild my-service with adjacent repos auth-api and worker-app."* |
 
-All outputs land in `rebuild-inputs/<project>/`.
+All outputs land in the destination repo.
 
 > [!IMPORTANT]
 > Review the outputs — especially `scope.md` Target State and `output/prd.md`. The Current Application section comes from the code; the Target State comes from your decisions. Adjust before proceeding to the build phase.

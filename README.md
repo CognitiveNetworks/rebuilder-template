@@ -16,7 +16,7 @@ That's it. The agent handles the rest.
 
 Three phases — each feeds into the next:
 
-**Phase 1 — Analyze:** The agent reads the legacy codebase and produces a PRD, architecture decisions, and populated agent configs. All outputs land in `rebuild-inputs/<project>/`. You review before anything is built.
+**Phase 1 — Analyze:** The agent reads the legacy codebase and produces a PRD, architecture decisions, and populated agent configs. All outputs land in the **destination repo** (e.g., `rebuilder-evergreen-tvevents/`). You review before anything is built.
 
 **Phase 2 — Build:** Tell the agent to create a new repo and build from the PRD. The developer agent writes the code; the QA agent independently verifies it.
 
@@ -83,7 +83,7 @@ The agent produces everything you need:
 - **Agent configs** — populated developer, QA, and SRE agent files for your specific project
 - **Built service** — tested code, CI/CD pipeline, Terraform, `/ops/* endpoints, OpenAPI spec
 
-All outputs land in `rebuild-inputs/<project>/`.
+All outputs land in the destination repo.
 
 ## Detail Documentation
 

@@ -30,7 +30,7 @@ The project-specific values come from: [path to scope.md, input.md, or other sou
 1. Read the **template** file from `sre-agent/skill.md` or `sre-agent/config.md`
 2. Read the **project source** files (`scope.md`, `input.md`, any adjacent docs)
 3. Apply the prompting rules above
-4. Write the populated file to `rebuild-inputs/<project>/sre-agent/skill.md` or `config.md`
+4. Write the populated file to `<dest>/sre-agent/skill.md` or `config.md`
 5. **Verification step**: Read both the template and the output, and confirm:
    - Same number of `##` headings
    - Same number of tables
