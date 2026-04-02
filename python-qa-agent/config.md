@@ -43,6 +43,7 @@
 | Lint errors | 0 | Merge |
 | Format violations | 0 | Merge |
 | Type errors | 0 | Merge |
+| Dead code | 0 commented-out defs/classes/imports | Release |
 | Runtime CVEs | 0 | Release |
 | Docstring coverage | ≥ 80% | Release |
 | Duplicate code | < 3% | Release |

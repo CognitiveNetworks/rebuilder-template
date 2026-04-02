@@ -83,28 +83,35 @@ $ pip-audit
 
 **Assessment:** [Explain findings — runtime vs dev-only? Action needed?]
 
-### 7. Docstring Coverage (interrogate) — [PASS ✅ / FAIL ❌]
+### 7. Dead Code (grep) — [PASS ✅ / FAIL ❌]
+
+```
+$ grep -rn "^#.*def \|^#.*class \|^#.*import " app/ tests/
+[paste output — must be zero results]
+```
+
+### 8. Docstring Coverage (interrogate) — [PASS ✅ / FAIL ❌]
 
 ```
 $ interrogate app tests -v
 [paste RESULT line]
 ```
 
-### 8. Duplicate Code (pylint) — [PASS ✅ / FAIL ❌]
+### 9. Duplicate Code (pylint) — [PASS ✅ / FAIL ❌]
 
 ```
 $ pylint --disable=all --enable=duplicate-code app tests
 [paste score line]
 ```
 
-### 9. Cognitive Complexity (complexipy) — [PASS ✅ / FAIL ❌]
+### 10. Cognitive Complexity (complexipy) — [PASS ✅ / FAIL ❌]
 
 ```
 $ complexipy app -mx 15 && complexipy tests -mx 15
 [paste summary line]
 ```
 
-### 10. Dependency Pinning (scripts/lock.sh) — [PASS ✅ / FAIL ❌]
+### 11. Dependency Pinning (scripts/lock.sh) — [PASS ✅ / FAIL ❌]
 
 ```
 $ ls -la scripts/lock.sh
@@ -129,14 +136,14 @@ $ head -1 requirements-dev.txt
 
 ## Helm Gates
 
-### 11. Helm Lint — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
+### 12. Helm Lint — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
 
 ```
 $ helm lint charts/
 [paste output or note if Helm CLI unavailable]
 ```
 
-### 12. Helm Template Render — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
+### 13. Helm Template Render — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
 
 ```
 $ tests/test-helm-template.sh -all
@@ -147,14 +154,14 @@ $ tests/test-helm-template.sh -all
 
 ## Container Gates
 
-### 13. Container Build — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
+### 14. Container Build — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
 
 ```
 $ docker build --platform linux/amd64 -t {service}:ci .
 [paste final output line or "Exit 0"]
 ```
 
-### 14. Container Isolation Smoke Test — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
+### 15. Container Isolation Smoke Test — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
 
 ```
 $ docker run -d -p 8000:8000 -e TEST_CONTAINER=true -e ENV=dev -e AWS_REGION=us-east-1 \
@@ -167,7 +174,7 @@ $ curl --silent --fail http://localhost:8000/status
 $ docker stop {service}-ci && docker rm {service}-ci
 ```
 
-### 15. Docker Compose Full-Stack Smoke Test — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
+### 16. Docker Compose Full-Stack Smoke Test — [PASS ✅ / FAIL ❌ / NOT RUN ⚠️]
 
 > If no `docker-compose.yml` exists: mark `NOT RUN — no compose file`.
 > If Docker daemon unavailable: mark `NOT RUN — Docker unavailable`.
