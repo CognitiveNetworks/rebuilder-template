@@ -604,9 +604,85 @@ At session end, for every manual correction the operator gave:
 
 ### Step 18: Summary of Work
 
-Generate a single summary document communicating rebuild value and scope. Gather metrics programmatically — count files and lines from both legacy and rebuilt codebases. Do not estimate.
+After all previous steps are complete, generate a single summary document that
+communicates the value and scope of the rebuild at a glance. This document is
+for stakeholders, leadership, and teams evaluating the rebuild approach.
 
-**Output:** Write to `output/summary-of-work.md` using the template at `rebuild/templates/summary_of_work.md`.
+**Gather metrics programmatically.** Count files and lines from both the legacy
+codebase (`repo/` and any `adjacent/` directories) and the rebuilt codebase.
+Do not estimate — measure.
+
+**Output:** Write to `output/summary-of-work.md` using the template at
+`rebuild/templates/summary_of_work.md`. Copy the template, then populate every
+placeholder with real values. The template is the **authoritative structure** —
+do not add, remove, or reorder sections.
+
+#### Section-by-Section Population Guide
+
+**Overview (two-column HTML table):**
+- Left column (55%): Three executive summary paragraphs.
+  - Paragraph 1: What the legacy application was, its problems, and why it
+    needed rebuilding.
+  - Paragraph 2: How the rebuild was executed (spec-driven automated process).
+  - Paragraph 3 ("Bottom line"): Synthesize for a non-technical reader:
+    (1) how long the rebuild would take a human engineer, (2) how long it
+    actually took with AI-driven automation, and (3) why the rebuilt codebase
+    is more maintainable going forward.
+- Right column (45%): Key Numbers table with headline metrics measured
+  programmatically (source lines eliminated, code reduction %, dependencies
+  removed, compliance checks passed, quality gates passed, test coverage,
+  CVEs, new endpoints, ADRs, total files).
+
+**Estimated Human Time Equivalent:**
+- Two engineer profiles are **mandatory**: "Familiar Engineer" (senior, knows
+  the legacy codebase) and "Unfamiliar Engineer" (new to the codebase, must
+  build context first). Both assume full-time 8h days.
+- Use the exact table structure from the template with phases: Legacy analysis
+  (Steps 1–3), Architecture & design (Steps 4–8), Feature parity & data
+  mapping (Steps 9–10), Implementation, Testing, Compliance & docs (Steps
+  11–16), Total.
+- Each row must include: deliverables, day ranges for both profiles, and a
+  basis column with justification citing LOC counts, file counts, and domain
+  complexity.
+- After the table: state the actual AI-driven pipeline time (use real
+  conversation timestamps — never fabricate), estimated acceleration factor
+  for each profile, and that the human role shifted from execution to review.
+- Include the four numbered footnotes from the template (McConnell, Jones ×2,
+  Meszaros).
+- **Do not use a single "Engineer-Days" column.** The dual-column format is
+  mandatory for consistency across all rebuild summaries.
+
+**Spec-Driven Approach:** Table showing each step in IDEATION_PROCESS.md that
+was executed and what artifact it produced.
+
+**Source Code Metrics:** Three sub-tables — Legacy Codebase, Rebuilt Codebase,
+and Comparison. All values measured programmatically (`find`, `wc -l`, etc.).
+
+**Dependency Cleanup:** Two sub-tables — Removed (with issue and replacement —
+**never leave the replacement column blank**) and Current (with version and
+purpose). Include the runtime dependency count comparison.
+
+**Legacy Health Scorecard:** Reproduce ratings from the legacy assessment
+(Step 1) for all 10 dimensions.
+
+**New Capabilities:** Table comparing legacy vs. rebuilt for each capability
+(HTTP API, OpenAPI Spec, Structured Logging, Distributed Tracing, Health
+Checks, Container Image, IaC, CI/CD, SRE Diagnostic Endpoints, plus any
+additional capabilities).
+
+**Compliance Result:** Summary from the Developer Agent Standards Compliance
+Audit (Step 12) with category, checks, passed, and failed counts.
+
+**Extended Quality Gate Results:** Core gates (pytest, pylint, black, mypy)
+and extended gates (coverage, vulture, pip-audit, interrogate, duplicate code,
+complexipy) from `tests/TEST_RESULTS.md`. Include brief notes on coverage
+gaps, flagged vulnerabilities, and justified exceptions.
+
+**Architecture Decisions:** Summary table of all ADRs with number, title,
+decision, and key trade-off.
+
+**File Inventory:** Tree view of all delivered files organized by category:
+Source, Tests, Infrastructure, Documentation.
 
 ### Step 18a: Automated Output Validation (Phase 2)
 
