@@ -64,6 +64,15 @@ the built repo and stays there permanently. If the template repo is not cloned
 into `template/`, the agent cannot verify conformance — the rebuild must not
 proceed without it.
 
+## Workspace Isolation
+
+The replicator reads **only** from these directories during a rebuild:
+- `rebuild-inputs/<project>/repo/` — the legacy codebase
+- `rebuild-inputs/<project>/template/` — the template repo (build standard)
+- `rebuild-inputs/<project>/adjacent/` — adjacent production dependencies (if listed in scope.md)
+
+**Never read from, reference, or import code from any other `rebuilder-*` repository in the workspace.** Other rebuilder repos may be partially built, stale, or from a different project. The destination directory is wiped clean before every run (see `scope.md` → Destination Directory). Do not read from the destination expecting prior state — the build starts from zero.
+
 ## Supporting Files
 
 | File | Purpose |

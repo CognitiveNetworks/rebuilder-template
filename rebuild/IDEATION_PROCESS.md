@@ -383,6 +383,16 @@ After Steps 7–11 complete, verify cross-artifact coherence:
 
 Steps 12–18 are executed **during the build phase** — after the developer agent has written the service code.
 
+### Clean Start (required before writing any code)
+
+The destination directory (from `scope.md` → Destination Directory → Local Path) must be empty except for `.git/`. If running via `/run-replicator`, Step 1c already handled this. If running manually, clean it now:
+
+```bash
+find <destination-dir> -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+```
+
+**Do not skip this step.** Old code from a prior build will cause the agent to make incorrect assumptions about what already exists, leading to partial updates instead of clean implementations.
+
 ### Template Repo Checklist (required before writing code)
 
 > Read `template/skill.md` from `rebuild-inputs/<project>/template/`. Complete
@@ -735,3 +745,5 @@ Source, Tests, Infrastructure, Documentation.
 - **Speed over perfection.** This process should take minutes, not days.
 - **Consistency after concurrency.** Parallel windows require subsequent consistency checks — not optional.
 - **Validate after each phase.** Run `rebuild/validate.sh` after Phase 1 (Step 11b) and Phase 2 (Step 18a). Do not proceed past a phase boundary with failures outstanding.
+- **Workspace isolation.** The replicator reads **only** from `rebuild-inputs/<project>/repo/` (legacy), `rebuild-inputs/<project>/template/` (build standard), and `rebuild-inputs/<project>/adjacent/` (if listed in scope.md). Never read from, reference, or import code from any other `rebuilder-*` repository in the workspace. Other rebuilder repos may be in any state — partially built, stale, or from a different project. Referencing them contaminates the build. The destination directory is wiped clean before every run; do not read from it expecting prior state.
+- **Clean destination.** Before Phase 2 writes any code, the destination directory (specified in `scope.md` → Destination Directory) must be wiped clean (preserving `.git/`). No file from a prior build may survive into the new build. The `/run-replicator` workflow handles this cleanup; if running manually, execute: `find <dest> -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +`

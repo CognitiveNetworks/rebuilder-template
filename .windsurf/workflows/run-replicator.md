@@ -11,11 +11,21 @@ and supporting file references.
 ## Prerequisites
 
 The project directory must exist under `rebuild-inputs/` with:
-- `scope.md` — filled out with current and target state
+- `scope.md` — filled out with current and target state (must include **Destination Directory** with a local path)
 - `input.md` — filled out with pain points and context
 - `repo/` — the cloned legacy repository
 - `template/` — the cloned template repo (e.g., `rebuilder-evergreen-template-repo-python`). This is the build standard — not an adjacent repo. Its `skill.md` is the authoritative checklist for how the rebuilt service must be structured.
 - (optional) `adjacent/` — cloned adjacent repos (production code dependencies)
+
+### Workspace Isolation (Mandatory)
+
+The replicator process reads **only** these directories:
+- `rebuild-inputs/<project>/repo/` — the legacy codebase
+- `rebuild-inputs/<project>/template/` — the template repo (build standard)
+- `rebuild-inputs/<project>/adjacent/` — adjacent production dependencies (if listed in scope.md)
+- `rebuild-inputs/<project>/` — scope.md, input.md, and process outputs
+
+**Never read from, reference, or import code from any other `rebuilder-*` repository in the workspace.** Other rebuilder repos (e.g., `rebuilder-ingesttimeline`, `rebuilder-evergreen-tvevents` from a prior run) may be in any state — partially built, stale, or broken. Referencing them contaminates the current build with assumptions from a different project or a prior attempt. The destination directory is wiped clean precisely so the build starts from zero.
 
 ## Steps
 
@@ -27,6 +37,19 @@ The project directory must exist under `rebuild-inputs/` with:
    git clone <template-repo-url> <project-dir>/template
    ```
    After cloning, verify `<project-dir>/template/skill.md` exists. This file is the authoritative checklist for the Build phase.
+
+1c. **Clean the destination directory.** Read `<project-dir>/scope.md` → Destination Directory → Local Path. This is the target repo where the rebuilt service will be written. **Wipe it clean** so no stale code from a prior run contaminates the new build:
+   ```
+   # Preserve .git/ so the repo stays connected to its remote
+   # Remove everything else — old app code, old configs, old test results
+   find <destination-dir> -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+   ```
+   If the destination directory does not exist, create it and initialize a git repo:
+   ```
+   mkdir -p <destination-dir>
+   git -C <destination-dir> init
+   ```
+   **Confirm with the user before deleting.** Show the destination path and ask for explicit approval. This is a destructive operation.
 
 // turbo
 2. **Create output directories** if they don't already exist:

@@ -135,6 +135,38 @@ if [ -d "$INPUT_DIR/template" ] && [ ! -f "$INPUT_DIR/template/skill.md" ]; then
     echo "Warning: template/skill.md not found. The template repo may be incomplete."
 fi
 
+# Detect and clean destination directory from scope.md
+DEST_DIR=""
+DEST_LINE=$(grep -A2 'Local Path' "$SCOPE_FILE" | grep '|' | tail -1 | sed 's/.*|\s*//' | sed 's/\s*|.*//' | sed 's/\*//g' | sed 's/\[.*\]//' | xargs)
+if [ -n "$DEST_DIR_OVERRIDE" ]; then
+    DEST_DIR="$DEST_DIR_OVERRIDE"
+elif [ -n "$DEST_LINE" ] && [ "$DEST_LINE" != "e.g.," ] && [[ ! "$DEST_LINE" =~ ^\[TODO ]] && [[ ! "$DEST_LINE" =~ ^\*\[ ]]; then
+    # Resolve relative paths from the repo root
+    if [[ "$DEST_LINE" = /* ]]; then
+        DEST_DIR="$DEST_LINE"
+    else
+        DEST_DIR="$(cd "$REPO_DIR" && cd "$(dirname "$DEST_LINE")" 2>/dev/null && pwd)/$(basename "$DEST_LINE")"
+    fi
+fi
+
+if [ -n "$DEST_DIR" ] && [ -d "$DEST_DIR" ]; then
+    echo ""
+    echo "⚠️  Destination directory detected: $DEST_DIR"
+    echo "    This directory will be wiped clean (preserving .git/) before the build."
+    echo ""
+    read -p "    Proceed with cleanup? [y/N] " confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        find "$DEST_DIR" -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+        echo "    ✅ Destination directory cleaned."
+    else
+        echo "    ⏭  Skipping cleanup. Old files may remain."
+    fi
+elif [ -n "$DEST_DIR" ] && [ ! -d "$DEST_DIR" ]; then
+    echo ""
+    echo "📁 Destination directory does not exist yet: $DEST_DIR"
+    echo "   It will be created during the Build phase."
+fi
+
 # Detect adjacent repos (optional — for multi-repo rebuilds)
 ADJACENT_PROMPT=""
 if [ -d "$INPUT_DIR/adjacent" ]; then

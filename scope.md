@@ -137,6 +137,18 @@
 
 > *[A new repository for the rebuilt application. The legacy codebase will not be modified.]*
 
+### Destination Directory
+
+> The local filesystem path to the target repository. The replicator wipes this
+> directory clean (preserving `.git/`) before every run so no stale code from
+> prior builds contaminates the new build. This path must be an absolute path
+> or a path relative to the user's workspace root.
+
+| Field | Value |
+|---|---|
+| Local Path | *[e.g., `/Users/you/Vizio/rebuilder-evergreen-tvevents` or `../rebuilder-evergreen-tvevents`]* |
+| GitHub Repo | *[e.g., `CognitiveNetworks/rebuilder-evergreen-tvevents`]* |
+
 ### Goals
 
 > *[Numbered list of rebuild goals — what the rebuild should achieve]*
