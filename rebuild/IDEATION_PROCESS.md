@@ -43,7 +43,7 @@ writes its own output — no sub-agent depends on another's output.
 |--------|-------|---------------|--------------|
 | **W1** | Step 1 | Steps 2 + 3 | `legacy_assessment.md`, `scope.md`, `input.md`, `repo/` |
 | **W2** | Step 6 | Steps 7 + 8 + 9 + 10 + 11 | `prd.md`, all Step 1–5 outputs, `scope.md`, `input.md`, `repo/`, template files |
-| **W3** | Step 12 | Steps 13a + 14 + 15 | Built codebase + `prd.md` + Step 12 audit results |
+| **W3** | Step 12 | Steps 13a + 13b + 14 + 15 | Built codebase + `prd.md` + Step 12 audit results |
 
 After each window, a **consistency check** verifies cross-artifact coherence.
 If sub-agents are not available, execute steps sequentially — identical results.
@@ -514,9 +514,10 @@ After any code change adding/removing/modifying endpoints, verify every document
 
 **Rule:** If an endpoint exists in code but not in docs, or in docs but not in code, the build is not complete.
 
-> **W3:** Steps 13a, 14, and 15 produce independent outputs. Dispatch
+> **W3:** Steps 13a, 13b, 14, and 15 produce independent outputs. Dispatch
 > concurrently if sub-agents available. Step 13 must complete first (may trigger
-> code changes). After W3, run Step 15a.
+> code changes). 13b (legacy endpoint compatibility) is a merge blocker —
+> do not proceed to 13c (Docker validation) until 13b passes. After W3, run Step 15a.
 
 ### Step 13a: Domain-Realistic Test Scenarios
 
@@ -530,7 +531,39 @@ AI-generated tests reveal themselves through generic data (`"abc123"`, `"token"`
 - **Assert on business-meaningful values**, not just status codes
 - **Validate response shapes** against what real clients parse
 
-### Step 13b: Docker Runtime Validation
+### Step 13b: Legacy Endpoint Compatibility Verification
+
+The rebuilt service must be **wire-compatible** with the legacy service for all existing endpoints. External integration test suites (e.g., unitE) and upstream clients (load balancers, monitoring, other services) call the legacy API and expect identical response formats. Any deviation causes integration test failures or production incidents.
+
+**Required checks for every endpoint that existed in the legacy service:**
+
+| # | Check | What to verify |
+|---|-------|----------------|
+| 1 | **Response format** | Same content type (plain text vs JSON), same body structure, same HTTP status codes |
+| 2 | **Error response shape** | Same JSON keys and value semantics — e.g., if legacy returns `{"error": "ClassName", "message": "details"}`, the rebuilt service must return the same shape, not `{"error": "details", "detail": null}` |
+| 3 | **Required parameters** | Same set of required parameters with same names and validation behavior — if legacy requires `EventType` and `timestamp`, the rebuilt service must too |
+| 4 | **Query parameters** | If legacy reads params from URL query string (`?tvid=X&event_type=Y`), the rebuilt service must read the same query params |
+| 5 | **Cross-validation** | If legacy cross-validates URL params vs body params (logging mismatches), the rebuilt service must do the same |
+| 6 | **Exception class names** | If legacy returns exception class names in error responses (e.g., `TvEventsMissingRequiredParamError`), the rebuilt service must return matching names |
+
+**How to verify:**
+
+1. Read every route handler in the legacy service. For each endpoint, document: HTTP method, path, query params read, body format, success response, error response(s).
+2. Compare against the rebuilt service's corresponding handler. Every item above must match.
+3. If an external integration test suite exists (e.g., unitE), deploy the rebuilt service to a PR environment and run the suite. All tests must pass before merge.
+
+**Common mistakes that break integration tests:**
+
+| Legacy (Flask) | Rebuilt (FastAPI) — WRONG | Fix |
+|----------------|--------------------------|-----|
+| `return "OK"` (plain text) | `return JSONResponse({"status": "ok"})` | Use `PlainTextResponse("OK")` |
+| `{"error": "ClassName", "message": "..."}` | `{"error": "...", "detail": null}` | Match legacy key names and values |
+| `request.args.get('tvid')` (URL query param) | Ignores query params | Add `Query(default=None)` params |
+| Required: `tvid, client, h, EventType, timestamp` | Required: `tvid, client, h` only | Include all legacy required params |
+
+> **This step is a merge blocker.** A rebuilt service that passes all unit tests but breaks integration tests is not production-ready. Wire compatibility with the legacy service's API contract is non-negotiable.
+
+### Step 13c: Docker Runtime Validation
 
 Validate the full stack runs in Docker after unit tests pass.
 
