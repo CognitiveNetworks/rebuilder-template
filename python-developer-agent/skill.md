@@ -32,7 +32,7 @@
 - *[Seed data — e.g., `python seed.py` to populate reference data]*
 - *[Test command — e.g., `pytest`]*
 - *[Lint command — e.g., `pylint --disable=import-error --fail-under=10.0 app tests`]*
-- *[Run command — e.g., `uvicorn main:app --reload`]*
+- *[Run command — e.g., `uvicorn app.main:app --host :: --port 8000 --reload`]*
 - *[Verify command — e.g., `curl http://localhost:8000/health`]*
 
 ### Local Dev Parity
@@ -43,6 +43,7 @@
 - **Python imports must use `app.*`.** All source code imports must use `from app.module import ...`. The `entrypoint.sh` must use `uvicorn app.main:app`. Since `app/` is at the repo root, `app.*` imports resolve directly in all environments.
 - **Container dependencies must be pinned for reproducible builds.** The `Dockerfile` must install from a `requirements.lock.txt` file (or equivalent) that contains exact package versions, not from `requirements.txt` which may have version ranges. Use `pip install --no-cache-dir -r requirements.lock.txt` to ensure identical dependency resolution across builds and environments. Generate the lock file using `pip-tools compile` or equivalent.
 - **Dependency locking script must be executed and its output must be captured.** The `scripts/lock.sh` script must be executable (`chmod +x scripts/lock.sh`) and must be run after any modification to `pyproject.toml` or dependency changes. The QA agent must actually execute `bash scripts/lock.sh`, capture the full terminal output, and include it in `TEST_RESULTS.md`. Do not infer the script was run from the presence of pip-compile headers or file timestamps — the actual execution output is required evidence. Run the script twice and compare `md5`/`md5sum` hashes of `requirements.txt` and `requirements-dev.txt` between runs to prove idempotent behavior. Both runs and both hash comparisons must appear in the report.
+- **Shell scripts and hooks must be committed with executable permissions.** IDE file-creation tools (e.g., Windsurf `write_to_file`, Copilot) create files as `100644` (non-executable). All `.sh` files and `hooks/*` files must be made executable before commit: `chmod +x <file>` followed by `git update-index --chmod=+x <file>`. Verify with `git ls-files -s <file>` — the mode must be `100755`, not `100644`. This applies to: `scripts/entrypoint.sh`, `scripts/environment-check.sh`, `scripts/lock.sh`, `hooks/pre-commit`, and any other shell scripts or hook files in the repo.
 - **Pylint must be configured for CI environments.** Configure pylint in `pyproject.toml` with `--disable=import-error` for local modules that aren't installable in CI (e.g., kafka, rds modules). Use `--fail-under=10.0` to require a perfect score with no errors, warnings, or conventions issues. Ensure all production dependencies are installed before running pylint in CI — install both production and dev requirements: `pip install -r requirements.txt -r requirements-dev.txt`.
 - Seed data scripts are checked into the repo and run as part of local setup. A developer should go from clone to working stack with a single command.
 - Environment variables for local development are documented in a `.env.example` file. Never commit `.env` files with real values.

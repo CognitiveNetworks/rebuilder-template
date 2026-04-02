@@ -450,7 +450,7 @@ docker run -p 4318:4318 otel/opentelemetry-collector
 
 # Start the service with OTEL enabled
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
-uvicorn main:app --host 0.0.0.0 --port 8080
+uvicorn main:app --host :: --port 8080
 ```
 
 ## Token Budget Controls

@@ -476,6 +476,17 @@ Verify every structural component from the template repo exists in the built rep
 - [ ] `.actrc`, `env.list`, `monitored-paths.txt`, `.pylintrc`, `.python-version`, `catalog-info.yaml`
 - [ ] `docker-compose.yml` — full local dev stack with healthchecks
 - [ ] `template/skill.md` — copied from template repo, referenced in `.windsurfrules`
+
+**File permissions verification:** IDE file-creation tools write all files as `100644` (non-executable). After staging, verify every `.sh` file and `hooks/*` file is `100755` in the git index:
+
+```bash
+# Check — all should show 100755
+git ls-files -s -- '*.sh' 'hooks/*'
+
+# Fix any that show 100644
+chmod +x <file>
+git update-index --chmod=+x <file>
+```
 - [ ] `.github/scripts/pod-identity-generator/`, `.github/scripts/workflow-runner.sh`
 
 **Required tooling** (each must be in pyproject.toml dev deps, configured, and in CI):
