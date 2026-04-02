@@ -86,7 +86,7 @@ flowchart TB
         DOC_TPL["docs/ templates<br/>cutover-report, disaster-recovery,<br/>feature-parity, data-migration"]
     end
 
-    subgraph OUTPUTS ["Outputs  (written to rebuild-inputs/project/)"]
+    subgraph OUTPUTS ["Outputs  (written to destination repo)"]
         ASSESS["output/<br/>legacy_assessment.md<br/>modernization_opportunities.md<br/>feasibility.md · candidate_N.md"]
         PRD["output/prd.md"]
         ADRS["docs/adr/*.md"]

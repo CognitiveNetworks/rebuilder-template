@@ -12,7 +12,7 @@
 #   ./deploy.sh <project-dir> --gcp-project <id> --service-url <url> [options]
 #
 # Example:
-#   ./deploy.sh ../../rebuild-inputs/orderflow \
+#   ./deploy.sh /path/to/rebuilder-orderflow \
 #     --gcp-project my-gcp-project \
 #     --service-url https://orderflow-abc123.run.app
 
@@ -54,7 +54,7 @@ usage() {
 Usage: ./deploy.sh <project-dir> --gcp-project <id> --service-url <url> [options]
 
 Required:
-  <project-dir>                 Path to rebuild-inputs/<project>/ (must contain scope.md)
+  <project-dir>                 Path to destination repo (must contain rebuild-inputs/scope.md)
   --gcp-project <id>            GCP project ID
   --service-url <url>           URL of the monitored service
 
@@ -134,8 +134,8 @@ validate_prerequisites() {
     if [[ ! -d "$PROJECT_DIR" ]]; then
         err "Project directory does not exist: $PROJECT_DIR"
         failed=true
-    elif [[ ! -f "$PROJECT_DIR/scope.md" ]]; then
-        err "scope.md not found in $PROJECT_DIR"
+    elif [[ ! -f "$PROJECT_DIR/rebuild-inputs/scope.md" ]] && [[ ! -f "$PROJECT_DIR/scope.md" ]]; then
+        err "scope.md not found in $PROJECT_DIR/rebuild-inputs/ or $PROJECT_DIR/"
         failed=true
     fi
 
@@ -196,7 +196,11 @@ extract_service_name() {
         return
     fi
 
-    local scope_file="$PROJECT_DIR/scope.md"
+    local scope_file="$PROJECT_DIR/rebuild-inputs/scope.md"
+    # Fall back to old location for backward compatibility
+    if [[ ! -f "$scope_file" ]] && [[ -f "$PROJECT_DIR/scope.md" ]]; then
+        scope_file="$PROJECT_DIR/scope.md"
+    fi
     local found=false
     local next_non_empty=false
 
