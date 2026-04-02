@@ -307,6 +307,7 @@ When creating a new service or component, it ships with these from day one — n
 - [ ] OpenAPI spec — API contract checked into the repo
 - [ ] OpenAPI response models — every endpoint (GET, POST, PUT, DELETE) must declare a typed Pydantic `response_model`. No bare `dict` returns. This includes all `/ops/*` endpoints.
 - [ ] OpenAPI examples — every request body model and response model must include `json_schema_extra` with realistic `examples` so Swagger UI shows typed schemas and pre-filled "Try it out" payloads. Request body examples must use valid test data (e.g., correct HMAC hashes for the local dev salt) so "Try it out" works without manual editing.
+- [ ] OpenAPI query parameter examples — every `Query()` parameter must include `example=` with a realistic default value so Swagger "Try it out" pre-fills the form fields. Use domain-realistic values, not empty strings or generic placeholders. For example: `topic: str = Query(example="evergreen")`, `count: int = Query(default=10, example=10)`. This applies to all GET endpoints including `/ops/*` diagnostic endpoints.
 - [ ] Unit and API test scaffolding — tests run from day one, not added later
 - [ ] `.env.example` — documented environment variables for local development
 - [ ] OTEL instrumentation — metrics (Golden Signals), traces (request spans), and log bridge configured with OTLP exporter
