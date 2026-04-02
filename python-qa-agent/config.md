@@ -146,6 +146,62 @@
 |---|---|---|
 | [TODO] | [TODO] | [TODO: e.g., RDS_HOST → DB_HOST] |
 
+## Legacy Endpoint Compatibility — App-Specific
+
+> Document the legacy service's exact API contract for every endpoint. The QA
+> agent uses this table to mechanically verify wire compatibility (skill.md §
+> Legacy Endpoint Compatibility Verification, IDEATION_PROCESS.md Step 13b).
+
+### Legacy Endpoint Contract
+
+| Method | Path | Query Params | Success Response | Error Response |
+|--------|------|-------------|-----------------|----------------|
+| [TODO] | [TODO] | [TODO: e.g., `tvid`, `event_type`] | [TODO: e.g., plain text `"OK"`, 200] | [TODO: e.g., `{"error": "ClassName", "message": "details"}`, 400] |
+| GET | `/status` | — | plain text `"OK"`, 200 | — |
+
+### Legacy Required Parameters
+
+> List every required parameter from the legacy validation code.
+
+| Parameter | Location | Notes |
+|-----------|----------|-------|
+| [TODO] | [TODO: body / query string / both] | [TODO] |
+
+### Legacy Error Class Names
+
+> If the legacy service returns exception class names in error responses, list them here.
+
+| Error Class | When Returned |
+|-------------|---------------|
+| [TODO: e.g., `TvEventsMissingRequiredParamError`] | [TODO: e.g., missing required param] |
+| [TODO: e.g., `TvEventsSecurityValidationError`] | [TODO: e.g., hash mismatch] |
+| [TODO: e.g., `TvEventsCatchallException`] | [TODO: e.g., unhandled error] |
+
+### Smoke Test Commands
+
+> Fill in the `{service-url}` and adjust payloads for the specific service.
+> Run these against PR environment deployments before merge.
+
+```bash
+# 1. Valid request — verify content type and body match legacy
+curl -s -w "\n%{content_type} %{http_code}" \
+  -X POST "http://{service-url}/[TODO: path + query params]" \
+  -H "Content-Type: application/json" \
+  -d '[TODO: valid JSON payload]'
+# Expected: [TODO: body], [TODO: content-type], [TODO: status code]
+
+# 2. Missing required param — verify error shape matches legacy
+curl -s -w "\n%{content_type} %{http_code}" \
+  -X POST "http://{service-url}/[TODO: path]" \
+  -H "Content-Type: application/json" \
+  -d '[TODO: invalid JSON payload]'
+# Expected: [TODO: error JSON shape], status 400
+
+# 3. Health check
+curl -s "http://{service-url}/status"
+# Expected: "OK"
+```
+
 ## Comparison Checklist
 
 > Check off each item when comparing a rebuilt service against its original.
@@ -155,6 +211,7 @@
 - [ ] `Dockerfile` — matches template (no extra platform flags, same user pattern)
 - [ ] `__init__.py` — OTEL setup matches template (LoggerProvider, MeterProvider, TracerProvider)
 - [ ] `routes.py` — all original endpoints present, /ops/* endpoints added
+- [ ] **Legacy endpoint compatibility** — response formats, error shapes, query params, required params all match legacy (see Legacy Endpoint Compatibility section above)
 - [ ] `charts/values.yaml` — all original env vars present (mapped to new names)
 - [ ] Helm templates — identical to template repo
 - [ ] Required files — `env.list`, `catalog-info.yaml`, `monitored-paths.txt`, `.actrc`

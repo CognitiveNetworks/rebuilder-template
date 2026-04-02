@@ -319,6 +319,64 @@ When verifying a rebuilt service, check these categories:
 - [ ] Security validation (T1_SALT, HMAC) matches the original.
 - [ ] Output JSON structure matches the original (same field names, same flattening).
 - [ ] Data obfuscation logic matches the original (same fields, same conditions).
+- [ ] **Legacy endpoint compatibility verified** — see Legacy Endpoint Compatibility Verification below.
+
+### Legacy Endpoint Compatibility Verification
+
+The rebuilt service must be **wire-compatible** with the legacy service. External integration test suites (e.g., unitE) and upstream clients call the legacy API and expect identical response formats. Any deviation causes integration test failures or production incidents. This verification is a **merge blocker** (IDEATION_PROCESS.md Step 13b).
+
+**Mechanical verification procedure — run for every endpoint that existed in the legacy service:**
+
+| # | Check | How to Verify |
+|---|-------|---------------|
+| 1 | **Response content type** | Send a valid request via `TestClient`. Check `response.headers["content-type"]`. Legacy plain text (`text/plain`) must not become JSON (`application/json`), or vice versa. |
+| 2 | **Success response body** | Compare `response.text` or `response.json()` against the legacy service's documented response. If legacy returns `"OK"`, rebuilt must return `"OK"` — not `{"status": "ok"}`. |
+| 3 | **Error response shape** | Send an invalid request (missing required param). Compare error JSON keys and value semantics. If legacy returns `{"error": "ClassName", "message": "details"}`, rebuilt must match — not `{"error": "details", "detail": null}`. |
+| 4 | **Required parameters** | List every required parameter from the legacy validation code. Send a request missing each one. Verify the rebuilt service rejects with the same HTTP status code. |
+| 5 | **URL query parameters** | If legacy reads params from the URL query string (e.g., `?tvid=X&event_type=Y`), send a request with those query params via `TestClient`. Verify the rebuilt service reads them (not ignores them). |
+| 6 | **Cross-validation** | If legacy cross-validates URL params vs body params (logging mismatches), send a request where URL `tvid` differs from body `tvid`. Check logs for a mismatch warning. |
+| 7 | **Exception class names in errors** | If legacy returns exception class names (e.g., `TvEventsMissingRequiredParamError`), verify the rebuilt service returns the same class name string in the error response. |
+
+**How to execute:**
+
+1. Read every route handler in the legacy repo (e.g., `app/routes.py`, `app/utils.py`). For each endpoint, document: HTTP method, path, query params read, body format, success response (content type + body), error response(s) (content type + body + status code).
+2. Write the same information for the rebuilt service's corresponding handler.
+3. Diff the two. Every item must match. Document findings in `TEST_RESULTS.md` under a **"Legacy Endpoint Compatibility"** heading.
+4. If an external integration test suite exists (e.g., unitE), deploy the rebuilt service to a PR environment and run the suite. All tests must pass before merge.
+
+**Common Flask → FastAPI mistakes:**
+
+| Legacy (Flask) | Rebuilt (FastAPI) — WRONG | Fix |
+|----------------|--------------------------|-----|
+| `return "OK"` (plain text) | `return JSONResponse({"status": "ok"})` | Use `PlainTextResponse("OK")` |
+| `{"error": "ClassName", "message": "..."}` | `{"error": "...", "detail": null}` | Match legacy key names and values |
+| `request.args.get('tvid')` (URL query param) | Ignores query params | Add `Query(default=None)` params |
+| Required: `tvid, client, h, EventType, timestamp` | Required: `tvid, client, h` only | Include all legacy required params |
+| Error status 400 for all validation failures | 422 (FastAPI default) or 500 | Return 400 explicitly via `JSONResponse` |
+
+**Smoke test procedure (for deployed PR environments):**
+
+```bash
+# 1. Valid request — must return same content type and body as legacy
+curl -s -w "\n%{content_type} %{http_code}" \
+  -X POST "http://{service-url}/?tvid=TEST123&event_type=NATIVEAPP_TELEMETRY" \
+  -H "Content-Type: application/json" \
+  -d '{"TvEvent":{"tvid":"TEST123","client":"smartcast","h":"abc","EventType":"NATIVEAPP_TELEMETRY","timestamp":"1700000000000"},"EventData":{"Timestamp":1700000000000}}'
+# Expected: body "OK", content-type text/plain, status 200
+
+# 2. Missing required param — must return same error shape as legacy
+curl -s -w "\n%{content_type} %{http_code}" \
+  -X POST "http://{service-url}/" \
+  -H "Content-Type: application/json" \
+  -d '{"TvEvent":{"client":"smartcast","h":"abc"}}'
+# Expected: {"error":"ValidationError","message":"Missing required parameter: tvid"}, status 400
+
+# 3. Health check — must return same response as legacy
+curl -s "http://{service-url}/status"
+# Expected: "OK"
+```
+
+> **This verification is a merge blocker.** A rebuilt service that passes all unit tests but breaks integration tests is not production-ready. Wire compatibility with the legacy API contract is non-negotiable.
 
 ### Infrastructure Parity
 
