@@ -102,6 +102,23 @@ When populating agent templates (Steps 7–8), follow the strict rules in
 
 ## Quick Start
 
+### Option 1: `/run-replicator` workflow (recommended)
+
+In Windsurf, type:
+```
+/run-replicator https://github.com/CognitiveNetworks/automate
+```
+
+The workflow automatically:
+1. Derives destination repo path (`../rebuilder-automate`)
+2. Creates the repo and clones the legacy code
+3. Copies `scope.md` and `input.md` templates
+4. Asks you to fill them out (pauses until you confirm)
+5. Clones the template repo
+6. Runs the full ideation process
+
+### Option 2: Manual setup + `run.sh`
+
 ```bash
 # 1. Create destination repo
 mkdir -p /path/to/rebuilder-my-project/rebuild-inputs
@@ -122,5 +139,3 @@ cp /path/to/rebuilder-template/rebuild/input.md rebuild-inputs/input.md
 # 6. Run (from rebuilder-template)
 /path/to/rebuilder-template/rebuild/run.sh /path/to/rebuilder-my-project
 ```
-
-Or use the `/run-replicator` workflow for interactive execution.
