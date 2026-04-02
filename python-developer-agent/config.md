@@ -31,6 +31,12 @@
 | `pip-audit` | Dependency vulnerability scan |
 | `interrogate app/ tests/ -v` | Docstring coverage |
 | `helm lint charts/` | Helm chart lint |
+| `act -j black --env-file env.list` | CI pipeline: black job (requires Docker + act) |
+| `act -j pytest --env-file env.list` | CI pipeline: pytest job (requires Docker + act) |
+| `act -j pylint --env-file env.list` | CI pipeline: pylint job (requires Docker + act) |
+| `act -j complexipy --env-file env.list` | CI pipeline: complexipy job (requires Docker + act) |
+| `act -j mypy --env-file env.list` | CI pipeline: mypy job (requires Docker + act) |
+| `act -j helm_lint` | CI pipeline: helm lint job (requires Docker + act) |
 | *[build command — e.g., `docker build -t app:latest .`]* | Build container image |
 | *[run command — e.g., `uvicorn app.main:app --host :: --port 8000 --reload`]* | Run locally |
 | *[seed command — e.g., `python seed.py` or `N/A — no application database`]* | Seed local database |
