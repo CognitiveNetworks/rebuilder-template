@@ -106,7 +106,7 @@ validate_analyze() {
     fi
     if [ -f "$scope_file" ]; then
         local scope_lang
-        scope_lang=$(grep -i 'Target Language' "$scope_file" 2>/dev/null | head -1 | sed 's/.*|\s*`\?\([a-zA-Z]*\)`\?.*/\1/' | tr '[:upper:]' '[:lower:]')
+        scope_lang=$(grep -i 'Target Language' "$scope_file" 2>/dev/null | head -1 | sed 's/.*Target Language.*|[[:space:]]*`\{0,1\}\([a-zA-Z]*\)`\{0,1\}[[:space:]]*|.*/\1/' | tr '[:upper:]' '[:lower:]')
         if [ -n "$scope_lang" ] && echo "$scope_lang" | grep -qE '^(python|c|go)$'; then
             target_lang="$scope_lang"
         fi

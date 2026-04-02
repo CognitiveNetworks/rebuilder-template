@@ -54,7 +54,7 @@ fi
 
 # Detect target language from scope.md (default: python)
 TARGET_LANG="python"
-SCOPE_LANG=$(grep -i 'Target Language' "$SCOPE_FILE" | head -1 | sed 's/.*|\s*`\?\([a-zA-Z]*\)`\?.*/\1/' | tr '[:upper:]' '[:lower:]')
+SCOPE_LANG=$(grep -i 'Target Language' "$SCOPE_FILE" | head -1 | sed 's/.*Target Language.*|[[:space:]]*`\{0,1\}\([a-zA-Z]*\)`\{0,1\}[[:space:]]*|.*/\1/' | tr '[:upper:]' '[:lower:]')
 if [ -n "$SCOPE_LANG" ] && [[ "$SCOPE_LANG" =~ ^(python|c|go)$ ]]; then
     TARGET_LANG="$SCOPE_LANG"
 fi
