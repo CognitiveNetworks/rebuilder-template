@@ -2,247 +2,287 @@
 
 ## Architecture
 
-- [Brief description of project structure]
-- [Key directories and what lives where]
-- [Service boundaries and how components communicate]
-- [Data flow — where data enters, how it transforms, where it lands]
+## Architecture
+
+- **Project structure**: Layers, key directories, service boundaries
+- **Data flow**: Entry points → transformations → outputs
+- **Service boundaries**: Component communication patterns
+- **Infrastructure layout**: Service deployment topology
+- **API design**: Endpoint organization, versioning, OpenAPI spec location
+- **API-first principle**: All functionality exposed and testable through APIs. UI consumes API — does not replace it.
 
 ### API-First Design
-- Every service exposes its functionality through APIs. If it cannot be tested, validated, and operated through an API call, it is not done.
-- No business logic hidden behind UIs, CLI tools, or cron jobs that cannot be triggered and verified via API. The UI is a consumer of the API, not a replacement for it.
-- All features are built API-first. The API is designed, documented, and testable before any frontend or consumer is built on top of it.
-- Every API endpoint must be testable in isolation — given a request, it returns a predictable response. If an endpoint requires manual UI interaction to validate, the design is wrong.
-- Use OpenAPI/Swagger specs as the source of truth. The spec is written first, the implementation follows, and contract tests verify they stay in sync.
+
+- Every service exposes functionality through APIs. If not testable, validated, and operated through API call → not done
+- No business logic hidden behind UIs, CLI tools, or cron jobs that cannot be triggered/verified via API
+- All features built API-first. API designed, documented, and testable before frontend/consumer
+- Every API endpoint testable in isolation — given request, returns predictable response
+- Use OpenAPI/Swagger specs as source of truth. Spec written first, implementation follows, contract tests verify sync
 
 ### Designing for Scale
-- Architect every component as if it will need to handle 10x current load without a rewrite. That doesn't mean over-engineer — it means make choices that don't paint you into a corner.
-- Stateless services. Application processes should hold nothing in memory between requests. Session data, caches, and job state belong in external stores — not in local variables that die with the process.
-- Separate read and write paths early. Even if they hit the same database today, structuring code to distinguish queries from commands makes it trivial to add read replicas, caching layers, or CQRS later.
-- Design APIs with pagination, filtering, and rate limiting from day one. Retrofitting these after users depend on unbounded responses is painful and breaking.
-- Use queues and async processing for anything that doesn't need a synchronous response. Email, notifications, report generation, webhooks, data enrichment — these are background jobs, not request handlers.
-- Database schema decisions are the hardest to reverse. Normalize properly, index deliberately, and think about query patterns before you create tables. A bad schema at scale is a migration project, not a bug fix.
-- Connection pooling, circuit breakers, and backpressure are not premature optimization — they are operational hygiene. A service that cannot shed load gracefully will take down everything upstream when it struggles.
-- Cache deliberately, not desperately. Know what you're caching, why, and when it expires. Stale cache bugs are harder to diagnose than slow queries.
-- Infrastructure should scale horizontally by default. If your architecture requires a bigger box instead of more boxes, you've created a scaling ceiling.
-- Plan for failure at every boundary. Services go down, networks partition, disks fill, certificates expire. The question is not if but how your system behaves when a dependency is unavailable.
+
+- **10x load assumption**: Architect as if handling 10x current load without rewrite — make choices that don't paint into corner
+- **Stateless services**: Application processes hold nothing in memory between requests. Session data, caches, job state → external stores
+- **Separate read/write paths early**: Even with same database, structure code to distinguish queries from commands → enables read replicas, caching, CQRS
+- **API design from day one**: Pagination, filtering, rate limiting. Retrofitting after users depend on unbounded responses is painful/breaking
+- **Async processing**: Queues for anything not needing synchronous response (email, notifications, report generation, webhooks, data enrichment)
+- **Database schema decisions**: Hardest to reverse. Normalize properly, index deliberately, think about query patterns before tables
+- **Operational hygiene**: Connection pooling, circuit breakers, backpressure — not premature optimization
+- **Cache deliberately**: Know what/why/when expires. Stale cache bugs harder than slow queries
+- **Horizontal scaling by default**: If architecture requires bigger box instead of more boxes → created scaling ceiling
+- **Plan for failure at every boundary**: Services go down, networks partition, disks fill, certificates expire
 
 ### Technology Selection
-- Choose enterprise-grade technologies. We are building systems that need to run reliably at scale, not prototypes that get replaced in six months. Every technology choice should have a proven track record in production at companies larger than ours.
-- Databases: PostgreSQL for relational workloads. It handles JSONB, full-text search, and partitioning well enough that you rarely need a second database engine early on. If you need a document store at scale, use a managed offering with enterprise support — not a hobby-tier project.
-- Caching: Redis with persistence and clustering, not Memcached. Redis gives you data structures, pub/sub, and durability options that Memcached does not.
-- Container orchestration: Kubernetes. Not Docker Compose in production, not hand-rolled systemd units.
-- IaC: Terraform. No exceptions. Infrastructure is code, versioned and reviewed like application code.
-- Design for local portability with cloud providers either GCP or AWS. Either is acceptable — choose based on team expertise, existing infrastructure, and managed service availability for the workload. Document the cloud provider decision in an ADR. Do not split a single project across both providers without a documented justification.
-- The litmus test for any technology choice: Does it have enterprise support options? Is there a managed offering on your chosen cloud provider? Can you hire engineers who already know it? If the answer to any of these is no, justify the exception in writing or pick something else.
+
+- **Enterprise-grade technologies**: Build systems that run reliably at scale, not prototypes replaced in 6 months
+- **Proven track record**: Every technology choice should have production experience at companies larger than ours
+- **Databases**: PostgreSQL for relational workloads. Handles JSONB, full-text search, partitioning well enough → rarely need second database engine early
+- **Document stores at scale**: Use managed offering with enterprise support — not hobby-tier project
+- **Caching**: Redis with persistence and clustering, not Memcached. Provides data structures, pub/sub, durability
+- **Container orchestration**: Kubernetes. Not Docker Compose in production, not hand-rolled systemd units
+- **IaC**: Terraform. No exceptions. Infrastructure as code, versioned and reviewed like application code
+- **Cloud provider**: Design for local portability with GCP or AWS. Choose based on team expertise, existing infrastructure, managed service availability. Document decision in ADR. Do not split single project across both providers without justification
+- **Litmus test**: Enterprise support options? Managed offering on chosen cloud provider? Can hire engineers who know it? If any answer is no → justify exception in writing or pick something else
 
 ## Development Environment
 
-- [Your stack-specific setup commands here, e.g.:]
-- `npm install` to bootstrap dependencies
-- `npm run test` to run tests
-- `npm run lint` to check style
-- [How to run the full stack locally — containers, env vars, seed data]
-- [How to verify the environment is working before writing any code]
+- **Setup commands**:
+  - `npm install` to bootstrap dependencies
+  - `npm run test` to run tests
+  - `npm run lint` to check style
+- **Local stack**: How to run full stack locally — containers, env vars, seed data
+- **Environment verification**: How to verify environment is working before writing code
 
 ## Coding Practices
 
 ### General Principles
-- Write code that the next engineer can understand without asking you. If it needs a comment, the code isn't clear enough — refactor first, comment second.
-- Fail fast and fail loud. Silent failures are production incidents waiting to happen. If something is wrong, raise it immediately — do not swallow errors, return empty defaults, or log and continue.
-- No dead code. No commented-out blocks. No "just in case" abstractions. If it's not running in production, it doesn't belong in the repo.
-- Functions do one thing. If you're naming it `processAndValidateAndSave`, that's three functions.
-- Prefer explicit over implicit. Magic values, hidden side effects, and implicit ordering create bugs that are impossible to trace at 2 AM.
+
+- Write code next engineer can understand without asking → refactor first, comment second
+- Fail fast and fail loud. Silent failures → production incidents waiting to happen
+- No dead code. No commented-out blocks. No "just in case" abstractions
+- Functions do one thing. `processAndValidateAndSave` → three functions
+- Prefer explicit over implicit. Magic values, hidden side effects, implicit ordering → impossible to trace bugs
 
 ### Error Handling
-- Handle errors at the boundary where you can do something about them. Do not catch exceptions just to re-throw or log them.
-- Every error message should answer: what happened, what was expected, and what the operator should do about it.
-- Distinguish between retryable and fatal errors. Retrying a permissions failure is a waste. Crashing on a transient network blip is fragile.
+
+- Handle errors at boundary where you can do something about them
+- Do not catch exceptions just to re-throw or log them
+- Every error message answers: what happened, what was expected, what operator should do
+- Distinguish retryable vs fatal errors. Retrying permissions failure → waste. Crashing on transient network blip → fragile
 
 ### Security
-- Never commit secrets, tokens, or credentials. No exceptions.
-- Secrets management: Use your cloud provider's native secrets manager — GCP Secret Manager or AWS Secrets Manager. All application secrets, API keys, database credentials, and service account keys are stored in the secrets manager and injected at runtime — never baked into images, config files, or environment variable definitions in source control. For workloads that span multiple clouds or run on-prem, HashiCorp Vault is the approved alternative. Nothing else.
-- Validate and sanitize all external input — user input, API responses, webhook payloads, environment variables. Trust nothing that crosses a boundary.
-- Apply least privilege everywhere — database users, API keys, IAM roles, file permissions. If it doesn't need write access, it doesn't get write access.
-- Dependencies are attack surface. Pin versions. Audit regularly. Remove what you don't use.
+
+- **Never commit secrets, tokens, or credentials. No exceptions.**
+- **Secrets management**: Use cloud provider's native secrets manager — GCP Secret Manager or AWS Secrets Manager. All application secrets, API keys, database credentials, service account keys stored in secrets manager and injected at runtime — never baked into images, config files, or environment variable definitions. For workloads spanning multiple clouds or on-prem → HashiCorp Vault. Nothing else.
+- **Input validation**: Validate and sanitize all external input — user input, API responses, webhook payloads, environment variables. Trust nothing that crosses boundary.
+- **Least privilege**: Apply everywhere — database users, API keys, IAM roles, file permissions. If doesn't need write access → doesn't get write access.
+- **Dependencies as attack surface**: Pin versions. Audit regularly. Remove what you don't use.
 
 ### Performance
-- Measure before you optimize. Profiling data beats intuition every time.
-- N+1 queries, unbounded loops, and missing indexes are not performance problems — they are bugs. Fix them when you find them.
-- Set timeouts on every external call. A missing timeout is a thread leak waiting for a server that will never respond.
+
+- Measure before you optimize. Profiling data beats intuition every time
+- N+1 queries, unbounded loops, missing indexes → bugs, not performance problems. Fix when found
+- Set timeouts on every external call. Missing timeout → thread leak waiting for server that will never respond
 
 ## Testing & QA
 
 ### Testing Strategy
-- Tests are not optional. Untested code is broken code that hasn't been caught yet.
-- Write tests that verify behavior, not implementation. If a refactor breaks your test but not the feature, the test was wrong.
-- Every bug fix gets a regression test. If it broke once, it will break again.
+
+- **Tests are not optional**: Untested code is broken code that hasn't been caught yet
+- **Behavior-focused tests**: Write tests that verify behavior, not implementation. If refactor breaks test but not feature → test was wrong
+- **Regression tests**: Every bug fix gets one. If broke once, will break again
 
 ### Test Levels
-- **Unit tests:** Fast, isolated, no network or database. Test business logic, transformations, edge cases. These run in seconds and gate every commit.
-- **API tests:** Every endpoint gets tested directly — request in, response out. Validate status codes, response shapes, error handling, auth, pagination, and edge cases. API tests are the primary integration gate. If the API works, consumers can be built with confidence.
-- **Integration tests:** Verify that components work together — API endpoints hit the database, services call external APIs through mocked boundaries, migrations run cleanly.
-- **End-to-end tests:** Validate critical user workflows against a running stack. Keep these focused on happy paths and high-value failure modes. Flaky E2E tests get fixed or deleted, not skipped.
-- **Contract tests:** Validate that API responses match the OpenAPI spec on every build. If the spec and the implementation diverge, the build fails.
+
+- **Unit tests**: Fast, isolated, no network or database. Test business logic, transformations, edge cases. Run in seconds, gate every commit
+- **API tests**: Every endpoint tested directly — request in, response out. Validate status codes, response shapes, error handling, auth, pagination, edge cases. Primary integration gate
+- **Integration tests**: Verify components work together — API endpoints hit database, services call external APIs through mocked boundaries, migrations run cleanly
+- **End-to-end tests**: Validate critical user workflows against running stack. Keep focused on happy paths and high-value failure modes. Flaky E2E tests → fix or delete, not skip
+- **Contract tests**: Validate API responses match OpenAPI spec on every build. If spec and implementation diverge → build fails
 
 ### QA Expectations
-- Run the full test suite locally before pushing. CI is a safety net, not your first line of defense.
-- If you can't write an automated test for it, document the manual test procedure in the PR.
-- Test failure is a build failure. Do not merge with failing tests. Do not skip tests to unblock a deploy.
-- Load and stress testing happen before major releases, not after the first production incident.
+
+- Run full test suite locally before pushing. CI is safety net, not first line of defense
+- If cannot write automated test → document manual test procedure in PR
+- Test failure = build failure. Do not merge with failing tests. Do not skip tests to unblock deploy
+- Load and stress testing before major releases, not after first production incident
 
 ## Git Workflow
 
-- We use git worktrees for parallel development. Each task gets its own worktree and feature branch.
-- Branch naming: `feature/<short-description>` or `fix/<short-description>`
-- Never commit directly to `main`.
-- Write clear, concise commit messages that explain why, not what. The diff shows what changed.
-- Squash related changes into logical commits before PR. One commit per logical change — not one per save.
-- Rebase on `main` before opening a PR. Merge conflicts are your responsibility, not the reviewer's.
+- **Git worktrees**: Use for parallel development. Each task gets own worktree and feature branch
+- **Branch naming**: `feature/<short-description>` or `fix/<short-description>`
+- **Never commit directly to `main`.**
+- **Commit messages**: Clear, concise, explain why not what. Diff shows what changed
+- **Squash related changes**: Into logical commits before PR. One commit per logical change — not per save
+- **Rebase on `main`**: Before opening PR. Merge conflicts → your responsibility, not reviewer's
 
 ## PR Expectations
 
-- PR title should summarize the change in one line.
-- PR body should include: what changed, why, and how to test it.
-- Keep PRs small and focused. A 2,000-line PR doesn't get reviewed — it gets approved. That's not the same thing.
-- Ensure all tests pass before creating the PR.
-- If the change touches an API, interface, config schema, or migration, call it out explicitly in the description.
-- Include before/after evidence where applicable — screenshots, curl output, log samples, benchmark numbers.
+- **Title**: Summarize change in one line
+- **Body**: What changed, why, how to test it
+- **Size**: Keep PRs small and focused. 2,000-line PR doesn't get reviewed — gets approved. Not same thing
+- **Tests**: Ensure all tests pass before creating PR
+- **API/config/migration changes**: Call out explicitly in description
+- **Evidence**: Include before/after where applicable — screenshots, curl output, log samples, benchmark numbers
 
 ## Observability
 
 - Follow Google SRE best practices for service monitoring and reliability.
 - Every service must emit structured logs. Unstructured log lines are noise.
-- **Logging:** Structured JSON to stdout. Every log entry includes timestamp, level, logger name, and message. Request-scoped fields (trace ID, span ID, incident ID) are attached when available. OTEL log bridge exports logs to APM platforms with trace/span correlation.
-- **Tracing:** OpenTelemetry for distributed tracing, exported via OTLP. Every inbound request gets a trace. Child spans cover downstream calls, background processing, and significant internal operations. Trace context propagates via W3C `traceparent` headers.
-- Health checks are mandatory. If the service can't verify its own dependencies are reachable, it should not report healthy.
+### Logging
+
+- **Structured JSON to stdout**: Every log entry includes timestamp, level, logger name, message
+- **Request-scoped fields**: Trace ID, span ID, incident ID attached when available
+- **OTEL log bridge**: Exports logs to APM platforms with trace/span correlation
+### Tracing
+
+- **OpenTelemetry**: For distributed tracing, exported via OTLP
+- **Inbound requests**: Every request gets trace
+- **Child spans**: Cover downstream calls, background processing, significant internal operations
+- **Trace context propagation**: Via W3C `traceparent` headers
+### Health Checks
+
+- **Mandatory**: If service cannot verify its own dependencies are reachable → should not report healthy
 
 ### Golden Signals
-- Every service must instrument the four Golden Signals as defined by Google SRE:
-  - **Latency:** Time to service a request. Track both successful and failed request latency separately — a fast error is not a healthy response.
-  - **Traffic:** Demand on the service — requests per second, transactions per second, or the appropriate throughput metric for the service type.
-  - **Errors:** Rate of failed requests — explicit failures (HTTP 5xx), implicit failures (HTTP 200 with wrong content), and policy-based failures (responses exceeding an SLO latency threshold).
-  - **Saturation:** How full the service is. CPU, memory, disk, queue depth, connection pool utilization. Alert before hitting 100% — not after.
-- Golden Signals are the baseline for every service. If a service does not expose these four metrics, it is not production-ready.
+
+Every service must instrument four Golden Signals as defined by Google SRE:
+
+- **Latency**: Time to service request. Track successful and failed request latency separately — fast error ≠ healthy response
+- **Traffic**: Demand on service — requests per second, transactions per second, or appropriate throughput metric
+- **Errors**: Rate of failed requests — explicit failures (HTTP 5xx), implicit failures (HTTP 200 with wrong content), policy-based failures (responses exceeding SLO latency threshold)
+- **Saturation**: How full service is. CPU, memory, disk, queue depth, connection pool utilization. Alert before hitting 100% — not after
+
+**Golden Signals are baseline**. If service doesn't expose these four metrics → not production-ready.
 
 ### RED Method
-- For request-driven services (APIs, web services, microservices), also apply the RED method:
-  - **Rate:** Requests per second.
-  - **Errors:** Failed requests per second.
-  - **Duration:** Distribution of request latency (use histograms, not averages — p50, p95, p99).
-- RED metrics feed directly into SLIs (Service Level Indicators) and SLOs (Service Level Objectives). Define SLOs for every user-facing service and alert on SLO burn rate, not on raw thresholds.
+
+For request-driven services (APIs, web services, microservices):
+
+- **Rate**: Requests per second
+- **Errors**: Failed requests per second
+- **Duration**: Distribution of request latency (use histograms, not averages — p50, p95, p99)
+
+**RED metrics feed directly into SLIs/SLOs**. Define SLOs for every user-facing service and alert on SLO burn rate, not raw thresholds.
 
 ### SLOs & Error Budgets
-- Every production service must have defined SLOs. An SLO without an error budget is a wish, not a target.
-- When the error budget is exhausted, feature work stops and reliability work takes priority. This is not a suggestion — it is the mechanism that keeps production stable.
-- Review SLO performance monthly. Adjust targets based on actual user impact, not on what feels achievable.
+
+- **SLOs required**: Every production service must have defined SLOs. SLO without error budget = wish, not target
+- **Error budget exhaustion**: When exhausted, feature work stops and reliability work takes priority. This is mechanism that keeps production stable
+- **Monthly reviews**: Review SLO performance monthly. Adjust targets based on actual user impact, not what feels achievable
 
 ### Telemetry Export (OpenTelemetry)
-- All services standardize on **OpenTelemetry (OTEL)** for exporting metrics, traces, and logs to external observability and APM platforms. OTEL is the vendor-neutral telemetry standard — it works with Grafana, Datadog, New Relic, Honeycomb, and any OTLP-compatible backend.
-- **OTEL and `/ops/*` endpoints coexist.** They serve different purposes:
-  - `/ops/*` endpoints = **pull-based** programmatic access. The SRE agent and humans query these on-demand to diagnose specific issues. They return structured snapshots of service health.
-  - OTEL = **push-based** continuous export. Metrics, traces, and logs flow to APM platforms for dashboards, alerting, and historical analysis. This is the data pipeline that powers monitoring, not the diagnostic interface.
-- **What services must export via OTEL:**
-  - **Metrics:** Golden Signals and RED metrics as OTEL instruments — Counters for request/error counts, Histograms for latency distributions, UpDownCounters for saturation (active connections, queue depth). These are the same signals exposed by `/ops/metrics`, but pushed continuously rather than polled.
-  - **Traces:** A trace per inbound request with child spans for downstream calls, database queries, cache operations, and background processing. Trace context propagates via W3C `traceparent` headers across service boundaries.
-  - **Logs:** Structured JSON logs bridged to the OTEL log pipeline so they correlate with traces and metrics in the APM platform. Log entries include trace ID and span ID when available.
-- **Configuration:** OTEL is configured via standard environment variables — `OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_PROTOCOL`, `OTEL_RESOURCE_ATTRIBUTES`. No custom configuration. If the OTLP endpoint is not set, OTEL runs as a no-op — the service works identically without it.
-- **Auto-instrumentation:** Use OTEL auto-instrumentation libraries for your HTTP framework (FastAPI, Express, etc.) and HTTP clients (httpx, requests, etc.) to get request-level metrics and traces without manual code. Add manual spans for business-logic operations that are not covered by auto-instrumentation.
+
+- **Standardization**: All services use OpenTelemetry (OTEL) for exporting metrics, traces, logs to external observability/APM platforms. OTEL is vendor-neutral telemetry standard — works with Grafana, Datadog, New Relic, Honeycomb, any OTLP-compatible backend
+- **OTEL and `/ops/*` endpoints coexist**: Serve different purposes
+  - `/ops/*` endpoints = **pull-based** programmatic access. SRE agent and humans query on-demand to diagnose specific issues. Return structured snapshots of service health
+  - OTEL = **push-based** continuous export. Metrics, traces, logs flow to APM platforms for dashboards, alerting, historical analysis. This is data pipeline that powers monitoring, not diagnostic interface
+- **Required exports via OTEL**:
+  - **Metrics**: Golden Signals and RED metrics as OTEL instruments — Counters for request/error counts, Histograms for latency distributions, UpDownCounters for saturation (active connections, queue depth)
+  - **Traces**: Trace per inbound request with child spans for downstream calls, database queries, cache operations, background processing. Trace context propagates via W3C `traceparent` headers
+  - **Logs**: Structured JSON logs bridged to OTEL log pipeline so they correlate with traces and metrics in APM platform. Log entries include trace ID and span ID when available
+- **Configuration**: OTEL configured via standard environment variables — `OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_PROTOCOL`, `OTEL_RESOURCE_ATTRIBUTES`. No custom configuration. If OTLP endpoint not set → OTEL runs as no-op — service works identically without it
+- **Auto-instrumentation**: Use OTEL auto-instrumentation libraries for HTTP framework (FastAPI, Express, etc.) and HTTP clients (httpx, requests, etc.) to get request-level metrics and traces without manual code. Add manual spans for business-logic operations not covered by auto-instrumentation
 
 ### Composite Service Health
-- Individual metrics are not enough. Every service must be able to answer one question: **"Is this service healthy?"** The answer is a rollup — a computed verdict that combines Golden Signals, RED metrics, SLO burn rate, and dependency status into a single, actionable assessment.
-- The composite health status is one of: **healthy**, **degraded**, or **unhealthy**. There is no "unknown" — if the service cannot determine its own health, it is unhealthy.
-- **Healthy:** All Golden Signals within SLO thresholds, all dependencies reachable, error budget has remaining capacity.
-- **Degraded:** One or more signals approaching SLO thresholds, a non-critical dependency is impaired, or error budget burn rate is elevated. The service is functioning but at risk.
-- **Unhealthy:** SLO is breached, a critical dependency is down, error rate exceeds threshold, or saturation is at capacity. The service needs immediate attention.
-- This composite status is exposed through `/ops/status` — a single endpoint that returns the overall verdict with a breakdown of what contributed to it. SRE agents and dashboards use this as the top-level entry point before drilling into individual signals.
-- The health computation logic lives in the service, not in an external aggregator. The service owns its own definition of healthy because only the service knows which dependencies are critical vs. optional, which error rates are normal, and which latency thresholds matter.
+
+- **Individual metrics insufficient**: Every service must answer one question: **"Is this service healthy?"** Answer is rollup — computed verdict combining Golden Signals, RED metrics, SLO burn rate, and dependency status into single, actionable assessment
+- **Status values**: One of **healthy**, **degraded**, or **unhealthy**. No "unknown" — if service cannot determine own health → unhealthy
+- **Healthy**: All Golden Signals within SLO thresholds, all dependencies reachable, error budget has remaining capacity
+- **Degraded**: One or more signals approaching SLO thresholds, non-critical dependency impaired, or error budget burn rate elevated. Service functioning but at risk
+- **Unhealthy**: SLO breached, critical dependency down, error rate exceeds threshold, or saturation at capacity. Service needs immediate attention
+- **Composite status exposure**: Through `/ops/status` — single endpoint returning overall verdict with breakdown of what contributed to it. SRE agents and dashboards use as top-level entry point before drilling into individual signals
+- **Health computation logic**: Lives in service, not external aggregator. Service owns definition of healthy because only service knows which dependencies are critical vs optional, which error rates are normal, which latency thresholds matter
 
 ### SRE Agent Endpoints
-- Every service must expose a set of operational API endpoints designed for consumption by SRE agents. These endpoints allow agents to understand system state, diagnose issues, and take safe remediation actions without human intervention.
-- **Read-only diagnostic endpoints** (no auth escalation required):
-  - `/ops/status` — composite health verdict (healthy / degraded / unhealthy) with breakdown of Golden Signals, RED metrics, SLO burn rate, and dependency status. This is the first endpoint an agent or human checks. One call answers "is this service healthy?"
-  - `/ops/health` — deep health check including all downstream dependencies (with latency), connection pools, and queue depths. Returns structured JSON with per-dependency status, not just a 200 OK. This is the single source of dependency health — no separate `/ops/dependencies` endpoint.
-  - `/ops/metrics` — current Golden Signals and RED metrics snapshot. Agents use this to assess individual signal details after `/ops/status` flags a concern.
-  - `/ops/config` — running configuration (sanitized — no secrets). Allows agents to verify expected vs. actual config without SSH access.
-  - `/ops/errors` — recent error summary with counts, types, and sample stack traces. Gives agents enough context to classify the failure without tailing logs.
-- **Safe remediation endpoints** (require SRE agent auth role, all actions are idempotent and non-destructive):
-  - `/ops/cache/flush` — flush application-level caches. Safe to call at any time. The service rebuilds cache from source on next request.
-  - `/ops/cache/refresh` — refresh application-level caches from the source of truth. Safe to call at any time.
-  - `/ops/loglevel` — temporarily adjust log verbosity for debugging without a redeploy. Reverts to default after a configurable TTL.
 
-- **Hard rules for SRE agent endpoints:**
-  - No endpoint may delete data, drop connections to databases, restart processes, or modify persistent state. Agents diagnose and stabilize — they do not perform destructive operations.
-  - All remediation endpoints are idempotent. Calling them twice produces the same result as calling them once.
-  - Every action taken through an ops endpoint is logged to the audit trail with the agent identity, timestamp, and action taken.
-  - Agents make decisions based on the aggregate health across services — not a single metric in isolation. A spike in latency on one service may be caused by saturation on a dependency. The diagnostic endpoints give agents the full picture to make that determination.
-  - If an agent cannot confidently diagnose or remediate an issue, it escalates to a human. Guessing in production is not permitted.
-  - The SRE agent's full operating instructions, diagnostic workflow, playbooks, and incident documentation format are defined in `sre-agent/skill.md`. The agent is configured per-project via `sre-agent/config.md` and trained on the tech stack chosen from the rebuild candidate.
+Every service must expose operational API endpoints designed for consumption by SRE agents. These endpoints allow agents to understand system state, diagnose issues, and take safe remediation actions without human intervention.
+
+**Read-only diagnostic endpoints** (no auth escalation required):
+- `/ops/status` — composite health verdict (healthy/degraded/unhealthy) with breakdown of Golden Signals, RED metrics, SLO burn rate, dependency status. First endpoint agent/human checks. One call answers "is this service healthy?"
+- `/ops/health` — deep health check including all downstream dependencies (with latency), connection pools, queue depths. Returns structured JSON with per-dependency status, not just 200 OK. Single source of dependency health
+- `/ops/metrics` — current Golden Signals and RED metrics snapshot. Agents use to assess individual signal details after `/ops/status` flags concern
+- `/ops/config` — running configuration (sanitized — no secrets). Allows agents to verify expected vs actual config without SSH access
+- `/ops/errors` — recent error summary with counts, types, sample stack traces. Gives agents enough context to classify failure without tailing logs
+
+**Safe remediation endpoints** (require SRE agent auth role, all actions idempotent and non-destructive):
+- `/ops/cache/flush` — flush application-level caches. Safe to call anytime. Service rebuilds cache from source on next request
+- `/ops/cache/refresh` — refresh application-level caches from source of truth. Safe to call anytime
+- `/ops/loglevel` — temporarily adjust log verbosity for debugging without redeploy. Reverts to default after configurable TTL
+
+**Hard rules for SRE agent endpoints**:
+- No endpoint may delete data, drop connections to databases, restart processes, or modify persistent state. Agents diagnose and stabilize — do not perform destructive operations
+- All remediation endpoints are idempotent. Calling twice produces same result as calling once
+- Every action through ops endpoint logged to audit trail with agent identity, timestamp, action taken
+- Agents make decisions based on aggregate health across services — not single metric in isolation. Spike in latency on one service may be caused by saturation on dependency. Diagnostic endpoints give full picture to make determination
+- If agent cannot confidently diagnose or remediate issue → escalates to human. Guessing in production not permitted
+- SRE agent's full operating instructions, diagnostic workflow, playbooks, incident documentation format defined in `sre-agent/skill.md`. Agent configured per-project via `sre-agent/config.md` and trained on tech stack chosen from rebuild candidate
 
 ## CI/CD
 
-- [CI pipeline description — what runs on each push, PR, merge to main]
-- [CD pipeline description — how deployments happen, what environments exist]
-- The pipeline is the source of truth. If it's green, it's deployable. If it's not, nothing else matters.
-- Infrastructure changes go through the same PR process as application code. No manual resource creation.
+- **CI pipeline**: What runs on each push, PR, merge to main
+- **CD pipeline**: How deployments happen, what environments exist
+- **Pipeline is source of truth**: If green → deployable. If not → nothing else matters
+- **Infrastructure changes**: Go through same PR process as application code. No manual resource creation
 
 ## Environment Strategy
 
-- Every project requires at minimum three environments: **dev**, **staging**, and **prod**.
-- Dev is for active development and integration. It can break. It gets deployed on every merge to `main`.
-- Staging mirrors prod in configuration, scale (or near-scale), and data shape. It is the final gate before production. If it doesn't work in staging, it doesn't go to prod.
-- Prod is sacred. Deployments to prod are deliberate, reviewed, and reversible.
-- Environment parity is not optional. If staging uses a different database engine, a smaller instance class, or skips a sidecar that exists in prod, it is not staging — it is a lie that will betray you during cutover.
-- All environments are provisioned through Terraform. No hand-created resources. If it exists in prod, it exists in code.
-- Environment-specific configuration (endpoints, credentials, feature flags) is managed through environment variables or config maps — never through conditional logic in application code.
+- **Minimum environments**: Every project requires dev, staging, prod
+- **Dev**: Active development and integration. Can break. Deployed on every merge to `main`
+- **Staging**: Mirrors prod in configuration, scale (or near-scale), and data shape. Final gate before production. If doesn't work in staging → doesn't go to prod
+- **Prod**: Sacred. Deployments deliberate, reviewed, and reversible
+- **Environment parity**: Not optional. If staging uses different database engine, smaller instance class, or skips sidecar that exists in prod → not staging — it's a lie that will betray during cutover
+- **Provisioning**: All environments through Terraform. No hand-created resources
+- **Configuration**: Environment-specific (endpoints, credentials, feature flags) managed through environment variables or config maps — never through conditional logic in application code
 
 ## API Versioning & Contracts
 
-- Every API that has external consumers or is consumed by other services must be versioned from day one. Prefer URL path versioning (`/v1/`, `/v2/`) for clarity.
-- API contracts are documented and treated as promises. Breaking changes require a version bump, a migration path for consumers, and a deprecation timeline. Do not break existing consumers silently.
-- During a legacy rebuild, the new system must support the legacy API surface as a compatibility layer until all consumers have migrated. Document which legacy endpoints are supported, which are deprecated, and the timeline for removal.
-- Use OpenAPI/Swagger specs checked into the repo. The spec is the contract. If the code and the spec disagree, the code is wrong.
-- Design APIs for optimal Swagger UI interaction. Use JSON request bodies with Pydantic models instead of query parameters for enum fields to enable proper dropdown menus. For editable fields, use Pydantic models with proper enum definitions, examples, and descriptions so Swagger UI renders interactive controls that users can edit directly. Avoid query parameters for complex operations - reserve them for simple filtering, pagination, or optional flags. POST/PUT endpoints should use request bodies; GET endpoints should use query parameters only for idempotent operations.
-- Integration tests validate the API contract on every build. If a response shape changes, the test fails before a consumer discovers it in production.
-- All FastAPI services must support dual-stack IPv4/IPv6 networking. Configure uvicorn to listen on both address families (`host="::"` binds to all interfaces on both IPv4 and IPv6). Validate connectivity in CI/CD with tests that exercise both IPv4 and IPv6 endpoints when the environment supports dual-stack networking.
-- CI/CD pipelines must install both production and development dependencies before running static analysis tools. Use `pip install -r requirements.txt -r requirements-dev.txt` to ensure pylint, mypy, and other tools can resolve all imports. Configure PYTHONPATH to include source directories (`export PYTHONPATH=$PWD/src:$PYTHONPATH`) so tools can find local modules.
+- **Versioning from day one**: Every API with external consumers or consumed by other services must be versioned. Prefer URL path versioning (`/v1/`, `/v2/`) for clarity
+- **Contracts as promises**: API contracts documented and treated as promises. Breaking changes require version bump, migration path for consumers, deprecation timeline. Do not break existing consumers silently
+- **Legacy rebuild compatibility**: During legacy rebuild, new system must support legacy API surface as compatibility layer until all consumers migrated. Document which legacy endpoints supported, deprecated, removal timeline
+- **OpenAPI specs**: Use specs checked into repo. Spec is contract. If code and spec disagree → code is wrong
+- **Swagger UI optimization**: Design APIs for optimal Swagger UI interaction. Use JSON request bodies with Pydantic models instead of query parameters for enum fields to enable proper dropdown menus. For editable fields, use Pydantic models with proper enum definitions, examples, descriptions so Swagger UI renders interactive controls users can edit directly. Avoid query parameters for complex operations — reserve for simple filtering, pagination, optional flags. POST/PUT endpoints should use request bodies; GET endpoints should use query parameters only for idempotent operations
+- **Integration tests**: Validate API contract on every build. If response shape changes → test fails before consumer discovers in production
+- **IPv6 support**: All FastAPI services must support dual-stack IPv4/IPv6 networking. Configure uvicorn to listen on both address families (`host="::"` binds to all interfaces on both IPv4 and IPv6). Validate connectivity in CI/CD with tests that exercise both IPv4 and IPv6 endpoints when environment supports dual-stack networking
+- **CI dependencies**: CI/CD pipelines must install both production and development dependencies before running static analysis tools. Use `pip install -r requirements.txt -r requirements-dev.txt` to ensure pylint, mypy, other tools can resolve all imports. Configure PYTHONPATH to include source directories (`export PYTHONPATH=$PWD/src:$PYTHONPATH`) so tools can find local modules
 
 ## Data Migration & Validation
 
-- Data migration is the highest-risk phase of any legacy rebuild. Treat it with the same rigor as a production deployment — planned, scripted, tested, and reversible.
-- Every migration must be scripted end-to-end. No manual SQL, no one-off shell commands, no "just run this notebook." If it cannot be re-executed from scratch and produce the same result, it is not a migration — it is an accident.
-- Schema mapping between legacy and target must be documented explicitly — every table, every column, every transformation. The rebuild analysis process generates an initial `docs/data-migration-mapping.md` from the legacy assessment (Step 11). Review and refine it during migration planning.
-- Run migrations against a copy of production data in staging before touching prod. Validate row counts, referential integrity, null handling, encoding, and edge cases (empty strings vs nulls, timezone conversions, truncated fields).
-- Build reconciliation checks that compare legacy and target data after migration. Counts, checksums, and spot-check samples at minimum. Automated reconciliation scripts are required — not optional.
-- Define a rollback plan before the migration runs. If the migration fails midway or validation shows data loss, how do you revert? If the answer is "we can't," the migration plan is not ready.
-- For large datasets, plan for incremental or CDC (change data capture) migration rather than big-bang. Dual-write or sync patterns allow the legacy system to keep running while data flows to the new system.
-- Data migration is never "done" until reconciliation passes and the legacy data source is formally decommissioned. Until then, track drift.
+- **Highest-risk phase**: Data migration is highest-risk phase of any legacy rebuild. Treat with same rigor as production deployment — planned, scripted, tested, and reversible
+- **End-to-end scripting**: Every migration must be scripted end-to-end. No manual SQL, no one-off shell commands, no "just run this notebook." If cannot be re-executed from scratch and produce same result → not migration, it's accident
+- **Schema mapping**: Schema mapping between legacy and target must be documented explicitly — every table, every column, every transformation. Rebuild analysis process generates initial `docs/data-migration-mapping.md` from legacy assessment (Step 11). Review and refine during migration planning
+- **Staging validation**: Run migrations against copy of production data in staging before touching prod. Validate row counts, referential integrity, null handling, encoding, edge cases (empty strings vs nulls, timezone conversions, truncated fields)
+- **Reconciliation checks**: Build reconciliation checks that compare legacy and target data after migration. Counts, checksums, spot-check samples at minimum. Automated reconciliation scripts required — not optional
+- **Rollback plan**: Define rollback plan before migration runs. If migration fails midway or validation shows data loss → how revert? If answer is "we can't" → migration plan not ready
+- **Large datasets**: For large datasets, plan for incremental or CDC (change data capture) migration rather than big-bang. Dual-write or sync patterns allow legacy system to keep running while data flows to new system
+- **Completion criteria**: Data migration never "done" until reconciliation passes and legacy data source formally decommissioned. Until then, track drift
 
 ## Feature Parity Tracking
 
-- Before the rebuild starts, produce a feature parity matrix: a complete list of every user-facing feature, integration, and workflow in the legacy application. The rebuild analysis process generates an initial `docs/feature-parity.md` from the legacy assessment (Step 10). Review and refine it before development begins.
-- Each feature gets a status: **Must Rebuild**, **Rebuild Improved**, **Intentionally Dropped**, or **Deferred**. Every feature must have a status — no unknowns.
-- Features marked **Intentionally Dropped** require a documented justification. If users depend on it and you remove it without explanation, you have created a regression, not a rebuild.
-- Acceptance criteria for the rebuild are tied to this matrix. The rebuild is not complete until every **Must Rebuild** and **Rebuild Improved** feature passes acceptance testing.
-- Update the matrix as the rebuild progresses. It is a living document, not a snapshot from day one.
+- **Feature parity matrix**: Before rebuild starts, produce complete list of every user-facing feature, integration, workflow in legacy application. Rebuild analysis process generates initial `docs/feature-parity.md` from legacy assessment (Step 10). Review and refine before development begins
+- **Feature status**: Each feature gets status — **Must Rebuild**, **Rebuild Improved**, **Intentionally Dropped**, or **Deferred**. Every feature must have status — no unknowns
+- **Dropped features**: Features marked **Intentionally Dropped** require documented justification. If users depend on it and you remove without explanation → created regression, not rebuild
+- **Acceptance criteria**: Acceptance criteria for rebuild tied to matrix. Rebuild not complete until every **Must Rebuild** and **Rebuild Improved** feature passes acceptance testing
+- **Living document**: Update matrix as rebuild progresses. It is living document, not snapshot from day one
 
 ## Cutover Strategy
 
-- Cutover is not a single event — it is a planned, phased transition with defined checkpoints, success criteria, and rollback triggers.
-- Define the cutover approach in the PRD: blue/green deployment, canary rollout, traffic shifting, or parallel run with shadow traffic. The choice depends on risk tolerance and data sensitivity.
-- Every cutover plan must include a rollback trigger — a specific, measurable condition under which you abort and revert to the legacy system. "It doesn't feel right" is not a trigger. Error rate thresholds, latency SLOs, and data reconciliation failures are.
-- Run a cutover rehearsal in staging before executing against prod. Time it. Document every step. Identify what took longer than expected. Fix it before the real cutover.
-- During cutover, maintain a war room or dedicated communication channel. Every participant knows their role, the runbook, and who makes the call to proceed or rollback.
-- After cutover, the legacy system stays running in read-only or standby mode for a defined bake period. Do not decommission legacy until the bake period passes and all success criteria are met.
-- Document the cutover outcome — what happened, what deviated from the plan, and what you would do differently. This goes in `docs/cutover-report.md`.
+- **Planned phased transition**: Cutover is not single event — planned, phased transition with defined checkpoints, success criteria, and rollback triggers
+- **Approach definition**: Define cutover approach in PRD: blue/green deployment, canary rollout, traffic shifting, or parallel run with shadow traffic. Choice depends on risk tolerance and data sensitivity
+- **Rollback trigger**: Every cutover plan must include rollback trigger — specific, measurable condition under which you abort and revert to legacy system. "It doesn't feel right" is not trigger. Error rate thresholds, latency SLOs, data reconciliation failures are
+- **Cutover rehearsal**: Run cutover rehearsal in staging before executing against prod. Time it. Document every step. Identify what took longer than expected. Fix before real cutover
+- **War room**: During cutover, maintain war room or dedicated communication channel. Every participant knows role, runbook, and who makes call to proceed or rollback
+- **Legacy standby**: After cutover, legacy system stays running in read-only or standby mode for defined bake period. Do not decommission legacy until bake period passes and all success criteria met
+- **Cutover report**: Document cutover outcome — what happened, what deviated from plan, and what you would do differently. Goes in `docs/cutover-report.md`
 
 ## Access Control & RBAC
 
-- Every application must implement role-based access control. Users get the minimum permissions required for their role — no shared admin accounts, no blanket access.
-- Define roles and permissions early in the rebuild, not as an afterthought. Document them in the PRD. Common baseline: admin, operator, viewer. Extend as needed but resist role explosion.
-- Authentication and authorization are separate concerns. Authentication verifies identity (who you are). Authorization verifies permissions (what you can do). Do not conflate them.
-- Use a centralized identity provider — GCP Identity Platform, AWS Cognito, Firebase Auth, or an external IdP (Okta, Auth0). Do not build custom auth. Rolling your own authentication is how breaches happen.
-- Service-to-service authentication uses service accounts with scoped IAM roles, not shared API keys. Rotate credentials automatically.
-- Audit all access to sensitive operations and data. Who accessed what, when, and from where. This is not optional — it is how you answer questions during an incident.
+- **Role-based access control**: Every application must implement RBAC. Users get minimum permissions required for role — no shared admin accounts, no blanket access
+- **Early definition**: Define roles and permissions early in rebuild, not as afterthought. Document in PRD. Common baseline: admin, operator, viewer. Extend as needed but resist role explosion
+- **Auth vs Authorization**: Authentication and authorization are separate concerns. Authentication verifies identity (who you are). Authorization verifies permissions (what you can do). Do not conflate them
+- **Centralized identity**: Use centralized identity provider — GCP Identity Platform, AWS Cognito, Firebase Auth, or external IdP (Okta, Auth0). Do not build custom auth. Rolling your own authentication is how breaches happen
+- **Service-to-service auth**: Uses service accounts with scoped IAM roles, not shared API keys. Rotate credentials automatically
+- **Audit access**: Audit all access to sensitive operations and data. Who accessed what, when, from where. This is not optional — it's how you answer questions during incident
 
 ## Architecture Decision Records
 
@@ -254,40 +294,38 @@
 
 ## Disaster Recovery & Business Continuity
 
-- Every production service must have a documented disaster recovery plan. Store it in `docs/disaster-recovery.md`.
-- Define RTO (Recovery Time Objective) and RPO (Recovery Point Objective) for each service. These are business decisions, not engineering guesses — get them from stakeholders and design to meet them.
-- Database backups are automated, tested, and stored in a separate region. A backup that has never been restored is not a backup — it is a hope. Test restores quarterly at minimum.
-- Infrastructure must be rebuildable from code. If a cloud project or account were deleted, Terraform should be able to recreate every resource. If it cannot, the Terraform is incomplete.
-- Document the recovery runbook: step-by-step instructions that an on-call engineer who did not build the system can follow at 3 AM. If recovery requires tribal knowledge, it will fail when the person with that knowledge is unavailable.
-- Multi-region or multi-zone deployment is required for any service with an RTO under 1 hour. Single-zone deployments are single points of failure.
-- After any incident that triggers DR procedures, conduct a blameless postmortem. Document what happened, what the impact was, how it was resolved, and what changes prevent recurrence. Store postmortems in `docs/postmortems/`.
+- **DR plan required**: Every production service must have documented disaster recovery plan. Store in `docs/disaster-recovery.md`
+- **RTO/RPO**: Define RTO (Recovery Time Objective) and RPO (Recovery Point Objective) for each service. These are business decisions, not engineering guesses — get from stakeholders and design to meet them
+- **Backup strategy**: Database backups automated, tested, and stored in separate region. Backup never restored → not backup, it's hope. Test restores quarterly at minimum
+- **Infrastructure rebuildability**: Infrastructure must be rebuildable from code. If cloud project or account deleted → Terraform should recreate every resource. If cannot → Terraform incomplete
+- **Recovery runbook**: Document recovery runbook: step-by-step instructions that on-call engineer who did not build system can follow at 3 AM. If recovery requires tribal knowledge → will fail when person with knowledge unavailable
+- **Multi-region deployment**: Multi-region or multi-zone deployment required for any service with RTO under 1 hour. Single-zone deployments = single points of failure
+- **Postmortems**: After any incident triggering DR procedures → conduct blameless postmortem. Document what happened, impact, how resolved, what changes prevent recurrence. Store postmortems in `docs/postmortems/`
 
 ## Rebuild Philosophy
 
-- A rebuild means a new repo. The legacy application's codebase is never modified, patched, or forked. All new work happens in a clean repository. No exceptions.
-- The legacy repo is a reference — read it, study it, understand it, but do not touch it. Changing the legacy code defeats the purpose of the rebuild and introduces risk to a system that is still running in production.
-- If you need to understand how the legacy app works, read its code and its data. If you need to reproduce its behavior, rewrite it from scratch in the new repo. Copy-pasting legacy code into the new repo is not rebuilding — it's relocating tech debt.
-- The legacy application continues to run until the rebuild is proven, migrated, and cut over. Two systems coexist during the transition. Plan for that.
+- **New repo for rebuild**: A rebuild means new repo. Legacy application's codebase never modified, patched, or forked. All new work happens in clean repository. No exceptions
+- **Legacy as reference**: Legacy repo is reference — read it, study it, understand it, but do not touch it. Changing legacy code defeats purpose of rebuild and introduces risk to system still running in production
+- **Rewrite from scratch**: If need to understand how legacy app works → read its code and data. If need to reproduce behavior → rewrite from scratch in new repo. Copy-pasting legacy code into new repo = not rebuilding, it's relocating tech debt
+- **Coexistence**: Legacy application continues to run until rebuild proven, migrated, and cut over. Two systems coexist during transition. Plan for that
 
 ### Dependency Boundaries
-- Legacy applications rarely live in isolation. The target repo will reference other repos — shared caches, auth services, message brokers, internal libraries, data pipelines. You cannot pull all of them into the rebuild scope or you will never finish.
-- Draw a hard boundary: the rebuild covers the primary application repo and nothing else. Adjacent repos are treated as external services with defined interfaces, not as code you own.
-- If the legacy app depends on another repo for runtime behavior (e.g., a shared Redis cache, a sidecar service, an internal API), interact with it through its existing interface. Do not fork it, do not inline it, do not rewrite it as part of this rebuild.
-- If a dependency's interface is undocumented or unstable, document it as a contract in the new repo. Write integration tests against that contract. When the dependency eventually gets rebuilt, the contract tells you what to verify.
-- If a dependency is so tightly coupled that the primary app cannot function without modifying the dependency's code, that is a finding — document it in the legacy assessment and scope.md. It may mean the rebuild boundary needs to shift, or that the dependency itself needs a separate, focused rebuild first.
-- The rule of thumb: if you can stub it behind an interface and the rebuild still works end-to-end, it stays outside the boundary. If you cannot, escalate the scope decision — do not silently absorb another repo into the rebuild.
-- Each repo gets rebuilt on its own timeline, with its own scope.md, its own PRD, and its own cutover plan. Compartmentalized rebuilds ship. Monolithic rewrites stall.
+
+- **Hard boundary**: Legacy applications rarely live in isolation. Target repo will reference other repos — shared caches, auth services, message brokers, internal libraries, data pipelines. Cannot pull all into rebuild scope or will never finish
+- **Boundary definition**: Draw hard boundary: rebuild covers primary application repo and nothing else. Adjacent repos treated as external services with defined interfaces, not as code you own
+- **Interface interaction**: If legacy app depends on another repo for runtime behavior (e.g., shared Redis cache, sidecar service, internal API) → interact through existing interface. Do not fork, inline, or rewrite as part of this rebuild
+- **Undocumented interfaces**: If dependency's interface undocumented or unstable → document as contract in new repo. Write integration tests against that contract. When dependency eventually gets rebuilt → contract tells you what to verify
+- **Tight coupling**: If dependency so tightly coupled that primary app cannot function without modifying dependency's code → that is finding. Document in legacy assessment and scope.md. May mean rebuild boundary needs shift, or dependency itself needs separate, focused rebuild first
+- **Rule of thumb**: If can stub behind interface and rebuild still works end-to-end → stays outside boundary. If cannot → escalate scope decision — do not silently absorb another repo into rebuild
+- **Compartmentalized rebuilds**: Each repo gets rebuilt on own timeline, with own scope.md, own PRD, own cutover plan. Compartmentalized rebuilds ship. Monolithic rewrites stall
 
 ## Modernization Best Practices
 
-> Every modernized and containerized service — regardless of language — must
-> implement these practices. Each language-specific developer agent
-> (`python-developer-agent`, `c-developer-agent`, `go-developer-agent`) references
-> this section as the authoritative cross-cutting standard.
+> Every modernized and containerized service — regardless of language — must implement these practices. Each language-specific developer agent (`python-developer-agent`, `c-developer-agent`, `go-developer-agent`) references this section as authoritative cross-cutting standard.
 
 ### 1. Static Analysis
 
-Examine code structure and logic for security vulnerabilities, logical errors, and runtime failures — without executing the program.
+Examine code structure and logic for security vulnerabilities, logical errors, runtime failures — without executing program.
 
 | Language | Tool |
 |----------|------|
@@ -307,7 +345,7 @@ Enforce consistency in coding style, formatting, and adherence to established st
 
 ### 3. Code Style Enforcement
 
-Ensure source code adheres to a predefined set of formatting and stylistic rules.
+Ensure source code adheres to predefined set of formatting and stylistic rules.
 
 | Language | Tool |
 |----------|------|
@@ -317,7 +355,7 @@ Ensure source code adheres to a predefined set of formatting and stylistic rules
 
 ### 4. Cyclomatic Complexity Checks
 
-Measure the number of linearly independent paths through the code. Keep complexity low for maintainability.
+Measure number of linearly independent paths through code. Keep complexity low for maintainability.
 
 | Language | Tool |
 |----------|------|
@@ -325,9 +363,9 @@ Measure the number of linearly independent paths through the code. Keep complexi
 | C | lizard, pmccabe |
 | Go | gocyclo (via golangci-lint) |
 
-### 5. Unit Testing to a Defined Coverage Percentage
+### 5. Unit Testing to Defined Coverage Percentage
 
-Code coverage is valuable as a concept — it reveals untested paths and potential bugs. Do not chase percentage for its own sake; write meaningful tests that address functionality and edge cases.
+Code coverage valuable as concept — reveals untested paths and potential bugs. Do not chase percentage for own sake; write meaningful tests that address functionality and edge cases.
 
 | Language | Tool | Minimum Coverage |
 |----------|------|-----------------|
@@ -337,11 +375,11 @@ Code coverage is valuable as a concept — it reveals untested paths and potenti
 
 ### 6. GitHub Workflows for Release Process Enforcement
 
-The `main` branch is updated only via PRs from `prerelease`. Direct commits to `prerelease` are prohibited. Workflow: feature branch → PR to prerelease → merge → PR from prerelease to main → merge.
+`main` branch updated only via PRs from `prerelease`. Direct commits to `prerelease` prohibited. Workflow: feature branch → PR to prerelease → merge → PR from prerelease to main → merge.
 
 ### 7. CI Checks for Docker Image Build and Start
 
-Every CI workflow for container artifacts must verify the container builds and the application functions, typically via a `/status` or `/monitoring` endpoint:
+Every CI workflow for container artifacts must verify container builds and application functions, typically via `/status` or `/monitoring` endpoint:
 
 ```bash
 docker build -t <service>:latest . --pull --no-cache
@@ -374,7 +412,7 @@ When feasible, all GitHub Actions should be set up to run locally with [ACT](htt
 
 ### 11. README Documentation for Local Development
 
-A README dictating important details about the repo and how to set it up for local testing / development must be included.
+README dictating important details about repo and how to set it up for local testing/development must be included.
 
 ### 12. Reproducible Build Architecture with Lock Files
 
@@ -388,7 +426,7 @@ All applications must implement dependency locking for fully reproducible builds
 
 ### 13. Git Hooks for Local CI Enforcement
 
-All CI tests must be integrated into a git hook, enabling developers to verify changes do not break the build before pushing.
+All CI tests must be integrated into git hook, enabling developers to verify changes do not break build before pushing.
 
 ### 14. Coverage Reports for Code Coverage
 
@@ -400,11 +438,11 @@ WIZ must scan Infrastructure-as-Code (IaC) files — Terraform, CloudFormation, 
 
 ### 16. Log All Logs to stdout/stderr
 
-In a Docker container, all logs must be directed to `stdout` and `stderr`. This eliminates in-container log file management and ensures logs are captured by the Docker logging driver.
+In Docker container, all logs must be directed to `stdout` and `stderr`. This eliminates in-container log file management and ensures logs are captured by Docker logging driver.
 
 ### 17. Entrypoint Environment Variable Validation
 
-If an entrypoint script or application requires environment variables, check for their existence in the entrypoint script:
+If entrypoint script or application requires environment variables, check for existence in entrypoint script:
 
 ```bash
 if [ -z "$AWS_REGION" ]; then
@@ -419,11 +457,11 @@ Using `set -eu` ensures scripts fail fast and clearly when errors or misconfigur
 
 ### 19. Entrypoint Scripts for Build/Runtime Separation
 
-An `entrypoint.sh` file establishes a clear separation between build and runtime. Entrypoint scripts configure environment variables, execute pre-start initialization, and conduct system checks before launching the main application.
+`entrypoint.sh` file establishes clear separation between build and runtime. Entrypoint scripts configure environment variables, execute pre-start initialization, and conduct system checks before launching main application.
 
 ### 20. Use `exec` for Main Container Command
 
-Using `exec` replaces the shell process with the application process, ensuring the application becomes PID 1. This enables proper signal handling (`SIGTERM`, `SIGKILL`) for graceful shutdowns.
+Using `exec` replaces shell process with application process, ensuring application becomes PID 1. This enables proper signal handling (`SIGTERM`, `SIGKILL`) for graceful shutdowns.
 
 ### 21. Docker Build Best Practices
 
@@ -440,9 +478,9 @@ Using `exec` replaces the shell process with the application process, ensuring t
 
 ## Task Scope Rules
 
-- Do not modify files outside the scope of your assigned task.
-- If you discover a bug or improvement opportunity unrelated to the current task, do not fix it — create a GitHub issue. Every bug, enhancement, and task gets tracked as an issue. No exceptions.
-- All code work is driven through GitHub issues. Do not start work based on ad-hoc prompting alone. If a prompt results in work that should be done, create an issue first, then work the issue.
-- All individual prompting commands and their outcomes are logged in `prompting.md` at the repo root. This provides an audit trail of what was asked, what was generated, and what decisions were made. If it was prompted, it gets logged.
-- Do not install new dependencies without explicit approval.
-- When in doubt about scope, ask before building.
+- Do not modify files outside assigned task scope
+- If discover bug or improvement opportunity unrelated to current task → do not fix — create GitHub issue. Every bug, enhancement, and task gets tracked as issue. No exceptions
+- All code work driven through GitHub issues. Do not start work based on ad-hoc prompting alone. If prompt results in work that should be done → create issue first, then work issue
+- All individual prompting commands and outcomes logged in `prompting.md` at repo root. Provides audit trail of what was asked, what was generated, what decisions made. If prompted → gets logged
+- Do not install new dependencies without explicit approval
+- When in doubt about scope, ask before building
