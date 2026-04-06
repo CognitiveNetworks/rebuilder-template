@@ -50,11 +50,15 @@
 > rebuild process (see `<dest>/template/`). The canonical source is
 > [`rebuilder-evergreen-template-repo-python`](https://github.com/CognitiveNetworks/rebuilder-evergreen-template-repo-python).
 >
-> **Read `template/skill.md` first.** It is the authoritative checklist — every item in it
-> is mandatory. The README is supplementary context; `skill.md` is the punch list. Complete
-> every checkbox in `template/skill.md` during the Build phase. Do not invent your own
-> tooling, configs, or patterns — match what the template repo specifies. If an item does
+> **Read `template/skill.md` first.** It is the authoritative structural checklist — every
+> item in it is mandatory. The README is supplementary context; `skill.md` is the punch list.
+> Complete every checkbox in `template/skill.md` during the Build phase. Do not invent your
+> own tooling, configs, or patterns — match what the template repo specifies. If an item does
 > not apply, mark it N/A with a justification.
+>
+> **Read `template/python-qa-agent/skill.md` for the general QA baseline** — quality gate
+> thresholds, test strategy, and acceptance criteria that apply to all Python services.
+> `python-qa-agent/skill.md` in this repo adds rebuild-specific verification on top.
 >
 > The template repo is **not** an adjacent repo. Adjacent repos (`adjacent/`) are production
 > code dependencies. The template repo (`template/`) is the build standard.

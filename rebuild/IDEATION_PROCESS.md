@@ -220,14 +220,14 @@ Populate the developer and QA agent configs so teams start with accurate setting
 
 `{lang}` below refers to the target language prefix.
 
-**Three skill.md Files — Distinct Roles:**
+**Four skill.md Files — Distinct Roles:**
 
-|  | `template/skill.md` | `{lang}-developer-agent/skill.md` | `{lang}-qa-agent/skill.md` |
-|---|---|---|---|
-| **Purpose** | Universal build standard | Project-specific coding rules | Verification procedures |
-| **Scope** | Same for every rebuild | Populated per project | Populated per project |
-| **Loaded** | Auto-loaded every session | Auto-loaded every session | On demand via `/qa` |
-| **Mutability** | Immutable — org-wide | Customized per project | Customized per project |
+|  | `template/skill.md` | `template/{lang}-qa-agent/skill.md` | `{lang}-developer-agent/skill.md` | `{lang}-qa-agent/skill.md` |
+|---|---|---|---|---|
+| **Purpose** | Structural compliance checklist | General QA baseline | Project-specific coding rules | Rebuild-specific verification |
+| **Scope** | Same for every rebuild | Same for every rebuild | Populated per project | Populated per project |
+| **Loaded** | Auto-loaded every session | On demand via `/qa` | Auto-loaded every session | On demand via `/qa` |
+| **Mutability** | Immutable — org-wide | Immutable — org-wide | Customized per project | Customized per project |
 
 #### 8a: Populate skill.md
 
@@ -264,7 +264,7 @@ Create these files in the **built repository** (the repo developers clone):
 
 | File | Purpose |
 |------|---------|
-| `.windsurfrules` | Read `{lang}-developer-agent/skill.md`, `config.md`, and `template/skill.md` every session |
+| `.windsurfrules` | Always: `{lang}-developer-agent/skill.md`, `config.md`, `template/skill.md`. On demand via `/qa`: `{lang}-qa-agent/skill.md`, `{lang}-qa-agent/config.md`, and `template/{lang}-qa-agent/skill.md` (general QA baseline from template repo) |
 | `.github/copilot-instructions.md` | Same content for VS Code + GitHub Copilot |
 | `{lang}-developer-agent/skill.md` | Populated from Step 8a |
 | `{lang}-developer-agent/config.md` | Populated from Step 8b |
@@ -275,6 +275,14 @@ Create these files in the **built repository** (the repo developers clone):
 > Without it, agents follow coding standards but skip structural requirements.
 
 #### 8d: Populate QA Agent Configuration
+
+> **Two-layer QA model:** The general QA baseline lives in `template/{lang}-qa-agent/skill.md`
+> (present from the template repo cloned to `template/`). That file is immutable and defines
+> the universal quality gates, test strategy, coverage thresholds, and acceptance criteria that
+> apply to every Python service. `{lang}-qa-agent/skill.md` (this file) adds rebuild-specific
+> verification on top: functional parity with the legacy service, legacy endpoint compatibility
+> checks, and the comparison workflow. When `/qa` activates, both files are read — general
+> baseline first, rebuild-specific additions second.
 
 From the PRD and developer agent config, update `{lang}-qa-agent/config.md`:
 
@@ -492,6 +500,8 @@ Verify every structural component from the template repo exists in the built rep
 - [ ] `.actrc`, `env.list`, `monitored-paths.txt`, `.pylintrc`, `.python-version`, `catalog-info.yaml`
 - [ ] `docker-compose.yml` — full local dev stack with healthchecks
 - [ ] `template/skill.md` — copied from template repo, referenced in `.windsurfrules`
+- [ ] `template/{lang}-qa-agent/skill.md` — present from template repo clone; general QA baseline, read alongside `{lang}-qa-agent/skill.md` when `/qa` activates
+- [ ] `template/{lang}-qa-agent/config.md` — present from template repo clone; general QA config baseline
 
 **File permissions verification:** IDE file-creation tools write all files as `100644` (non-executable). After staging, verify every `.sh` file and `hooks/*` file is `100755` in the git index:
 

@@ -1,5 +1,11 @@
-# QA Agent — Evergreen Python Services
+# QA Agent — Evergreen Python Services (Rebuild-Specific)
 
+> **Two-layer QA model:** Read `template/python-qa-agent/skill.md` first — it is the
+> immutable general QA baseline (quality gates, test strategy, coverage thresholds, acceptance
+> criteria) that applies to every Python service. This file adds rebuild-specific verification
+> on top: functional parity with the legacy service, legacy endpoint compatibility checks, and
+> the comparison workflow. Both files are active when `/qa` activates.
+>
 > Quality assurance standards for rebuilt Evergreen Python services.
 > Activated on demand via the `/qa` Windsurf workflow or during ideation Step 12.
 > The QA agent does **not** replace the developer agent — it verifies that the
@@ -8,6 +14,7 @@
 > verification procedures and acceptance criteria that the developer agent is
 > checked against.
 > For development standards (the rules being verified), see `python-developer-agent/skill.md`.
+> For the general QA baseline, see `template/python-qa-agent/skill.md`.
 > For SRE agent configuration, see `sre-agent/skill.md`.
 
 ## Agent Role
